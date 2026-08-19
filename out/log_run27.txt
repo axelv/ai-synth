@@ -1,0 +1,46 @@
+/Users/axelvanraes/dev/ai-synth/.claude/worktrees/bridge-cse_01EcKHcs4NbCjA2hkSKNm3EF/.venv/lib/python3.11/site-packages/resampy/filters.py:50: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+29 notes, device cpu, 15 free / 12 frozen params, pinned at 0: ['drive', 'spread']
+  faust[   1] baseline out/patch_torch.json 1.5482 ACCEPT (best 1.5482)
+baseline true faust loss 1.5482
+
+--- gradient polish from out/patch_torch.json, lr 0.0030 ---
+  polish lr0.0030 step  1/4  surrogate 1.6391  |g| 0.303  lr 0.0027
+  polish lr0.0030 step  2/4  surrogate 1.6372  |g| 0.293  lr 0.0024
+  faust[   2] polish lr0.0030 step 2       1.5586 reject (best 1.5482)
+  polish lr0.0030 step  3/4  surrogate 1.6355  |g| 0.283  lr 0.0022
+  polish lr0.0030 step  4/4  surrogate 1.6341  |g| 0.290  lr 0.0020
+  faust[   3] polish lr0.0030 step 4       1.5634 reject (best 1.5482)
+
+--- gradient polish from out/patch_torch.json, lr 0.0100 ---
+  polish lr0.0100 step  1/4  surrogate 1.6391  |g| 0.303  lr 0.0090
+  polish lr0.0100 step  2/4  surrogate 1.6329  |g| 0.288  lr 0.0081
+  faust[   4] polish lr0.0100 step 2       1.5687 reject (best 1.5482)
+  polish lr0.0100 step  3/4  surrogate 1.6278  |g| 0.264  lr 0.0073
+  polish lr0.0100 step  4/4  surrogate 1.6235  |g| 0.239  lr 0.0066
+  faust[   5] polish lr0.0100 step 4       1.5544 reject (best 1.5482)
+
+--- gradient polish from out/patch_torch.json, lr 0.0300 ---
+  polish lr0.0300 step  1/4  surrogate 1.6391  |g| 0.303  lr 0.0270
+  polish lr0.0300 step  2/4  surrogate 1.6220  |g| 0.247  lr 0.0243
+  faust[   6] polish lr0.0300 step 2       1.5657 reject (best 1.5482)
+  polish lr0.0300 step  3/4  surrogate 1.6105  |g| 0.166  lr 0.0219
+  polish lr0.0300 step  4/4  surrogate 1.6035  |g| 0.125  lr 0.0197
+  faust[   7] polish lr0.0300 step 4       1.5860 reject (best 1.5482)
+gradient polish did NOT beat the converged patch (best 1.5482)
+
+--- CMA-ES on the 12 frozen params, 693 renders left ---
+  [frozen] gen   1  best 1.5600  (23 renders, 12s)
+  [frozen] gen  10  best 1.5559  (167 renders, 117s)
+  [frozen] gen  20  best 1.5559  (327 renders, 235s)
+  faust[ 344] frozen best                  1.5559 reject (best 1.5482)
+
+--- CMA-ES on all 27, sigma 0.04, 356 renders left ---
+  [full] gen   1  best 1.5712  (360 renders, 12s)
+  [full] gen  10  best 1.5566  (504 renders, 119s)
+  [full] gen  20  best 1.5566  (664 renders, 236s)
+  faust[ 697] full best                    1.5566 reject (best 1.5482)
+
+best true faust loss 1.5482 (baseline 1.5482) after 697 renders, 12 gradient steps, 680s
+no candidate beat the baseline, out/patch.json stands and nothing was written
+log: out/torch_stage2_log.json, trace: out/torch_loss_history.npy

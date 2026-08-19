@@ -1,0 +1,43 @@
+{
+ "loss": {
+  "mono": 1.4284496307373047,
+  "side": 2.2260513305664062,
+  "total": 2.207567596435547
+ },
+ "cos": {
+  "mid": 0.7850188573791337,
+  "side": 0.6119943295217217
+ },
+ "width_rise": {
+  "target": 15.937420779439694,
+  "new": 9.371395686940751,
+  "old": -1.8161167348519678
+ },
+ "side_band_error": {
+  "30_90": -2.1402813306712494,
+  "90_300": -6.251255039085005,
+  "300_1000": -5.761436721069798,
+  "1000_4000": -7.463665763194983,
+  "4000_16000": -8.73821759213456
+ },
+ "metrics": {
+  "onset_f": 0.42307692307692313,
+  "onset_p": 0.3055555555555556,
+  "onset_r": 0.6875,
+  "chroma_agree": 0.9202376245264865,
+  "env_l1": 0.11212469637393951,
+  "mel_dist": 5.381862947323007
+ },
+ "checks": {
+  "total loss improves": true,
+  "width rise moves toward target": true,
+  "side cos improves": true,
+  "mid cos does not regress": false,
+  "side energy error shrinks": true,
+  "all bend-free windows improve": false,
+  "mel_dist holds": false,
+  "chroma_agree holds": true,
+  "env_l1 holds": false,
+  "onset_f holds": true
+ }
+}

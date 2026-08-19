@@ -1,0 +1,112 @@
+{
+  "intro": [
+    49,
+    53
+  ],
+  "regions": [
+    {
+      "t0": 3.45,
+      "t1": 4.3,
+      "bass": 39,
+      "voicing": [
+        24,
+        28,
+        33
+      ],
+      "label": "Eb(top)"
+    },
+    {
+      "t0": 4.3,
+      "t1": 7.45,
+      "bass": 29,
+      "voicing": [
+        16,
+        19,
+        24,
+        28
+      ],
+      "label": "F major"
+    },
+    {
+      "t0": 7.45,
+      "t1": 10.4,
+      "bass": 25,
+      "voicing": [
+        12,
+        19,
+        24,
+        28,
+        31
+      ],
+      "label": "Db major"
+    },
+    {
+      "t0": 10.4,
+      "t1": 16.05,
+      "bass": 27,
+      "voicing": [
+        12,
+        19,
+        24,
+        26,
+        31
+      ],
+      "label": "Ebsus2"
+    },
+    {
+      "t0": 16.05,
+      "t1": 17.9,
+      "bass": 29,
+      "voicing": [
+        12,
+        19,
+        24,
+        28,
+        31
+      ],
+      "label": "F major"
+    }
+  ],
+  "metrics": {
+    "onset_f": 0.21993127147766325,
+    "onset_p": 0.12355212355212356,
+    "onset_r": 1.0,
+    "chroma_agree": 0.8404013514518738,
+    "env_l1": 0.2200804054737091,
+    "mel_dist": 12.910439491271973
+  },
+  "overlap": 0.0,
+  "velocities": {
+    "bass": 100,
+    "upper": 75,
+    "intro": 80
+  },
+  "metrics_note": "measured with the neutral reference saw patch, not the fitted patch",
+  "intro_velocity": 80,
+  "intro_bend": "glide 88.3 Hz (F2) -> 138.9 Hz (C\u266f3), +7.85 semitones over 3.67s",
+  "structure": "author (GarageBand): F > Dbm > Ebsus2, last chord bent +3 at half length",
+  "bend": "intro glide 88.3 Hz (F2) -> 138.9 Hz (C\u266f3), +7.85 st over 3.67s; then +3 st at 13.35s, released at 16.05s",
+  "metrics_vs_mine": {
+    "author_loss": 1.5650089457631111,
+    "mine_loss": 1.5756139546632766,
+    "author_chroma": 0.9137867093086243,
+    "mine_chroma": 0.9130014181137085
+  },
+  "db_region_test": {
+    "Db minor (current)": {
+      "loss": 1.5798866711556911,
+      "chroma": 0.9136603474617004,
+      "mel": 7.111564636230469
+    },
+    "Db major": {
+      "loss": 1.5787843197584153,
+      "chroma": 0.9147189855575562,
+      "mel": 7.110414028167725
+    },
+    "Db no third": {
+      "loss": 1.5741343729197979,
+      "chroma": 0.9145307540893555,
+      "mel": 7.108640670776367
+    }
+  }
+}

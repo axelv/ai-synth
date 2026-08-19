@@ -1,0 +1,77 @@
+{
+  "sources": {
+    "n_params": 56,
+    "n_params_before": 29,
+    "eq_source_matches_eq_stage": true,
+    "table_max_abs_err": 4.5936687786962693e-10,
+    "table_h": 128,
+    "legacy_has_old_oscmix": true,
+    "legacy_stage_tokens": 0
+  },
+  "identity": {
+    "recorded_loss": 1.5446351990103722,
+    "legacy_loss": 1.5446351990103722,
+    "new_loss": 1.5447113763540983,
+    "saw_build_loss": 1.5446353208273649,
+    "reference_loss": 1.5446360360831022,
+    "loss_delta": 7.617734372611373e-05,
+    "vs_legacy": {
+      "max_abs": 5.8710575103759766e-05,
+      "rel_l2": 5.0749091315083206e-05
+    },
+    "vs_reference": {
+      "max_abs": 5.8710575103759766e-05,
+      "rel_l2": 5.075535479049376e-05
+    },
+    "legacy_vs_reference": {
+      "max_abs": 1.1896190699189901e-07,
+      "rel_l2": 8.14049239255508e-07
+    },
+    "saw_build_vs_legacy": {
+      "max_abs": 5.960464477539063e-08,
+      "rel_l2": 5.8352682685836044e-08
+    },
+    "sec_per_render_new": 16.19137406349182,
+    "sec_per_render_legacy": 0.6527280807495117,
+    "sec_compile_new": 15.591056108474731
+  },
+  "amplifier": {
+    "cutoff": 257.7540728334786,
+    "pole_radius": 0.9639424045239021,
+    "roundoff_gain_per_pole": 27.733407810370693,
+    "oscillator": {
+      "max_abs": 5.960464477539063e-08,
+      "rel_l2": 2.0775057951324796e-08,
+      "peak": 0.7873008251190186
+    },
+    "oscillator_then_filter": {
+      "max_abs": 5.617737770080566e-06,
+      "rel_l2": 5.727414154804416e-06,
+      "peak": 0.39244264364242554
+    }
+  },
+  "window": {
+    "baseline_from_brief": 1.5605,
+    "eq_warm_start_measured_post_hoc": 1.2859071591868996,
+    "identity": {
+      "score": 1.560823231190443,
+      "cos": 0.7515663730150373,
+      "sec": 20.709376096725464
+    },
+    "legacy_dsp": {
+      "score": 1.5605118721723557,
+      "cos": 0.7515663544790703,
+      "sec": 0.5634541511535645
+    },
+    "eq_warm_start": {
+      "score": 1.2831568548455834,
+      "cos": 0.853349731424062,
+      "sec": 4.965079069137573
+    },
+    "wtMorph_1": {
+      "score": 1.8002898424863816,
+      "cos": 0.7241281259150771,
+      "sec": 5.627821683883667
+    }
+  }
+}
