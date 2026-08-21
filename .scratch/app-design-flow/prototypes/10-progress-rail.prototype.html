@@ -1,0 +1,279 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>PROTOTYPE: the progress rail</title>
+<!--
+  THROWAWAY PROTOTYPE for .scratch/app-design-flow/issues/10-the-progress-rail.md
+  Sibling of 07-first-screen.prototype.html, which owns the setup flow and is already at
+  four variants. Three placements of the rail beside a STUBBED play surface: the keyboard
+  and macros here are grey boxes standing in for ticket 06, not proposals.
+  ?variant=A|B|C, arrow keys, or the bottom bar. Phase selector top right is prototype
+  chrome, not part of the design.
+-->
+<style>
+  :root { --ink:#1a1a1a; --dim:#6b6b6b; --line:#d8d8d8; --bg:#fbfbfb; --panel:#f2f2f2; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+         color:var(--ink); background:var(--bg); }
+  .notice { background:#fff3cd; border-bottom:1px solid #e8d9a0; padding:6px 14px; font-size:12px; color:#6b5b20; }
+  .notice b { font-weight:600; }
+  button { font:inherit; cursor:pointer; }
+  .primary { background:#1a1a1a; color:#fff; border:0; padding:8px 16px; border-radius:5px; font-size:14px; }
+  .secondary { background:#fff; color:#1a1a1a; border:1px solid var(--line); padding:8px 16px; border-radius:5px; font-size:14px; }
+  .dim { color:var(--dim); } .small { font-size:13px; } .tiny { font-size:12px; }
+  .stub { outline:1px dashed #c9c9c9; outline-offset:3px; }
+  .stublabel { font-size:10px; letter-spacing:.09em; color:#b0b0b0; text-transform:uppercase; margin-bottom:6px; }
+  /* stub play surface */
+  .keys { display:flex; height:110px; position:relative; user-select:none; }
+  .wk { flex:1; background:#fff; border:1px solid #cfcfcf; border-radius:0 0 4px 4px; }
+  .bk { position:absolute; top:0; width:2.4%; height:64%; background:#2a2a2a; border-radius:0 0 3px 3px; }
+  .macro { display:grid; grid-template-columns:78px 1fr 44px; gap:10px; align-items:center; margin-bottom:9px; font-size:13px; }
+  .track { height:4px; background:#e2e2e2; border-radius:2px; position:relative; }
+  .track i { position:absolute; top:-4px; width:12px; height:12px; border-radius:50%; background:#1a1a1a; }
+  .track b { position:absolute; top:-3px; left:50%; width:1px; height:10px; background:#c4c4c4; }
+  .badge { display:inline-block; background:#eee; border-radius:4px; padding:3px 8px; font-size:12px; color:#555; }
+  /* rail bits */
+  .bar { height:4px; background:#e2e2e2; border-radius:2px; overflow:hidden; }
+  .bar i { display:block; height:100%; background:#1a1a1a; }
+  .act { background:#111; color:#fff; border-radius:7px; padding:12px 14px; }
+  .act .primary { background:#fff; color:#111; }
+  .act .secondary { background:transparent; color:#fff; border-color:#555; }
+  #bar { position:fixed; left:50%; bottom:16px; transform:translateX(-50%); display:flex; align-items:center;
+         gap:4px; background:#111; color:#fff; border-radius:999px; padding:4px 6px; box-shadow:0 6px 24px rgba(0,0,0,.3);
+         font-size:13px; z-index:99; }
+  #bar button { background:none; border:0; color:#fff; font-size:16px; padding:2px 10px; }
+  #bar span { padding:0 8px; white-space:nowrap; }
+  #phase { position:fixed; top:34px; right:14px; z-index:99; font-size:12px; background:#fff;
+           border:1px solid var(--line); border-radius:6px; padding:6px 8px; }
+</style>
+
+<div class="notice"><b>Prototype</b> for ticket 10, the progress rail. Three placements,
+bottom bar or ← → keys. Keyboard and macros are <b>stubs</b> for ticket 06. The phase
+selector, top right, is prototype chrome.</div>
+
+<div id="phase"></div>
+<div id="stage"></div>
+<div id="bar"><button onclick="cycle(-1)">←</button><span id="barlabel"></span><button onclick="cycle(1)">→</button></div>
+
+<script>
+const VARIANTS = {
+  A: "Left rail: the machine keeps a column",
+  B: "Top strip: the machine keeps a band",
+  C: "Ambient pill: the machine keeps a corner",
+  D: "A's position, C's pill: the column, collapsed"
+};
+const PHASES = [
+  { k:"notes",  t:"Finding the notes",  sub:"about 3 minutes" },
+  { k:"check",  t:"Check the notes",    sub:"yours to answer" },
+  { k:"fit",    t:"Fitting the patch",  sub:"about 40 minutes" },
+  { k:"slow",   t:"Fitting the patch",  sub:"longer than usual" },
+  { k:"done",   t:"Done",               sub:"fitted in 38 minutes" }
+];
+const STEPS = ["Choose a sound","Choose the part","Start","Finding the notes","Check the notes","Fitting the patch","Play it"];
+
+let v = (new URLSearchParams(location.search).get("variant")||"A").toUpperCase();
+if (!VARIANTS[v]) v = "A";
+let ph = "fit", open_ = false;
+
+function cycle(d){ const k=Object.keys(VARIANTS); v=k[(k.indexOf(v)+d+k.length)%k.length];
+  try{history.replaceState(null,"","?variant="+v);}catch(e){} open_=false; render(); }
+addEventListener("keydown", e => {
+  if (/input|textarea|select/i.test(e.target.tagName)) return;
+  if (e.key==="ArrowLeft") cycle(-1); if (e.key==="ArrowRight") cycle(1);
+});
+
+// which of the 7 steps is live, per phase
+const liveStep = () => ({ notes:4, check:5, fit:6, slow:6, done:7 })[ph];
+const detail = () => ({
+  notes: { text:"29 note events so far", bar:null, meta:"1 min 40 s", short:"1 min 40 s" },
+  check: { text:"", bar:null, meta:"", short:"" },
+  fit:   { text:"2 480 of 7 360 attempts", bar:0.34, meta:"12 min elapsed", short:"12 min" },
+  slow:  { text:"2 510 of 7 360 attempts", bar:0.34, meta:"41 min elapsed, longer than usual", short:"longer than usual" },
+  done:  { text:"", bar:1, meta:"fitted in 38 minutes", short:"38 min" }
+})[ph];
+
+function keyboardStub() {
+  const d = document.createElement("div");
+  const blacks = [1,2,4,5,6,8,9,11,12,13].map(i => (i*(100/14)) - 1.2);
+  d.innerHTML = `<div class="stublabel">stub &mdash; ticket 06</div>
+    <div class="keys stub">${Array.from({length:14},()=>'<div class="wk"></div>').join("")}
+    ${blacks.map(l=>`<div class="bk" style="left:${l}%"></div>`).join("")}</div>`;
+  return d;
+}
+function macrosStub() {
+  const names = [["Brightness",.62],["Movement",.5],["Width",.78],["Body",.44],["Attack",.5]];
+  const d = document.createElement("div");
+  d.innerHTML = `<div class="stublabel" style="margin-top:26px">stub &mdash; ticket 06</div>
+    <div class="stub" style="padding:14px 12px">` + names.map(([n,x]) => `
+      <div class="macro"><span class="dim">${n}</span>
+        <span class="track"><b></b><i style="left:calc(${x*100}% - 6px)"></i></span>
+        <span class="tiny dim">${x===.5?"0":(x>.5?"+":"")+Math.round((x-.5)*200)}</span></div>`).join("") + `</div>`;
+  return d;
+}
+function nowPlaying() {
+  const d = document.createElement("div");
+  d.style.marginBottom = "18px";
+  d.innerHTML = ph === "done"
+    ? `<div style="font-size:19px">example-pad.wav</div><div class="small dim">Your patch. Version 1.</div>`
+    : `<div style="font-size:19px">example-pad.wav</div>
+       <div class="small"><span class="badge">Placeholder &mdash; not your sound</span></div>`;
+  return d;
+}
+
+/* full seven-step list, shared shape, laid out differently per variant */
+function stepList(compact) {
+  const live = liveStep(), det = detail();
+  const ol = document.createElement("ol");
+  ol.style.cssText = "list-style:none;margin:0;padding:0;border-left:1px solid var(--line)";
+  STEPS.forEach((t,i) => {
+    const n = i+1, state = n<live ? "done" : n===live ? "now" : "todo";
+    const li = document.createElement("li");
+    li.style.cssText = "position:relative;padding:0 0 16px 18px;margin-left:-1px;border-left:2px solid " +
+      (state==="now" ? "var(--ink)" : "transparent");
+    let extra = "";
+    if (state === "now" && !compact) {
+      if (ph === "check") extra = "";
+      else if (det.bar !== null) extra = `<div class="bar" style="margin:7px 0 4px"><i style="width:${det.bar*100}%"></i></div>
+        <div class="tiny dim">${det.text}${det.text&&det.meta?" &middot; ":""}${det.meta}</div>`;
+      else extra = `<div class="tiny dim" style="margin-top:3px">${det.text} &middot; ${det.meta}</div>`;
+    }
+    li.innerHTML = `<div style="font-size:14px;color:${state==="todo"?"var(--dim)":"var(--ink)"};
+      font-weight:${state==="now"?600:400}">${state==="done"?"&#10003; ":""}${t}</div>${extra}`;
+    ol.append(li);
+  });
+  return ol;
+}
+function checkAction(wide) {
+  const d = document.createElement("div");
+  d.className = "act";
+  d.style.cssText = wide ? "display:flex;gap:14px;align-items:center;justify-content:space-between" : "";
+  d.innerHTML = `<div><div style="font-weight:600;font-size:14px">Are these the right notes?</div>
+      <div class="tiny" style="opacity:.75;margin-top:2px">Your clip and a plain tone, together.</div></div>
+    <div style="margin-top:${wide?0:12}px;display:flex;gap:8px;flex-shrink:0">
+      <button class="primary">Listen</button><button class="secondary">Not now</button></div>`;
+  return d;
+}
+
+/* ------------------------------------------------------------------ A: left rail */
+function VariantA(stage) {
+  const w = document.createElement("div");
+  w.style.cssText = "display:grid;grid-template-columns:250px 1fr;gap:48px;max-width:1080px;margin:0 auto;padding:40px 24px 120px;align-items:start";
+  const rail = document.createElement("div");
+  if (ph === "done" && !open_) {
+    rail.innerHTML = `<button class="secondary" style="width:100%;text-align:left">&#10003; Fitted in 38 minutes <span class="dim">&#8964;</span></button>`;
+    rail.querySelector("button").onclick = () => { open_ = true; render(); };
+  } else {
+    rail.append(stepList(false));
+    if (ph === "check") { const a = checkAction(false); a.style.marginTop = "6px"; rail.append(a); }
+  }
+  const main = document.createElement("div");
+  main.append(nowPlaying(), keyboardStub(), macrosStub());
+  w.append(rail, main); stage.append(w);
+}
+
+/* ------------------------------------------------------------------ B: top strip */
+function VariantB(stage) {
+  const w = document.createElement("div");
+  w.style.cssText = "max-width:920px;margin:0 auto;padding:26px 24px 120px";
+  const live = liveStep(), det = detail();
+  const strip = document.createElement("div");
+  strip.style.cssText = "background:var(--panel);border-radius:8px;padding:12px 14px;margin-bottom:26px";
+  strip.innerHTML = `
+    <div style="display:flex;gap:4px;margin-bottom:9px">${STEPS.map((t,i)=>{
+      const n=i+1, done=n<live, now=n===live;
+      return `<div title="${t}" style="flex:${now?3:1};height:5px;border-radius:3px;
+        background:${done?"#1a1a1a":now?"#8a8a8a":"#dcdcdc"}"></div>`;}).join("")}</div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px">
+      <div class="small" style="font-weight:600">${STEPS[live-1]}</div>
+      <div class="tiny dim">${det.text}${det.text&&det.meta?" &middot; ":""}${det.meta}</div>
+    </div>`;
+  if (ph === "done") {
+    strip.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="small">&#10003; Fitted in 38 minutes</div>
+      <button class="secondary tiny" style="padding:4px 10px">Show steps</button></div>`;
+  }
+  w.append(strip);
+  if (ph === "check") { const a = checkAction(true); a.style.marginBottom = "26px"; w.append(a); }
+  w.append(nowPlaying(), keyboardStub(), macrosStub());
+  stage.append(w);
+}
+
+/* ------------------------------------------------------------------ C: ambient pill */
+function VariantC(stage) {
+  const w = document.createElement("div");
+  w.style.cssText = "max-width:900px;margin:0 auto;padding:56px 24px 120px";
+  w.append(nowPlaying(), keyboardStub(), macrosStub());
+  if (ph === "check") {
+    const a = checkAction(true); a.style.marginTop = "26px"; w.append(a);
+  }
+  stage.append(w);
+
+  const det = detail();
+  const pill = document.createElement("div");
+  pill.style.cssText = "position:fixed;left:18px;bottom:18px;background:#fff;border:1px solid var(--line);"
+    + "border-radius:999px;padding:7px 14px;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.06);cursor:pointer";
+  pill.innerHTML = ph === "done"
+    ? `&#10003; Fitted in 38 minutes`
+    : `<span style="font-weight:600">${STEPS[liveStep()-1]}</span>
+       <span class="dim">${det.bar!==null?" &middot; "+Math.round(det.bar*100)+"%":""} &middot; ${det.short}</span>`;
+  pill.onclick = () => { open_ = !open_; render(); };
+  document.body.append(pill);
+  if (open_) {
+    const pop = document.createElement("div");
+    pop.style.cssText = "position:fixed;left:18px;bottom:64px;background:#fff;border:1px solid var(--line);"
+      + "border-radius:10px;padding:16px 18px;box-shadow:0 8px 30px rgba(0,0,0,.12);width:250px";
+    pop.append(stepList(false)); document.body.append(pop);
+  }
+}
+
+/* ------------------------------------------- D: A's position, C's pill */
+function VariantD(stage) {
+  const w = document.createElement("div");
+  w.style.cssText = "display:grid;grid-template-columns:250px 1fr;gap:48px;max-width:1080px;"
+    + "margin:0 auto;padding:40px 24px 120px;align-items:start";
+  const col = document.createElement("div");
+  const det = detail();
+
+  if (ph === "check") {
+    // the pill grows into the action, in place, without moving anything else
+    col.append(checkAction(false));
+  } else if (open_) {
+    const box = document.createElement("div");
+    box.style.cssText = "border:1px solid var(--line);border-radius:10px;padding:16px 18px;background:#fff";
+    box.append(stepList(false));
+    const c = document.createElement("button");
+    c.className = "tiny"; c.style.cssText = "background:none;border:0;color:var(--dim);padding:6px 0 0";
+    c.textContent = "Collapse"; c.onclick = () => { open_ = false; render(); };
+    box.append(c); col.append(box);
+  } else {
+    const pill = document.createElement("button");
+    pill.style.cssText = "width:100%;text-align:left;background:#fff;border:1px solid var(--line);"
+      + "border-radius:999px;padding:9px 15px;font-size:13px;cursor:pointer";
+    pill.innerHTML = ph === "done"
+      ? `&#10003; Fitted in 38 minutes`
+      : `<span style="font-weight:600">${STEPS[liveStep()-1]}</span>
+         <span class="dim">${det.bar!==null?" &middot; "+Math.round(det.bar*100)+"%":""} &middot; ${det.short}</span>`;
+    pill.onclick = () => { open_ = true; render(); };
+    col.append(pill);
+    if (det.bar !== null && ph !== "done") {
+      const b = document.createElement("div");
+      b.className = "bar"; b.style.margin = "8px 6px 0";
+      b.innerHTML = `<i style="width:${det.bar*100}%"></i>`;
+      col.append(b);
+    }
+  }
+  const main = document.createElement("div");
+  main.append(nowPlaying(), keyboardStub(), macrosStub());
+  w.append(col, main); stage.append(w);
+}
+
+function render() {
+  document.querySelectorAll("body > div:not(#phase):not(#bar):not(#stage):not(.notice)").forEach(n => n.remove());
+  const stage = document.getElementById("stage"); stage.innerHTML = "";
+  ({A:VariantA,B:VariantB,C:VariantC,D:VariantD})[v](stage);
+  document.getElementById("barlabel").textContent = v + " — " + VARIANTS[v];
+  document.getElementById("phase").innerHTML = "phase " +
+    `<select>${PHASES.map(p=>`<option value="${p.k}" ${p.k===ph?"selected":""}>${p.t}${p.sub?" ("+p.sub+")":""}</option>`).join("")}</select>`;
+  document.getElementById("phase").querySelector("select").onchange = e => { ph = e.target.value; open_ = false; render(); };
+}
+render();
+</script>

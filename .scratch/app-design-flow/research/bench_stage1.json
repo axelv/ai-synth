@@ -1,0 +1,15 @@
+{
+ "librosa_load_44100_mono_s": 2.6075297500938177,
+ "fit_region_one_s": 27.20045299991034,
+ "fit_region_notes": [
+  25,
+  26,
+  27,
+  37
+ ],
+ "spec_cache_entries_after_one_region": 295,
+ "all_regions_est_s": 163.20271799946204,
+ "stft_8192_s": 0.21023850003257394,
+ "salience_s": 0.8743402080144733,
+ "viterbi_s": 3.228295458946377
+}
