@@ -22,7 +22,7 @@ BEND_SEMITONES = 3.0
 RAMP = 0.20            # ~0.2 s, read off the automation lane in the DAW
 
 
-def bend_curve(n_samples: int, sr: int = SR, path: str = "out/intro_f0.npy") -> np.ndarray:
+def bend_curve(n_samples: int, sr: int = SR, path: str = "data/intro_f0.npy") -> np.ndarray:
     t_meas, f0 = np.load(path)
     target = float(librosa.midi_to_hz(TARGET_MIDI))
     ratio = f0 / target
@@ -48,7 +48,7 @@ def bend_curve(n_samples: int, sr: int = SR, path: str = "out/intro_f0.npy") -> 
 
 
 def describe() -> str:
-    t, f0 = np.load("out/intro_f0.npy")
+    t, f0 = np.load("data/intro_f0.npy")
     return (
         f"intro glide {f0[2]:.1f} Hz ({librosa.hz_to_note(f0[2])}) -> {f0[-3]:.1f} Hz "
         f"({librosa.hz_to_note(f0[-3])}), {12 * np.log2(f0[-3] / f0[2]):+.2f} st over "

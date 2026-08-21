@@ -39,7 +39,7 @@ WIN_T1 = 7.45
 PITCHES = (29, 45, 48, 53, 57)          # F1 A2 C3 F3 A3, all held across the window
 H_TABLE = 64                            # wavetable harmonics; h=64 of F1 is 2.8 kHz, and
                                         # 99% of the window's energy is below 2.46 kHz
-MIDI_PATH = "out/transcription.mid"
+MIDI_PATH = "data/transcription.mid"
 TARGET_PATH = "data/original.wav"
 
 

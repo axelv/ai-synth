@@ -57,7 +57,7 @@ FX = ["chRate", "chDepth", "dlyTime", "dlyFb", "dlyWet", "revSize", "revDamp", "
 EQ = [f"eq{i}" for i in range(26)]
 
 
-def load_notes(path: str = "out/transcription.mid"):
+def load_notes(path: str = "data/transcription.mid"):
     pm = pretty_midi.PrettyMIDI(path)
     notes = []
     for inst in pm.instruments:
@@ -255,7 +255,7 @@ def main() -> None:
     args = ap.parse_args()
 
     notes = load_notes()
-    print(f"loaded {len(notes)} notes from out/transcription.mid")
+    print(f"loaded {len(notes)} notes from data/transcription.mid")
     obj = Objective(notes)
 
     if args.init:

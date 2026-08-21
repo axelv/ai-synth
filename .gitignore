@@ -22,15 +22,10 @@ out/*.png
 .claude/settings.local.json
 .DS_Store
 
-# out/ is where every experiment writes. Three of these files are INPUTS that live code
-# reads, and the rest is the debris of runs whose conclusions are already in CLAUDE.md.
-# Keeping the debris commits a patch_*.json and a log_*.txt per abandoned experiment for
-# no information. Keeping the three is not optional:
-#   transcription.mid  stage 1 is frozen; stage2.load_notes reads this and cannot
-#                      regenerate it, and four live scripts depend on it
-#   intro_f0.npy       what bend2.bend_curve reads
-#   patch.json         the incumbent, loss 1.544635, and the default --patch everywhere
+# out/ is where every experiment writes, and the debris of runs whose conclusions are
+# already in CLAUDE.md is worth nothing: one patch_*.json and one log_*.txt per abandoned
+# experiment. The frozen stage-1 inputs used to live here and now sit in data/ beside
+# original.wav, which is the same category of thing. One file stays tracked:
+#   patch.json  the incumbent, loss 1.544635, and the default --patch everywhere
 out/*
-!out/transcription.mid
-!out/intro_f0.npy
 !out/patch.json

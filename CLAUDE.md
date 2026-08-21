@@ -15,7 +15,7 @@ something a synth can actually do.
 Two stages, in dependency order:
 
 1. **Stage 1, transcription.** Notes and a measured pitch-bend curve. **Frozen.** Treat
-   `out/transcription.mid` and `bend2.bend_curve` as inputs, not parameters. Re-opening
+   `data/transcription.mid` and `bend2.bend_curve` as inputs, not parameters. Re-opening
    this is a separate project and it confounds any judgement of stage 2.
 2. **Stage 2, patch fitting.** Synth parameters against a multi-resolution STFT loss.
    This is where the work happens.
@@ -105,9 +105,11 @@ would otherwise reopen.
   `build_midi.py`, `refine_midi.py`, `refine2.py`, `polish_midi.py`, `finalize_midi.py`,
   `final_transcription.py`, `segment.py`, `chords_nnls.py`, `octave_check.py`,
   `try_db_major.py`, `velocity_balance.py`, `detune_vs_vibrato.py`, `intro_glide.py`,
-  `late_bend.py`, `bend.py`, `analyze.py`. Output is `out/transcription.mid` plus
-  `bend2.bend_curve`. `bend.py` is the predecessor of `bend2.py`, which is live and in
-  the table above.
+  `late_bend.py`, `bend.py`, `analyze.py`. Output is `data/transcription.mid` plus
+  `bend2.bend_curve`. These scripts still read and write inside `out/`, deliberately: a
+  re-run produces a candidate to diff against the frozen copy rather than overwriting it,
+  and both `finalize_midi.py` and `write_final.py` write `out/transcription.mid`.
+  `bend.py` is the predecessor of `bend2.py`, which is live and in the table above.
 - **Differentiable surrogate, abandoned.** `torch_*.py` (7 files), `verify_env.py`,
   `verify_filter.py`, `verify_fx.py`, `verify_osc.py`, `verify_torch_synth.py`,
   `audit_gradients.py`, `audit_fidelity.py`. A full PyTorch port of the synth, accurate
