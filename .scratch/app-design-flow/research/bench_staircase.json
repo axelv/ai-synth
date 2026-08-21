@@ -1,0 +1,41 @@
+{
+ "seed (no fitting at all)": {
+  "loss_flat_level_corrected": 3.673625776171684,
+  "cos_flat": 0.5428274976833538,
+  "loss_after_oracle_eq": 2.890531414747238,
+  "cos_after_oracle_eq": 0.48647678356745705,
+  "loss_after_powell_150": 2.763115604221821,
+  "t_render_s": 1.221635458059609,
+  "t_score_s": 0.29646212491206825,
+  "t_oracle_s": 0.07111933408305049,
+  "t_powell_s": 47.64570162491873,
+  "powell_evals": 150,
+  "max_abs_gain_db": 17.999539310234965
+ },
+ "CMA prefix, 8 min / 353 renders": {
+  "loss_flat_level_corrected": 1.815636146068573,
+  "cos_flat": 0.5142581413262721,
+  "loss_after_oracle_eq": 1.6878093644976615,
+  "cos_after_oracle_eq": 0.6249331864018296,
+  "loss_after_powell_150": 1.6415639340877533,
+  "t_render_s": 1.2117460409644991,
+  "t_score_s": 0.23189799999818206,
+  "t_oracle_s": 0.05963137489743531,
+  "t_powell_s": 48.56482591596432,
+  "powell_evals": 150,
+  "max_abs_gain_db": 15.327976252833677
+ },
+ "delivered patch, EQ flat": {
+  "loss_flat_level_corrected": 1.545766855403781,
+  "cos_flat": 0.7196182570622396,
+  "loss_after_oracle_eq": 1.426020596921444,
+  "cos_after_oracle_eq": 0.8054550384427025,
+  "loss_after_powell_150": 1.4431397661566734,
+  "t_render_s": 1.111611207947135,
+  "t_score_s": 0.19528075004927814,
+  "t_oracle_s": 0.06188937509432435,
+  "t_powell_s": 52.854710957966745,
+  "powell_evals": 150,
+  "max_abs_gain_db": 11.453575520497289
+ }
+}

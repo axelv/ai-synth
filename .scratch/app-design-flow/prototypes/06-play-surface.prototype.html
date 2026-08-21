@@ -1,0 +1,442 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>PROTOTYPE: the play surface</title>
+<!--
+  THROWAWAY PROTOTYPE for .scratch/app-design-flow/issues/06-the-play-surface.md
+  Four variants that disagree about what this screen IS: a synth face, an instrument,
+  a comparison tool, or a toy that gets out of the way.
+  ?variant=A|B|C|D, arrow keys, or the bottom bar.
+  The rail is NOT a variable here: ticket 10 settled it as a ~250px seven-step column that
+  collapses to one line once the fit lands, so all four carry the same rail and the test is
+  whether their layout survives it in both states.
+  Top-right toggles are prototype chrome. Play with the mouse or the keys a w s e d f t g y h u j k.
+-->
+<style>
+  :root { --ink:#1a1a1a; --dim:#6b6b6b; --line:#d8d8d8; --bg:#fbfbfb; --panel:#f2f2f2; --ev:#e9e2cd; }
+  * { box-sizing:border-box; }
+  html,body { height:100%; }
+  body { margin:0; font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+         color:var(--ink); background:var(--bg); overflow:hidden; }
+  .notice { background:#fff3cd; border-bottom:1px solid #e8d9a0; padding:6px 14px; font-size:12px; color:#6b5b20; }
+  .notice b { font-weight:600; }
+  button { font:inherit; cursor:pointer; }
+  .secondary { background:#fff; color:#1a1a1a; border:1px solid var(--line); padding:6px 12px; border-radius:5px; font-size:13px; }
+  .dim { color:var(--dim); } .small { font-size:13px; } .tiny { font-size:12px; }
+  a { color:inherit; }
+
+  /* ---- keyboard, shared primitive; every variant sizes and marks it differently ---- */
+  .keys { display:flex; position:relative; user-select:none; }
+  .wk { flex:1; background:#fff; border:1px solid #cfcfcf; border-right:0; border-radius:0 0 4px 4px; }
+  .wk:last-of-type { border-right:1px solid #cfcfcf; }
+  .bk { position:absolute; top:0; height:62%; background:#2a2a2a; border-radius:0 0 3px 3px; z-index:2; }
+  .wk.on { background:#cfd8e6; }
+  .bk.on { background:#5b7095; }
+  .wk.ev { background:#fdfaf1; }
+  .bk.ev { background:#403a28; }
+  .evwrap { position:relative; height:20px; }
+  .evbar { position:absolute; top:5px; border-top:1.5px solid #a3916a; height:7px;
+           border-left:1.5px solid #a3916a; border-right:1.5px solid #a3916a; }
+  .evlab { position:absolute; top:12px; font-size:11px; color:#7d6f4d; white-space:nowrap; }
+  .evtick { position:absolute; bottom:0; font-size:11px; color:#7d6f4d; }
+
+  /* ---- rail, settled by ticket 10, identical in all four ---- */
+  .rail { width:250px; flex:0 0 250px; border-right:1px solid var(--line); padding:18px 18px 0 18px; }
+  .step { display:grid; grid-template-columns:16px 1fr; gap:9px; padding:7px 0; font-size:13px; }
+  .dot { width:9px; height:9px; border-radius:50%; background:#dcdcdc; margin-top:6px; }
+  .step.done .dot { background:#9a9a9a; } .step.now .dot { background:#1a1a1a; }
+  .step.now { font-weight:600; }
+  .step.todo { color:#a8a8a8; }
+  .bar { height:4px; background:#e2e2e2; border-radius:2px; overflow:hidden; margin-top:6px; }
+  .bar i { display:block; height:100%; background:#1a1a1a; }
+  .railone { border-bottom:1px solid var(--line); padding:8px 16px; font-size:13px; color:var(--dim);
+             display:flex; gap:10px; align-items:center; }
+  .standin { background:#111; color:#fff; border-radius:6px; padding:9px 11px; font-size:12px; line-height:1.45; margin-top:14px; }
+
+  /* ---- macro primitives ---- */
+  .knob { width:58px; height:58px; border-radius:50%; border:1px solid #cbcbcb; background:#fff; position:relative;
+          cursor:ns-resize; }
+  .knob i { position:absolute; left:50%; top:5px; width:2px; height:20px; background:#1a1a1a; transform-origin:50% 100%;
+            margin-left:-1px; }
+  .knob b { position:absolute; left:50%; top:-6px; width:1px; height:4px; background:#c0c0c0; }
+  .htrack { height:4px; background:#e2e2e2; border-radius:2px; position:relative; cursor:ew-resize; }
+  .htrack i { position:absolute; top:-4px; width:12px; height:12px; border-radius:50%; background:#1a1a1a; margin-left:-6px; }
+  .htrack b { position:absolute; top:-3px; left:50%; width:1px; height:10px; background:#c4c4c4; }
+  .vtrack { width:4px; background:#e2e2e2; border-radius:2px; position:relative; margin:0 auto; cursor:ns-resize; }
+  .vtrack i { position:absolute; left:-4px; width:12px; height:12px; border-radius:50%; background:#1a1a1a; margin-top:-6px; }
+  .vtrack b { position:absolute; left:-3px; top:50%; width:10px; height:1px; background:#c4c4c4; }
+  .off { opacity:.38; pointer-events:none; }
+  .why { font-size:11px; color:#9a9a9a; }
+
+  canvas { display:block; width:100%; height:100%; }
+  .frame { border:1px solid var(--line); border-radius:7px; background:#fff; }
+
+  #stage { height:calc(100vh - 31px); display:flex; flex-direction:column; }
+  .row { display:flex; flex:1; min-height:0; }
+  .main { flex:1; min-width:0; display:flex; flex-direction:column; padding:18px 22px 52px 22px; }
+
+  #bar { position:fixed; right:16px; bottom:14px; display:flex; align-items:center;
+         gap:4px; background:#111; color:#fff; border-radius:999px; padding:4px 6px; box-shadow:0 6px 24px rgba(0,0,0,.3);
+         font-size:13px; z-index:99; }
+  #bar button { background:none; border:0; color:#fff; font-size:16px; padding:2px 10px; }
+  #bar span { padding:0 8px; white-space:nowrap; }
+  #chrome { position:fixed; bottom:66px; right:14px; z-index:99; font-size:12px; background:#fff;
+            border:1px solid var(--line); border-radius:6px; padding:7px 9px; line-height:1.9; }
+  #chrome button { font-size:11px; padding:2px 7px; margin-left:5px; }
+  #chrome .on { background:#111; color:#fff; border-color:#111; }
+  /* E's compare control: deliberately not a slider, so it cannot read as a sixth macro */
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:5px; overflow:hidden; background:#fff; }
+  .seg button { border:0; background:#fff; font-size:12px; padding:5px 11px; color:var(--dim); }
+  .seg button + button { border-left:1px solid var(--line); }
+  .seg button.on { background:#1a1a1a; color:#fff; }
+</style>
+
+<div class="notice"><b>Prototype</b> for ticket 06, the play surface. Four variants, bottom
+bar or ← → keys. Play with the mouse, or the keys <b>a w s e d f t g y h u j k</b>. The
+toggles top right are prototype chrome.</div>
+
+<div id="chrome"></div>
+<div id="stage"></div>
+<div id="bar"><button onclick="cycle(-1)">←</button><span id="barlabel"></span><button onclick="cycle(1)">→</button></div>
+
+<script>
+const VARIANTS = {
+  A: "Instrument panel: one face, nothing moves",
+  B: "Keyboard first: the controls step aside",
+  C: "Comparison: the clip never leaves the screen",
+  D: "Bare: a keyboard and five words",
+  E: "WINNER — A's bracket, C's comparison frame"
+};
+const MACROS = ["Brightness","Movement","Width","Body","Attack"];
+// Ticket 05: the FIT declares each macro's excursion. On the stand-in there is no fit, so
+// every macro is disabled with a reason. Once fitted, only the ones this patch cannot honour are.
+const off = i => stage === "standin" ? "waiting for the fit" : ({ 2: "this patch is mono" })[i];
+
+let v = "A";
+let stage = "fitted";     // "standin" = fit still running | "fitted" = a Version exists
+let midi = true;
+let mv = [0,0,0,0,0];     // macro positions, bipolar -1..1
+let drawer = false;       // variant D's compare drawer
+let xfade = 1;            // variant C's clip/patch crossfader
+let hearing = "patch";    // variant E's segmented compare control
+const held = new Set();
+
+/* ---------------- keyboard model ---------------- */
+const LO = 24, HI = 84;            // C1..C6
+const EV = [36, 55];               // C2..G3, what the clip evidenced
+const WPC = [0,2,4,5,7,9,11];
+const NAME = n => ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"][n%12] + (Math.floor(n/12)-1);
+const WK = []; const BK = [];
+for (let n=LO;n<=HI;n++) (WPC.includes(n%12) ? WK : BK).push(n);
+const belowW = m => WK.filter(w=>w<m).length;
+const evPct = () => { const l = belowW(EV[0])*100/WK.length, r = (belowW(EV[1])+1)*100/WK.length; return [l, r-l]; };
+const marked = () => stage === "fitted";   // the stand-in claims no range: it was never fitted
+
+// mark: "tint" paints the keys in range, anything else leaves the keys alone
+function keyboard(h, mark) {
+  const bw = 100/WK.length*0.62;
+  let s = `<div class="keys" style="height:${h}px">`;
+  WK.forEach(m => {
+    const ev = marked() && mark==="tint" && m>=EV[0] && m<=EV[1];
+    s += `<div class="wk${held.has(m)?" on":""}${ev?" ev":""}" data-m="${m}"></div>`;
+  });
+  BK.forEach(m => {
+    const ev = marked() && mark==="tint" && m>=EV[0] && m<=EV[1];
+    s += `<div class="bk${held.has(m)?" on":""}${ev?" ev":""}" data-m="${m}" style="left:${belowW(m)*100/WK.length - bw/2}%;width:${bw}%"></div>`;
+  });
+  return s + `</div>`;
+}
+// four different ways of saying the same true thing
+function evidence(kind) {
+  if (!marked()) return `<div class="evwrap"></div>`;
+  const [l,w] = evPct();
+  if (kind === "bracket") return `<div class="evwrap"><div class="evbar" style="left:${l}%;width:${w}%"></div>`
+    + `<div class="evlab" style="left:${l}%">your clip played ${NAME(EV[0])} to ${NAME(EV[1])}</div></div>`;
+  if (kind === "tintlabel") return `<div class="evwrap"><div class="evlab" style="left:${l}%">your clip played here</div></div>`;
+  if (kind === "ticks") return `<div class="evwrap"><div class="evbar" style="left:${l}%;width:${w}%"></div></div>`;
+  if (kind === "endpoints") return `<div class="evwrap">`
+    + `<div class="evtick" style="left:${l}%">${NAME(EV[0])}</div>`
+    + `<div class="evtick" style="left:${l+w}%;transform:translateX(-100%)">${NAME(EV[1])}</div></div>`;
+  return `<div class="evwrap"></div>`;
+}
+
+/* ---------------- rail, settled elsewhere, identical in all four ---------------- */
+const STEPS = ["Choose a sound","Choose the part","Start","Finding the notes","Check the notes","Fitting the patch","Play it"];
+function railColumn() {
+  let s = `<div class="rail">`;
+  STEPS.forEach((t,i) => {
+    const cls = i<5 ? "done" : i===5 ? "now" : "todo";
+    s += `<div class="step ${cls}"><div class="dot"></div><div>${t}`;
+    if (i===5) s += `<div class="bar"><i style="width:34%"></i></div><div class="tiny dim">2 480 of 7 360 attempts · 12 min elapsed</div>`;
+    s += `</div></div>`;
+  });
+  return s + `<div class="standin"><b>You are playing a stand-in.</b><br>Not your sound yet. It swaps
+    itself out the moment the real one is ready.</div></div>`;
+}
+const railLine = () => `<div class="railone"><span>Fitted in 38 minutes.</span><a href="#">Start another</a></div>`;
+
+/* ---------------- macro primitives ---------------- */
+const knob  = i => `<div class="knob${off(i)?" off":""}" data-mac="${i}"><b></b><i style="transform:rotate(${mv[i]*135}deg)"></i></div>`;
+const htrack= i => `<div class="htrack${off(i)?" off":""}" data-mac="${i}"><b></b><i style="left:${50+mv[i]*50}%"></i></div>`;
+const vtrack= (i,h) => `<div class="vtrack${off(i)?" off":""}" data-mac="${i}" style="height:${h}px"><b></b><i style="top:${50-mv[i]*50}%"></i></div>`;
+const macroOff = i => off(i) ? `<div class="why">${off(i)}</div>` : "";
+
+const deviceLine = () => midi
+  ? `<span class="tiny dim">Roland A-49 connected</span>`
+  : `<span class="tiny dim">No MIDI keyboard. Play the keys below.</span>`;
+
+/* ---------------- variants ---------------- */
+// A: a synth face. Everything visible at once, nothing ever moves, hierarchy by size.
+const A = () => `
+  <div class="row">
+    ${stage==="standin" ? railColumn() : ""}
+    <div class="main">
+      <div class="frame" style="flex:1;min-height:0;position:relative;padding:10px">
+        <canvas data-viz="bars"></canvas>
+        <button class="secondary" style="position:absolute;top:12px;right:12px" onmousedown="ab(1)" onmouseup="ab(0)" onmouseleave="ab(0)">Hold to hear the clip</button>
+      </div>
+      <div style="display:flex;gap:34px;justify-content:center;padding:22px 0 18px 0">
+        ${MACROS.map((n,i)=>`<div style="text-align:center;width:96px">
+           ${knob(i)}<div class="small" style="margin-top:7px">${n}</div>${macroOff(i)}</div>`).join("")}
+      </div>
+      <div style="text-align:right;margin-bottom:5px">${deviceLine()}</div>
+      ${keyboard(132,"none")}
+      ${evidence("bracket")}
+    </div>
+  </div>`;
+
+// B: the instrument is the point. Keyboard huge and central, controls pushed to a side column.
+const B = () => `
+  <div class="row">
+    ${stage==="standin" ? railColumn() : ""}
+    <div class="main" style="justify-content:center">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px">
+        <div class="tiny dim">Your clip</div>${deviceLine()}
+      </div>
+      <div class="frame" style="height:56px;position:relative;padding:6px" onmousedown="ab(1)" onmouseup="ab(0)" onmouseleave="ab(0)"
+           title="hold to hear the clip">
+        <canvas data-viz="wave"></canvas>
+      </div>
+      <div class="tiny dim" style="margin:5px 0 26px 0">Hold the strip to hear the clip instead.</div>
+      <div style="height:34px;margin-bottom:-1px"><canvas data-viz="ribbon"></canvas></div>
+      ${keyboard(190,"tint")}
+      ${evidence("tintlabel")}
+    </div>
+    <div style="flex:0 0 190px;border-left:1px solid var(--line);padding:16px 20px;display:flex;flex-direction:column;justify-content:center;overflow-y:auto">
+      ${MACROS.map((n,i)=>`<div style="margin-bottom:14px;text-align:center">
+        <div class="small" style="margin-bottom:8px">${n}</div>${vtrack(i,60)}${macroOff(i)}</div>`).join("")}
+    </div>
+  </div>`;
+
+// C: the question is "is it the same instrument", so the clip is structural, not a button.
+const C = () => `
+  <div class="row">
+    ${stage==="standin" ? railColumn() : ""}
+    <div class="main">
+      <div class="frame" style="flex:1;min-height:0;position:relative;padding:10px">
+        <canvas data-viz="overlay"></canvas>
+        <div class="tiny" style="position:absolute;top:12px;left:14px;color:#9a9a9a">
+          <span style="color:#a3916a">▬</span> your clip &nbsp; <span style="color:#1a1a1a">▬</span> this patch
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:16px 0 20px 0">
+        <span class="tiny dim">clip</span>
+        <div class="htrack" style="flex:1" data-xf="1"><i style="left:${xfade*100}%"></i></div>
+        <span class="tiny dim">patch</span>
+        <span class="tiny dim" style="width:130px;text-align:right">${deviceLine()}</span>
+      </div>
+      <div style="display:flex;gap:26px;padding-bottom:20px">
+        ${MACROS.map((n,i)=>`<div style="flex:1">
+          <div class="tiny" style="margin-bottom:8px">${n}</div>${htrack(i)}${macroOff(i)}</div>`).join("")}
+      </div>
+      ${evidence("ticks")}
+      ${keyboard(84,"none")}
+    </div>
+  </div>`;
+
+// D: does any of it earn its place? Five words, a keyboard, one reactive thing, nothing else.
+const D = () => `
+  <div class="row">
+    ${stage==="standin" ? railColumn() : ""}
+    <div class="main" style="align-items:center;justify-content:center">
+      <div style="width:640px;max-width:100%">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:30px">
+          <div class="tiny dim">${midi?"Roland A-49":"no MIDI keyboard"}</div>
+          <div style="width:34px;height:34px"><canvas data-viz="ring"></canvas></div>
+        </div>
+        ${MACROS.map((n,i)=>`<div style="display:grid;grid-template-columns:96px 1fr;gap:16px;align-items:center;margin-bottom:15px">
+          <div class="small${off(i)?" dim":""}">${n}</div><div>${htrack(i)}${macroOff(i)}</div></div>`).join("")}
+        <div style="height:26px"></div>
+      </div>
+      <div style="width:100%">
+        ${keyboard(120,"none")}
+        ${evidence("endpoints")}
+      </div>
+      <div style="margin-top:14px">
+        <a class="tiny dim" href="#" onclick="drawer=!drawer;render();return false">${drawer?"hide":"compare with the clip"}</a>
+        ${drawer?`<div class="frame" style="height:70px;margin-top:10px;padding:6px;width:640px"><canvas data-viz="wave"></canvas></div>`:""}
+      </div>
+    </div>
+  </div>`;
+
+// E: the chosen one. C's comparison frame as the primary visual, because judging "the same
+// instrument" is the job, plus A's bracket, because tinting keys reads as a stain and bare
+// note names read as nothing. Two choices follow rather than being picked: the compare
+// control is a segmented toggle, NOT a slider, since C's crossfader sat above five macro
+// sliders and read as a sixth macro; and the macros are A's knobs, which cannot be confused
+// with any horizontal control on the screen.
+const E = () => `
+  <div class="row">
+    ${stage==="standin" ? railColumn() : ""}
+    <div class="main">
+      <div class="frame" style="flex:1;min-height:0;position:relative;padding:10px">
+        <canvas data-viz="overlay"></canvas>
+        <div class="tiny" style="position:absolute;top:12px;left:14px;color:#9a9a9a">
+          <span style="color:#a3916a">\u25ac</span> your clip &nbsp; <span style="color:#1a1a1a">\u25ac</span> this patch
+        </div>
+        <div class="seg" style="position:absolute;top:10px;right:12px">
+          <button class="${hearing==="patch"?"on":""}" onclick="hearing='patch';render()">this patch</button
+          ><button class="${hearing==="clip"?"on":""}" onclick="hearing='clip';render()">your clip</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:34px;justify-content:center;padding:20px 0 16px 0">
+        ${MACROS.map((n,i)=>`<div style="text-align:center;width:96px">
+           ${knob(i)}<div class="small" style="margin-top:7px">${n}</div>${macroOff(i)}</div>`).join("")}
+      </div>
+      <div style="text-align:right;margin-bottom:5px">${deviceLine()}</div>
+      ${keyboard(120,"none")}
+      ${evidence("bracket")}
+    </div>
+  </div>`;
+
+const RENDER = { A, B, C, D, E };
+
+/* ---------------- visuals ---------------- */
+// Log-frequency 40 Hz to 16 kHz, the same span the real 26-band EQ covers.
+const NB = 56;
+function spectrum(t) {
+  const out = new Array(NB).fill(0);
+  for (let i=0;i<NB;i++) {
+    const f = i/NB;
+    out[i] = 0.10*Math.exp(-Math.pow((f-0.14)/0.15,2)) + 0.04*Math.exp(-Math.pow((f-0.55)/0.45,2));
+  }
+  held.forEach(m => {
+    for (let h=1;h<=12;h++) {
+      const hz = 440*Math.pow(2,(m-69)/12)*h;
+      const i = Math.round(NB*Math.log2(hz/40)/Math.log2(400));
+      if (i>=0 && i<NB) out[i] += (0.85/h)*(0.82+0.18*Math.sin(t/280+h*1.7+m));
+    }
+  });
+  return out;
+}
+const ghost = () => { const o=new Array(NB).fill(0);
+  for (let i=0;i<NB;i++){ const f=i/NB;
+    o[i] = 0.30*Math.exp(-Math.pow((f-0.22)/0.13,2)) + 0.17*Math.exp(-Math.pow((f-0.44)/0.12,2)) + 0.06*Math.exp(-Math.pow((f-0.72)/0.2,2)); }
+  return o; };
+
+function paint(cv, mode, t) {
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (!w || !h) return;
+  cv.width = w*2; cv.height = h*2;
+  const c = cv.getContext("2d"); c.scale(2,2); c.clearRect(0,0,w,h);
+  const s = spectrum(t);
+  if (mode === "bars") {
+    const bw = w/NB;
+    s.forEach((val,i) => { const bh = Math.min(h, val*h*1.6);
+      c.fillStyle = "#1a1a1a"; c.fillRect(i*bw+1, h-bh, bw-2, bh); });
+  } else if (mode === "overlay") {
+    const g = ghost(), bw = w/NB;
+    c.beginPath(); c.moveTo(0,h);
+    g.forEach((val,i)=>c.lineTo(i*bw+bw/2, h-Math.min(h,val*h*1.6)));
+    c.lineTo(w,h); c.closePath(); c.fillStyle="#efe9d8"; c.fill();
+    c.strokeStyle="#a3916a"; c.lineWidth=1; c.stroke();
+    s.forEach((val,i) => { const bh = Math.min(h*0.95, val*h*0.9);
+      c.fillStyle="#1a1a1a"; c.fillRect(i*bw+bw*0.3, h-bh, bw*0.4, bh); });
+  } else if (mode === "ribbon") {
+    c.strokeStyle="#1a1a1a"; c.lineWidth=1.2; c.beginPath();
+    for (let x=0;x<w;x++) {
+      let y = h/2;
+      s.forEach((val,i)=>{ y += val*7*Math.sin(x/(3+i*0.7)+t/420+i); });
+      x ? c.lineTo(x,y) : c.moveTo(x,y);
+    }
+    c.stroke();
+  } else if (mode === "wave") {
+    c.strokeStyle="#a3916a"; c.lineWidth=1; c.beginPath();
+    for (let x=0;x<w;x++) {
+      const e = Math.min(1, x/40) * Math.min(1,(w-x)/90);
+      const a = e*(0.55+0.45*Math.sin(x/23))*(0.5+0.5*Math.sin(x/7.3));
+      c.moveTo(x, h/2 - a*h*0.44); c.lineTo(x, h/2 + a*h*0.44);
+    }
+    c.stroke();
+  } else if (mode === "ring") {
+    const lvl = Math.min(1, held.size*0.34);
+    c.strokeStyle="#dcdcdc"; c.lineWidth=2; c.beginPath(); c.arc(w/2,h/2,w/2-3,0,7); c.stroke();
+    c.strokeStyle="#1a1a1a"; c.beginPath(); c.arc(w/2,h/2,w/2-3,-1.57,-1.57+6.283*lvl); c.stroke();
+  }
+}
+let abHold = 0;
+function ab(on){ abHold = on; }
+function loop(t) {
+  document.querySelectorAll("canvas[data-viz]").forEach(cv => paint(cv, cv.dataset.viz, t));
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ---------------- input ---------------- */
+const KEYMAP = { a:60,w:61,s:62,e:63,d:64,f:65,t:66,g:67,y:68,h:69,u:70,j:71,k:72 };
+addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft") return cycle(-1);
+  if (e.key === "ArrowRight") return cycle(1);
+  const m = KEYMAP[e.key];
+  if (m !== undefined && !held.has(m)) { held.add(m); render(); }
+});
+addEventListener("keyup", e => { const m = KEYMAP[e.key]; if (m !== undefined) { held.delete(m); render(); } });
+
+let dragMac = null, dragXf = false, dragStart = 0, dragVal = 0;
+addEventListener("mousedown", e => {
+  const k = e.target.closest("[data-m]");
+  if (k) { held.add(+k.dataset.m); render(); return; }
+  const mac = e.target.closest("[data-mac]");
+  if (mac) { dragMac = +mac.dataset.mac; dragStart = mac.classList.contains("htrack") ? e.clientX : e.clientY;
+             dragVal = mv[dragMac]; e.preventDefault(); return; }
+  if (e.target.closest("[data-xf]")) { dragXf = true; e.preventDefault(); }
+});
+addEventListener("mousemove", e => {
+  if (dragMac !== null) {
+    const el = document.querySelector(`[data-mac="${dragMac}"]`);
+    const horiz = el && el.classList.contains("htrack");
+    const d = horiz ? (e.clientX-dragStart)/((el.clientWidth||200)/2) : (dragStart-e.clientY)/60;
+    mv[dragMac] = Math.max(-1, Math.min(1, dragVal + d)); render();
+  } else if (dragXf) {
+    const el = document.querySelector("[data-xf]"); const r = el.getBoundingClientRect();
+    xfade = Math.max(0, Math.min(1, (e.clientX-r.left)/r.width)); render();
+  }
+});
+addEventListener("mouseup", () => { dragMac = null; dragXf = false; held.clear(); render(); });
+
+/* ---------------- chrome and switching ---------------- */
+function chrome() {
+  document.getElementById("chrome").innerHTML =
+    `<div>stage
+       <button class="secondary${stage==="standin"?" on":""}" onclick="stage='standin';render()">stand-in, fitting</button>
+       <button class="secondary${stage==="fitted"?" on":""}" onclick="stage='fitted';render()">fitted</button></div>
+     <div>MIDI
+       <button class="secondary${midi?" on":""}" onclick="midi=true;render()">connected</button>
+       <button class="secondary${!midi?" on":""}" onclick="midi=false;render()">absent</button></div>
+     <div class="dim" style="max-width:210px;line-height:1.4;padding-top:4px">
+       held: ${held.size?[...held].map(NAME).join(" "):"nothing"} · macros ${mv.map(x=>x.toFixed(1)).join(" ")}${abHold?" · A/B held":""}</div>`;
+}
+function render() {
+  document.getElementById("stage").innerHTML = (stage==="fitted" ? railLine() : "") + RENDER[v]();
+  document.getElementById("barlabel").textContent = v + " — " + VARIANTS[v];
+  chrome();
+}
+function cycle(d) {
+  const ks = Object.keys(VARIANTS);
+  v = ks[(ks.indexOf(v)+d+ks.length)%ks.length];
+  const u = new URL(location); u.searchParams.set("variant", v); history.replaceState(null,"",u);
+  render();
+}
+v = new URL(location).searchParams.get("variant") || "A";
+if (!VARIANTS[v]) v = "A";
+render();
+</script>

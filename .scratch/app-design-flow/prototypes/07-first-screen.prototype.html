@@ -1,0 +1,353 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>PROTOTYPE: the first screen</title>
+<!--
+  THROWAWAY PROTOTYPE for .scratch/app-design-flow/issues/07-the-first-screen.md
+  Three variants of the first screen, switchable via ?variant=A|B|C, arrow keys, or the
+  bottom bar. Deliberately unstyled beyond plain greys: visual language is still fog on
+  the map and this prototype must not accidentally decide it. Judge structure and
+  sequence, not looks.
+-->
+<style>
+  :root { --ink:#1a1a1a; --dim:#6b6b6b; --line:#d8d8d8; --bg:#fbfbfb; --panel:#f2f2f2; --hot:#1a1a1a; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+         color:var(--ink); background:var(--bg); }
+  .notice { background:#fff3cd; border-bottom:1px solid #e8d9a0; padding:6px 14px;
+            font-size:12px; color:#6b5b20; }
+  .notice b { font-weight:600; }
+  #stage { min-height:calc(100vh - 90px); }
+  button { font:inherit; cursor:pointer; }
+  .primary { background:var(--hot); color:#fff; border:0; padding:12px 22px; border-radius:6px; }
+  .primary:disabled { opacity:.35; cursor:not-allowed; }
+  .ghost { background:none; border:0; color:var(--dim); text-decoration:underline; padding:0; }
+  .dim { color:var(--dim); }
+  .small { font-size:13px; }
+  .tiny { font-size:12px; }
+  canvas { display:block; width:100%; height:120px; background:#fff; border:1px solid var(--line); border-radius:4px; }
+  .wf { position:relative; }
+  .handle { position:absolute; top:0; bottom:0; width:11px; margin-left:-5px; cursor:ew-resize; }
+  .handle::after { content:""; position:absolute; left:5px; top:0; bottom:0; width:1px; background:var(--hot); }
+  .shade { position:absolute; top:0; bottom:0; background:rgba(0,0,0,.55); pointer-events:none; }
+  /* switcher */
+  #bar { position:fixed; left:50%; bottom:16px; transform:translateX(-50%); display:flex;
+         align-items:center; gap:4px; background:#111; color:#fff; border-radius:999px;
+         padding:4px 6px; box-shadow:0 6px 24px rgba(0,0,0,.3); font-size:13px; z-index:99; }
+  #bar button { background:none; border:0; color:#fff; font-size:16px; padding:2px 10px; }
+  #bar span { padding:0 8px; white-space:nowrap; }
+</style>
+
+<div class="notice"><b>Prototype</b> for ticket 07, the first screen. Four variants: use
+the bar at the bottom or the ← → keys. Styling is deliberately plain; judge structure and
+sequence. Nothing here is real.</div>
+
+<div id="stage"></div>
+
+<div id="bar">
+  <button onclick="cycle(-1)">←</button><span id="barlabel"></span><button onclick="cycle(1)">→</button>
+</div>
+
+<script>
+const VARIANTS = {
+  A: "The drop zone: minimal, one surface, no coaching",
+  B: "The workbench: everything visible, informed consent",
+  C: "The conversation: one question per step",
+  D: "C plus a stepper carrying every phase, setup and machine"
+};
+const CLIP = { name: "example-pad.wav", dur: 17.9 };
+
+let v = (new URLSearchParams(location.search).get("variant") || "A").toUpperCase();
+if (!VARIANTS[v]) v = "A";
+let S = { file:null, a:0.12, b:0.62, step:1, started:false, phase:4 };
+
+function cycle(d) {
+  const k = Object.keys(VARIANTS);
+  v = k[(k.indexOf(v) + d + k.length) % k.length];
+  try { history.replaceState(null, "", "?variant=" + v); } catch (e) {}
+  S = { file:null, a:0.12, b:0.62, step:1, started:false, phase:4 };
+  render();
+}
+addEventListener("keydown", e => {
+  if (/input|textarea/i.test(e.target.tagName) || e.target.isContentEditable) return;
+  if (e.key === "ArrowLeft") cycle(-1);
+  if (e.key === "ArrowRight") cycle(1);
+});
+
+// deterministic fake waveform
+let seed = 7;
+const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+const WAVE = Array.from({length:700}, (_,i) => {
+  const env = Math.min(1, i/40) * Math.min(1, (700-i)/90);
+  const swell = .55 + .45*Math.sin(i/70);
+  return env * swell * (.5 + .5*rnd());
+});
+
+function drawWave(cv) {
+  const w = cv.clientWidth, h = 120, dpr = devicePixelRatio || 1;
+  cv.width = w*dpr; cv.height = h*dpr;
+  const c = cv.getContext("2d"); c.scale(dpr,dpr);
+  c.clearRect(0,0,w,h); c.fillStyle = "#8a8a8a";
+  WAVE.forEach((a,i) => {
+    const x = i/WAVE.length*w, hh = a*h*0.44;
+    c.fillRect(x, h/2-hh, Math.max(1, w/WAVE.length-0.4), hh*2);
+  });
+}
+
+function waveform(opts) {
+  const el = document.createElement("div");
+  el.className = "wf";
+  el.innerHTML = `<canvas></canvas>
+    <div class="shade" style="left:0"></div><div class="shade" style="right:0"></div>
+    <div class="handle" data-h="a"></div><div class="handle" data-h="b"></div>`;
+  const paint = () => {
+    const w = el.clientWidth;
+    el.querySelectorAll(".shade")[0].style.width = (S.a*w)+"px";
+    el.querySelectorAll(".shade")[1].style.width = ((1-S.b)*w)+"px";
+    el.querySelector('[data-h=a]').style.left = (S.a*w)+"px";
+    el.querySelector('[data-h=b]').style.left = (S.b*w)+"px";
+    if (opts && opts.onchange) opts.onchange();
+  };
+  let drag = null;
+  el.addEventListener("pointerdown", e => {
+    const h = e.target.dataset && e.target.dataset.h;
+    if (h) { drag = h; e.target.setPointerCapture(e.pointerId); }
+  });
+  el.addEventListener("pointermove", e => {
+    if (!drag) return;
+    const r = el.getBoundingClientRect();
+    let p = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+    if (drag === "a") S.a = Math.min(p, S.b - 0.03); else S.b = Math.max(p, S.a + 0.03);
+    paint();
+  });
+  el.addEventListener("pointerup", () => drag = null);
+  requestAnimationFrame(() => { drawWave(el.querySelector("canvas")); paint(); });
+  return el;
+}
+
+const secs = () => ((S.b - S.a) * CLIP.dur).toFixed(1);
+// fake "pitch coverage" derived from selection width, purely so the readout moves
+const coverage = () => {
+  const f = (S.b - S.a);
+  if (f < 0.15) return { label:"one note, maybe two", tone:"thin" };
+  if (f < 0.4)  return { label:"a few distinct pitches", tone:"ok" };
+  return { label:"wide, several pitches across the register", tone:"good" };
+};
+
+function dropzone(onpick, label) {
+  const d = document.createElement("div");
+  d.style.cssText = "border:2px dashed var(--line);border-radius:10px;padding:44px 24px;text-align:center;background:#fff";
+  d.innerHTML = `<div style="font-size:15px">${label}</div>
+    <div class="small dim" style="margin-top:8px">or <button class="ghost">use the example clip</button></div>`;
+  d.querySelector("button").onclick = () => onpick(CLIP);
+  d.ondragover = e => { e.preventDefault(); d.style.background = "#f0f6ff"; };
+  d.ondragleave = () => d.style.background = "#fff";
+  d.ondrop = e => { e.preventDefault(); onpick({ name:(e.dataTransfer.files[0]||{}).name || "dropped.wav", dur:17.9 }); };
+  return d;
+}
+
+function wrap(maxw) {
+  const w = document.createElement("div");
+  w.style.cssText = `max-width:${maxw}px;margin:0 auto;padding:56px 24px 120px`;
+  return w;
+}
+
+/* ---------------------------------------------------------------- Variant A */
+function VariantA(stage) {
+  const w = wrap(680); stage.append(w);
+  if (S.started) {
+    w.innerHTML = `<h1 style="font-size:26px;margin:0 0 10px">Fitting your sound.</h1>
+      <p class="dim">About forty minutes. You can close this tab.</p>
+      <p style="margin-top:28px">Meanwhile there is a placeholder instrument on the keyboard.
+      <b>It is not your sound.</b></p>
+      <button class="primary" style="margin-top:16px">Go to the keyboard</button>`;
+    return;
+  }
+  if (!S.file) {
+    w.innerHTML = `<h1 style="font-size:34px;margin:0 0 8px;letter-spacing:-.5px">Play any sound you hear.</h1>
+      <p class="dim" style="margin:0 0 32px">Drop in a few seconds of a synth. Get a patch you can play on your keyboard.</p>`;
+    w.append(dropzone(f => { S.file = f; render(); }, "Drop an audio file"));
+    return;
+  }
+  w.innerHTML = `<div class="small dim" style="margin-bottom:10px">${S.file.name}</div>`;
+  const out = document.createElement("div");
+  w.append(waveform({ onchange: () => out.textContent = secs() + " seconds selected" }), out);
+  out.className = "small dim"; out.style.marginTop = "10px";
+  const go = document.createElement("div");
+  go.style.marginTop = "28px";
+  go.innerHTML = `<button class="primary">Fit this sound</button>
+    <div class="tiny dim" style="margin-top:10px">About forty minutes. You can close this tab and come back.</div>`;
+  go.querySelector("button").onclick = () => { S.started = true; render(); };
+  w.append(go);
+}
+
+/* ---------------------------------------------------------------- Variant B */
+function VariantB(stage) {
+  const w = wrap(1020); stage.append(w);
+  w.innerHTML = `<h1 style="font-size:20px;margin:0 0 24px">New patch</h1>`;
+  const cols = document.createElement("div");
+  cols.style.cssText = "display:grid;grid-template-columns:1fr 320px;gap:28px;align-items:start";
+  w.append(cols);
+  const left = document.createElement("div"), right = document.createElement("div");
+  cols.append(left, right);
+
+  if (!S.file) {
+    left.append(dropzone(f => { S.file = f; render(); }, "Drop an audio file, or pick one"));
+  } else {
+    left.innerHTML = `<div class="small dim" style="margin-bottom:10px">${S.file.name} &middot; ${CLIP.dur}s &middot; 48 kHz stereo</div>`;
+    const stats = document.createElement("div");
+    stats.className = "small"; stats.style.marginTop = "14px";
+    const upd = () => {
+      const c = coverage();
+      stats.innerHTML = `
+        <div style="display:flex;gap:26px">
+          <div><div class="tiny dim">selection</div><div>${secs()} s</div></div>
+          <div><div class="tiny dim">pitch coverage</div><div>${c.label}</div></div>
+          <div><div class="tiny dim">content</div><div>polyphonic, 3 to 4 voices</div></div>
+        </div>
+        <p class="tiny dim" style="margin:14px 0 0;max-width:52ch">Wider pitch coverage gives a
+        patch that holds up across more of the keyboard. A single held note is accepted, and
+        produces a patch that is right at that pitch and guesswork away from it.</p>`;
+    };
+    left.append(waveform({ onchange: upd }), stats); upd();
+  }
+
+  right.style.cssText = "background:var(--panel);border-radius:8px;padding:18px";
+  if (S.started) {
+    right.innerHTML = `<div class="small" style="font-weight:600;margin-bottom:12px">Running</div>
+      <ol class="small" style="margin:0;padding-left:18px;line-height:2">
+        <li>Finding the notes <span class="dim">~3 min, running</span></li>
+        <li>You confirm the notes <span class="dim">waiting</span></li>
+        <li>Fitting the patch <span class="dim">~40 min, started</span></li>
+      </ol>
+      <p class="tiny dim" style="margin-top:14px">You can close this tab.</p>
+      <button class="primary" style="margin-top:12px;width:100%">Go to the keyboard</button>`;
+  } else {
+    right.innerHTML = `<div class="small" style="font-weight:600;margin-bottom:12px">What happens next</div>
+      <ol class="small" style="margin:0;padding-left:18px;line-height:2">
+        <li>Finding the notes <span class="dim">~3 min</span></li>
+        <li>You confirm the notes <span class="dim">a few seconds</span></li>
+        <li>Fitting the patch <span class="dim">~40 min</span></li>
+      </ol>
+      <p class="tiny dim" style="margin-top:14px">A placeholder instrument is playable
+      immediately. It is not your sound.</p>
+      <button class="primary" style="margin-top:14px;width:100%" ${S.file?"":"disabled"}>Start</button>`;
+    const b = right.querySelector("button");
+    if (S.file) b.onclick = () => { S.started = true; render(); };
+  }
+}
+
+/* ---------------------------------------------------------------- Variant D */
+const PHASES = [
+  { t:"Choose a sound",     sub:"" },
+  { t:"Choose the part",    sub:"" },
+  { t:"Start",              sub:"" },
+  { t:"Finding the notes",  sub:"about 3 minutes" },
+  { t:"Check the notes",    sub:"a few seconds, yours to answer" },
+  { t:"Fitting the patch",  sub:"about 40 minutes" },
+  { t:"Play it",            sub:"" }
+];
+function VariantD(stage) {
+  const w = document.createElement("div");
+  w.style.cssText = "max-width:940px;margin:0 auto;padding:56px 24px 120px;display:grid;grid-template-columns:250px 1fr;gap:52px;align-items:start";
+  stage.append(w);
+
+  const cur = S.started ? (S.phase || 4) : S.step;
+  const rail = document.createElement("ol");
+  rail.style.cssText = "list-style:none;margin:0;padding:0;border-left:1px solid var(--line)";
+  PHASES.forEach((p,i) => {
+    const n = i + 1, state = n < cur ? "done" : n === cur ? "now" : "todo";
+    const li = document.createElement("li");
+    li.style.cssText = "position:relative;padding:0 0 22px 20px;margin-left:-1px;" +
+      (state === "now" ? "border-left:2px solid var(--ink);" : "border-left:2px solid transparent;");
+    li.innerHTML = `
+      <div style="font-size:14px;color:${state==="todo"?"var(--dim)":"var(--ink)"};
+                  font-weight:${state==="now"?600:400}">${state==="done"?"&#10003; ":""}${p.t}</div>
+      ${p.sub ? `<div class="tiny dim" style="margin-top:2px">${p.sub}</div>` : ""}`;
+    rail.append(li);
+  });
+  const col = document.createElement("div"); w.append(rail, col);
+
+  if (cur === 1) {
+    col.innerHTML = `<h1 style="font-size:28px;margin:0 0 26px;font-weight:500">What sound do you want to play?</h1>`;
+    col.append(dropzone(f => { S.file = f; S.step = 2; render(); }, "Drop a few seconds of audio"));
+  } else if (cur === 2) {
+    col.innerHTML = `<h1 style="font-size:28px;margin:0 0 8px;font-weight:500">Which part of it?</h1>
+      <p class="dim small" style="margin:0 0 22px">A stretch where the pitch moves works best.
+      A single held note is fine, it just tells us less.</p>`;
+    const cap = document.createElement("div"); cap.className = "small dim"; cap.style.marginTop = "10px";
+    col.append(waveform({ onchange: () => cap.textContent = secs() + " seconds" }), cap);
+    const n = document.createElement("button");
+    n.className = "primary"; n.textContent = "Next"; n.style.marginTop = "26px";
+    n.onclick = () => { S.step = 3; render(); };
+    col.append(n);
+  } else if (cur === 3) {
+    col.innerHTML = `<h1 style="font-size:28px;margin:0 0 8px;font-weight:500">Ready.</h1>
+      <p class="dim" style="margin:0 0 6px">You do not have to wait around. Close the tab, come back
+      later, the sound will be here.</p>
+      <p class="dim" style="margin:0 0 30px">If you stay, there is a placeholder instrument to play
+      straight away. It is not your sound, it is something to put your hands on.</p>
+      <button class="primary">Start</button>
+      <div style="margin-top:14px"><button class="ghost small">Back</button></div>`;
+    col.querySelector(".primary").onclick = () => { S.started = true; S.phase = 4; render(); };
+    col.querySelector(".ghost").onclick = () => { S.step = 2; render(); };
+  } else {
+    const copy = {
+      4: ["Finding the notes.", "Nothing for you to do. The placeholder is already playable."],
+      5: ["Are these the right notes?", "Your clip and a plain tone, played together. Wrong notes will clash."],
+      6: ["Fitting the patch.", "About forty minutes. Close the tab if you like."],
+      7: ["Your sound is ready.", "It swapped in under your hands."]
+    }[cur];
+    col.innerHTML = `<h1 style="font-size:28px;margin:0 0 8px;font-weight:500">${copy[0]}</h1>
+      <p class="dim" style="margin:0 0 26px">${copy[1]}</p>
+      <button class="primary">${cur === 7 ? "Play" : "Simulate: next phase"}</button>`;
+    col.querySelector("button").onclick = () => { S.phase = Math.min(7, cur + 1); render(); };
+  }
+}
+
+/* ---------------------------------------------------------------- Variant C */
+function VariantC(stage) {
+  const w = wrap(620); stage.append(w);
+  const step = S.started ? 4 : S.step;
+  w.innerHTML = `<div class="tiny dim" style="letter-spacing:.08em;margin-bottom:34px">
+    ${step > 3 ? "" : "STEP " + step + " OF 3"}</div>`;
+  const body = document.createElement("div"); w.append(body);
+
+  if (step === 1) {
+    body.innerHTML = `<h1 style="font-size:28px;margin:0 0 26px;font-weight:500">What sound do you want to play?</h1>`;
+    body.append(dropzone(f => { S.file = f; S.step = 2; render(); }, "Drop a few seconds of audio"));
+  } else if (step === 2) {
+    body.innerHTML = `<h1 style="font-size:28px;margin:0 0 8px;font-weight:500">Which part of it?</h1>
+      <p class="dim small" style="margin:0 0 22px">A stretch where the pitch moves works best.
+      A single held note is fine, it just tells us less.</p>`;
+    const cap = document.createElement("div"); cap.className = "small dim"; cap.style.marginTop = "10px";
+    body.append(waveform({ onchange: () => cap.textContent = secs() + " seconds" }), cap);
+    const n = document.createElement("button");
+    n.className = "primary"; n.textContent = "Next"; n.style.marginTop = "26px";
+    n.onclick = () => { S.step = 3; render(); };
+    body.append(n);
+  } else if (step === 3) {
+    body.innerHTML = `<h1 style="font-size:28px;margin:0 0 8px;font-weight:500">This takes about forty minutes.</h1>
+      <p class="dim" style="margin:0 0 6px">You do not have to wait. Close the tab, come back later,
+      the sound will be here.</p>
+      <p class="dim" style="margin:0 0 30px">If you stay, there is a placeholder instrument to play
+      straight away. It is not your sound, it is something to put your hands on.</p>
+      <button class="primary">Start</button>
+      <div style="margin-top:14px"><button class="ghost small">Back</button></div>`;
+    body.querySelector(".primary").onclick = () => { S.started = true; render(); };
+    body.querySelector(".ghost").onclick = () => { S.step = 2; render(); };
+  } else {
+    body.innerHTML = `<h1 style="font-size:28px;margin:0 0 10px;font-weight:500">Working on it.</h1>
+      <p class="dim">We will find the notes first, then ask you to check them.</p>
+      <button class="primary" style="margin-top:22px">Play the placeholder</button>`;
+  }
+}
+
+function render() {
+  const stage = document.getElementById("stage");
+  stage.innerHTML = "";
+  ({ A:VariantA, B:VariantB, C:VariantC, D:VariantD })[v](stage);
+  document.getElementById("barlabel").textContent = v + " — " + VARIANTS[v];
+}
+render();
+addEventListener("resize", render);
+</script>

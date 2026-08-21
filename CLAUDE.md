@@ -40,6 +40,8 @@ Use the uv project workflow (`uv add`). Never `uv pip install` into a bare venv.
 | `scripts/diagnose.py` | measures the fit never optimised, including stereo structure |
 | `scripts/chord.py` | single-window bench for quick diagnosis |
 | `scripts/metrics.py` | shared metrics; reuse these rather than writing new ones |
+| `scripts/bend2.py` | the measured pitch-bend lane. Stage-1 output, consumed as an input |
+| `scripts/faust_probe.py` | renders isolated Faust sub-chains. Still the way to hear one stage alone |
 
 Current state lives in `out/patch.json` and `out/render.wav`.
 
@@ -92,7 +94,8 @@ them; several here are more valuable than the wins.
 
 ## What is superseded
 
-58 scripts, of which about a dozen are load-bearing (see the table above). The rest is
+58 scripts, of which ten are load-bearing. **The table above lists all ten**; everything
+below this line is dead, so a file named here and not there is safe to ignore. The rest is
 stage-1 work that is now frozen, or experiments that were measured and abandoned. Do not
 read them for guidance on current approach; they are kept because a measured negative
 result is worth more than an untested suggestion, and each one closes a door someone
@@ -103,7 +106,8 @@ would otherwise reopen.
   `final_transcription.py`, `segment.py`, `chords_nnls.py`, `octave_check.py`,
   `try_db_major.py`, `velocity_balance.py`, `detune_vs_vibrato.py`, `intro_glide.py`,
   `late_bend.py`, `bend.py`, `analyze.py`. Output is `out/transcription.mid` plus
-  `bend2.bend_curve`. `bend2.py` is live; `bend.py` is its predecessor.
+  `bend2.bend_curve`. `bend.py` is the predecessor of `bend2.py`, which is live and in
+  the table above.
 - **Differentiable surrogate, abandoned.** `torch_*.py` (7 files), `verify_env.py`,
   `verify_filter.py`, `verify_fx.py`, `verify_osc.py`, `verify_torch_synth.py`,
   `audit_gradients.py`, `audit_fidelity.py`. A full PyTorch port of the synth, accurate
@@ -121,4 +125,3 @@ would otherwise reopen.
 - **Probes and one-offs.** `drive_probe.py`, `spread_scan.py`, `defect_check.py`,
   `quality_test.py`, `compare.py`, `make_report.py`, `write_final.py`,
   `promote_patch.py`, `verify_new_stages.py`, `verify_timbre_stages.py`.
-  `faust_probe.py` is still useful: it renders isolated Faust sub-chains.
