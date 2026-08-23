@@ -29,3 +29,13 @@ out/*.png
 #   patch.json  the incumbent, loss 1.544635, and the default --patch everywhere
 out/*
 !out/patch.json
+
+# Spike renders and generated pages. Both are reproducible: measure.py and
+# faust_render.py regenerate the wavs, and build_page.py rebuilds a page from its .dsp
+# plus `npm install`. The probe page is hand-written, so it stays.
+spikes/out/*.wav
+spikes/web/*.html
+!spikes/web/index.html
+
+# Node is only here for faustwasm, which is 28 MB of libfaust.
+node_modules/

@@ -1,0 +1,98 @@
+=== warm-pad.dsp
+0 fail, 1 warn
+
+  warn  tail is inert on the pad pattern but moves the release tail by 23.4 dB, so the audition pattern does not exercise it
+
+  macro            level   shape   width  centroid  peak lo  peak hi
+  brightness        6.1d   26.4d    0.0d      2.57x    0.343    0.670
+  detune            2.5d    1.0d    0.2d      0.97x    0.769    0.664
+  swell             0.8d    2.1d    0.1d      1.09x    0.692    0.714
+  tail              0.3d    0.5d    0.1d      1.05x    0.683    0.639
+  space             2.6d    1.3d    3.7d      1.01x    0.708    0.714
+  width             1.6d    0.7d    4.8d      1.00x    0.537    0.806
+
+  voices    +12.04 dB for 4x unison at MIDI 62: bit-identical voices
+  register  36:-22dB/73Hz  48:-27dB/139Hz  60:-28dB/289Hz  72:-28dB/520Hz  84:-28dB/883Hz
+  release   tail is -130 dB below peak at 6 s
+  note      centroid 283 -> 264 Hz, 50% of that travel by 0.232 s, 90% by 0.255 s
+
+=== fm-bass.dsp
+1 fail, 3 warn
+
+  FAIL  width peaks 1.277 at width=1 (max of its declared range)
+  warn  body moves level more than shape (10.6 dB against 6.2 dB); correct for an envelope-length control, a defect for a timbre control
+  warn  decay moves level more than shape (6.7 dB against 4.2 dB); correct for an envelope-length control, a defect for a timbre control
+  warn  drive moves level more than shape (10.6 dB against 2.9 dB); correct for an envelope-length control, a defect for a timbre control
+
+  macro            level   shape   width  centroid  peak lo  peak hi
+  bite              0.3d    1.5d    0.0d      1.32x    0.824    0.766
+  body             10.6d    6.2d    8.2d      0.21x    0.777    0.815
+  brightness        2.3d   12.1d    4.7d      4.95x    0.607    0.786
+  decay             6.7d    4.2d    5.1d      1.25x    0.704    0.842
+  drive            10.6d    2.9d    4.1d      0.58x    0.610    0.895
+  snap              1.2d    6.2d    3.7d      4.54x    0.800    0.710
+  width             0.0d    0.1d   70.8d      1.00x    0.547    1.277
+
+  voices    +12.04 dB for 4x unison at MIDI 37: bit-identical voices
+  register  36:-20dB/198Hz  48:-20dB/353Hz  60:-21dB/640Hz  72:-21dB/1106Hz  84:-21dB/1878Hz
+  release   tail is -237 dB below peak at 6 s
+  note      centroid 1644 -> 81 Hz, 50% of that travel by 0.012 s, 90% by 0.046 s
+
+=== bell-lead.dsp
+1 fail, 1 warn
+
+  FAIL  decay peaks 1.116 at decay=14 (max of its declared range)
+  warn  decay moves level more than shape (15.5 dB against 8.4 dB); correct for an envelope-length control, a defect for a timbre control
+
+  macro            level   shape   width  centroid  peak lo  peak hi
+  attack            0.4d    7.5d    0.2d      1.00x    0.721    0.594
+  brightness        0.7d    8.7d    3.0d      1.21x    0.606    0.881
+  decay            15.5d    8.4d    1.8d      0.98x    0.491    1.116
+  shimmer           0.5d    1.4d    0.0d      1.00x    0.619    0.786
+  sparkle           0.0d   10.3d    0.1d      1.00x    0.701    0.712
+  width             0.0d    7.4d    3.0d      0.98x    0.752    0.707
+  space             3.6d    0.6d   17.1d      0.97x    0.806    0.706
+
+  voices    +12.04 dB for 4x unison at MIDI 74: bit-identical voices
+  register  36:-23dB/78Hz  48:-20dB/147Hz  60:-19dB/282Hz  72:-20dB/558Hz  84:-20dB/1101Hz
+  release   tail is -144 dB below peak at 6 s
+  note      centroid 617 -> 588 Hz, 50% of that travel by 1.892 s, 90% by 2.078 s
+
+=== breathy-texture.dsp
+0 fail, 1 warn
+
+  warn  air moves level more than shape (8.0 dB against 5.3 dB); correct for an envelope-length control, a defect for a timbre control
+
+  macro            level   shape   width  centroid  peak lo  peak hi
+  air               8.0d    5.3d    0.2d      2.95x    0.797    0.647
+  bloom             1.8d    0.2d    0.0d      0.97x    0.734    0.693
+  brightness        0.3d    4.3d    0.0d      2.77x    0.715    0.721
+  fade              1.7d    0.4d    0.0d      1.06x    0.714    0.752
+  movement          0.2d    1.6d    0.3d      1.47x    0.711    0.726
+  space             1.6d    1.4d    2.4d      0.86x    0.724    0.718
+  width             1.1d    0.7d   16.4d      1.03x    0.634    0.785
+
+  voices    +10.72 dB for 4x unison at MIDI 62: bit-identical voices
+  register  36:-32dB/399Hz  48:-28dB/466Hz  60:-27dB/651Hz  72:-29dB/1844Hz  84:-26dB/2362Hz
+  release   tail is -91 dB below peak at 6 s
+  note      centroid 900 -> 1476 Hz, 50% of that travel by 0.244 s, 90% by 0.557 s
+
+=== acid-lead.dsp
+0 fail, 1 warn
+
+  warn  drive moves level more than shape (10.9 dB against 4.5 dB); correct for an envelope-length control, a defect for a timbre control
+
+  macro            level   shape   width  centroid  peak lo  peak hi
+  accent            0.0d    1.8d    0.0d      0.96x    0.569    0.568
+  brightness        3.5d    2.5d    1.7d      1.61x    0.586    0.565
+  decay             1.1d    3.5d    0.3d      1.41x    0.535    0.556
+  drive            10.9d    4.5d    0.1d      0.48x    0.489    0.579
+  movement          0.4d    7.4d    0.2d      1.12x    0.586    0.567
+  squelch           1.2d    2.2d    1.3d      1.32x    0.532    0.572
+  width             1.3d    0.1d   14.8d      1.02x    0.504    0.668
+
+  voices    +12.04 dB for 4x unison at MIDI 37: bit-identical voices
+  register  36:-15dB/188Hz  48:-15dB/283Hz  60:-16dB/299Hz  72:-16dB/564Hz  84:-24dB/1146Hz
+  release   tail is -234 dB below peak at 6 s
+  note      centroid 229 -> 235 Hz, 50% of that travel by 0.012 s, 90% by 0.012 s
+

@@ -1,0 +1,8 @@
+{
+  "name": "ai-synth-build",
+  "private": true,
+  "description": "Faust to WebAssembly build step for spikes/build_page.py. Node only; the rest of the project is Python under uv.",
+  "devDependencies": {
+    "@grame/faustwasm": "0.16.7"
+  }
+}
