@@ -7,7 +7,7 @@ assets by relative URL, which is exactly what cannot work here, so this bypasses
 hands `FaustPolyDspGenerator.createNode` already-compiled modules instead.
 
 Usage:
-    uv run python spikes/build_page.py spikes/dsp/warm-pad.dsp spikes/web/warm-pad.html
+    uv run python <skill>/scripts/build_page.py patch.dsp out/patch.html "Display Name"
 """
 
 from __future__ import annotations
@@ -21,14 +21,28 @@ import sys
 import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-TEMPLATE = os.path.join(HERE, "page_template.html")
-# faustwasm ships libfaust compiled to wasm, so the build needs node but NOT the native
-# faust CLI. Installed by `npm install` at the repo root; see package.json.
-REPO = os.path.dirname(HERE)
-FAUST2WASM = os.environ.get(
-    "FAUST2WASM",
-    os.path.join(REPO, "node_modules", "@grame", "faustwasm", "scripts", "faust2wasm.js"),
-)
+TEMPLATE = os.path.join(os.path.dirname(HERE), "assets", "page_template.html")
+REL = os.path.join("node_modules", "@grame", "faustwasm", "scripts", "faust2wasm.js")
+
+
+def find_faust2wasm() -> str:
+    """Locate faust2wasm.js, which ships libfaust compiled to wasm.
+
+    The build therefore needs node but NOT the native faust CLI. Searched from the
+    working directory upward so the skill works in any project that has run
+    `npm install @grame/faustwasm`, rather than only in the one it was written in.
+    """
+    if os.environ.get("FAUST2WASM"):
+        return os.environ["FAUST2WASM"]
+    d = os.path.abspath(os.getcwd())
+    while True:
+        cand = os.path.join(d, REL)
+        if os.path.exists(cand):
+            return cand
+        parent = os.path.dirname(d)
+        if parent == d:
+            return os.path.join(os.getcwd(), REL)  # reported in the error below
+        d = parent
 
 BLURB = ("Faust compiled to WebAssembly, running in an AudioWorklet. "
          "Everything is inside this one file: no network, no server. "
@@ -36,11 +50,13 @@ BLURB = ("Faust compiled to WebAssembly, running in an AudioWorklet. "
 
 
 def compile_dsp(dsp_path: str, out_dir: str) -> None:
-    if not os.path.exists(FAUST2WASM):
+    faust2wasm = find_faust2wasm()
+    if not os.path.exists(faust2wasm):
         raise RuntimeError(
-            f"faust2wasm not found at {FAUST2WASM}. Run `npm install` at the repo root.")
+            "faust2wasm not found. Run `npm install @grame/faustwasm` in the project "
+            f"root, or set FAUST2WASM. Looked for {faust2wasm}")
     r = subprocess.run(
-        ["node", FAUST2WASM, dsp_path, out_dir, "-poly", "-standalone"],
+        ["node", faust2wasm, dsp_path, out_dir, "-poly", "-standalone"],
         capture_output=True, text=True,
     )
     if r.returncode != 0:

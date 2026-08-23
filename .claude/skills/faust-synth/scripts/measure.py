@@ -17,7 +17,7 @@ read: whether 6 dB of level change on `brightness` is a defect depends on what t
 was meant to do. Only checks that are wrong under ANY intent are raised as failures.
 
 Usage:
-    uv run python spikes/measure.py spikes/dsp/acid-lead.dsp bass
+    uv run python <skill>/scripts/measure.py patch.dsp bass
 """
 
 from __future__ import annotations
