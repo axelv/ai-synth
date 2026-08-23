@@ -2,33 +2,73 @@
 
 ## What this is
 
-Reverse-engineering a **playable synth patch** from a recording. Input is 18 seconds of
-a synth pad (`data/original.wav`); output is a note list plus a parameter vector that,
-rendered through a synth, reproduces it.
+Two tracks under one rule.
 
-The deliverable is the patch, not the audio. Anything that matches the waveform but does
-not correspond to controls a person could dial in is off-topic. That rules out learned
-vocoders, direct spectrogram optimisation, and sample-level tricks, and it is why Faust
-through dawdreamer stays the authoritative renderer: whatever is fitted has to be
-something a synth can actually do.
+**The rule, which governs both: the deliverable is the patch, not the audio.** Anything
+that matches a waveform but does not correspond to controls a person could dial in is
+off-topic. That rules out learned vocoders, direct spectrogram optimisation, and
+sample-level tricks, and it is why Faust stays the authoritative renderer on both
+tracks: whatever is built has to be something a synth can actually do.
 
-Two stages, in dependency order:
+### Track A, building patches. Active.
+
+A description of a sound goes in, a Faust patch that plays in a browser comes out,
+checked by measurement rather than by ear. The skill lives in
+`.claude/skills/faust-synth/` and owns its scripts; reach for those when the task is
+building an instrument.
+
+This is the half of `VISION.md` that was known-buildable. It exists because the full
+app, matching a patch to a clip automatically, was judged too long a shot to attempt
+first, and because the playable half is a prerequisite for it anyway. Nothing here is
+throwaway if track B resumes.
+
+### Track B, fitting a patch to a recording. Paused.
+
+Reverse-engineering a patch from 18 seconds of a synth pad (`data/original.wav`) into a
+note list plus a parameter vector. Two stages, in dependency order:
 
 1. **Stage 1, transcription.** Notes and a measured pitch-bend curve. **Frozen.** Treat
    `data/transcription.mid` and `bend2.bend_curve` as inputs, not parameters. Re-opening
    this is a separate project and it confounds any judgement of stage 2.
 2. **Stage 2, patch fitting.** Synth parameters against a multi-resolution STFT loss.
-   This is where the work happens.
+   **Paused, not abandoned**, at loss 1.544635 with `out/patch.json` as the incumbent.
+
+Paused means the code still runs, every finding below still holds, and none of it is
+retracted. It is not the place to start work without being asked to. Do not delete or
+"tidy" stage-2 code on the assumption it is dead.
 
 ## Running things
 
-Always from the repo root, always through uv:
+Always from the repo root, always through uv. Use the uv project workflow (`uv add`),
+never `uv pip install` into a bare venv. Node is here only for `@grame/faustwasm`, which
+ships libfaust as wasm; `npm install` at the root, and the native `faust` binary is not
+required for anything currently in the repo.
+
+### Track A
+
+```
+uv run python .claude/skills/faust-synth/scripts/<script>.py
+```
+
+Paths below are relative to `.claude/skills/faust-synth/`, except where they start with
+`spikes/`. **Track A never uses the repo-root `scripts/`, which belongs to track B.**
+
+| file | role |
+|---|---|
+| `SKILL.md` | the workflow. Read it before touching the rest |
+| `scripts/faust_render.py` | offline audition renderer, `Instrument`, the four patterns |
+| `scripts/measure.py` | the verification pass. Macro sweeps, voice coherence, register |
+| `scripts/build_page.py` | one `.dsp` to one self-contained playable page |
+| `references/faust-poly.md` | poly conventions and the failures that are silent |
+| `references/patch-design.md` | what makes a macro a macro; ranges and defaults |
+| `spikes/dsp/*.dsp` | five measured patches. The regression set for any skill change |
+| `spikes/out/measure-report.txt` | their measurements, and the evidence behind the rules |
+
+### Track B
 
 ```
 PYTHONPATH=scripts uv run python scripts/<script>.py
 ```
-
-Use the uv project workflow (`uv add`). Never `uv pip install` into a bare venv.
 
 | file | role |
 |---|---|
@@ -60,6 +100,18 @@ Current state lives in `out/patch.json` and `out/render.wav`.
 - **`dawdreamer.set_automation` needs the full Faust path**, not the slider label.
 - Faust oscillators are free-running, so splitting notes across processor instances
   changes voice allocation and therefore phase. Compare **spectra, not waveforms**.
+- **A DSP with no `effect` still returns `True` from `set_dsp_string`**, logging only
+  `ERROR : undefined symbol : effect` to stderr, and the parameter path changes shape.
+  `declare name` changes it independently: with both, `/Sequencer/DSP1/Polyphonic/
+  Voices/<name>/x`; without `effect`, `/Polyphonic/Voices/<name>/x`; without the name,
+  `.../Voices/dawdreamer/x`. Declare both, always, and address parameters by **label**.
+- **Faust poly voices are bit-identical.** Every voice is a copy of `process` with the
+  same initial state, so `no.noise` and free-running `os.osc` produce the same samples
+  in every simultaneously gated voice: 4 voices measure +12.04 dB over 1, not +6.02, and
+  the 4-voice render equals 4x the 1-voice render sample for sample. Unison detune
+  inside one voice still works; two voices on one note phase-add instead of beating, so
+  there is no chorusing and no decorrelation. Derive anything that must vary per voice
+  from `freq`, the only thing that differs between them.
 
 ## Settled by measurement; do not re-litigate
 
@@ -84,7 +136,30 @@ Current state lives in `out/patch.json` and `out/render.wav`.
   control before reading a value as good or bad.
 - **`stage2.Objective.loss_of` is mono** and cannot see stereo width at all. Stereo
   scoring is opt-in via `loss_parts`, which reports the mono term alongside so historical
-  numbers stay comparable.
+  numbers stay comparable. `measure.py` rediscovered the same blindness from scratch and
+  reported a working mid/side widener as a dead macro. Any new metric here needs a
+  stereo term stated explicitly or it will make the same mistake a third time.
+- **Writing Faust is not the constraint; verifying it is.** Five patches written one-shot
+  from plain-language descriptions, with no reference material, produced 5 of 5 compiling
+  and exactly one compile error across ten render invocations. The defects were all
+  silent: macros clipping at extremes nobody had turned them to, controls that moved
+  loudness rather than timbre, voices that never decorrelated. Spend effort on
+  measurement, not on a Faust API reference.
+- **Separate a macro's effect on level from its effect on level-normalised spectral
+  shape.** It is the one check that does not need to know what the macro was for: large
+  level with near-zero shape is a volume knob whatever the label says. It is also where
+  ears are weakest, since louder reads as better. Envelope-length macros are the
+  exception and legitimately change level.
+- **Artifacts run wasm and AudioWorklets but not Web MIDI.** Measured in the published
+  sandbox: WebAssembly compiles, `addModule` from a blob URL works, a `WebAssembly.Module`
+  survives `postMessage` into the worklet, `baseLatency` 5.33 ms at 48 kHz. Web MIDI
+  throws `SecurityError` from a permissions policy set by the embedding document, which
+  no user action fixes. One generated page therefore serves both roles: published for
+  sharing with an on-screen keyboard, served locally for a hardware keyboard.
+- **A self-contained Faust instrument is small.** DSP wasm 12.4 KiB, effect 22.6 KiB, the
+  `@grame/faustwasm` runtime-only bundle 190.6 KiB, whole page 268 KiB against a 16 MB
+  cap. The 5.4 MB libfaust compiler never ships because the DSP is precompiled. Do not
+  design around a size budget that is not binding.
 
 ## Style
 
@@ -94,12 +169,16 @@ them; several here are more valuable than the wins.
 
 ## What is superseded
 
-58 scripts, of which ten are load-bearing. **The table above lists all ten**; everything
-below this line is dead, so a file named here and not there is safe to ignore. The rest is
-stage-1 work that is now frozen, or experiments that were measured and abandoned. Do not
-read them for guidance on current approach; they are kept because a measured negative
-result is worth more than an untested suggestion, and each one closes a door someone
-would otherwise reopen.
+`scripts/` holds 58 files, of which ten are load-bearing. **The track B table above lists
+all ten**; everything below this line is dead, so a file in `scripts/` named here and not
+there is safe to ignore. The rest is stage-1 work that is now frozen, or experiments that
+were measured and abandoned. Do not read them for guidance on current approach; they are
+kept because a measured negative result is worth more than an untested suggestion, and
+each one closes a door someone would otherwise reopen.
+
+None of this list is superseded by track A. The two tracks share the rule at the top of
+this file and nothing else: track A builds a patch from a description, track B fits one
+to a recording, and no result from either transfers to the other untested.
 
 - **Stage 1, frozen.** `transcribe.py`, `pitch_track.py`, `pitch_probe.py`,
   `build_midi.py`, `refine_midi.py`, `refine2.py`, `polish_midi.py`, `finalize_midi.py`,
