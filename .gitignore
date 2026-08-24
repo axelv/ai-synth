@@ -20,6 +20,9 @@ out/*.png
 .claude/worktrees/
 # Per-machine: records which output style one person selected, not a project decision.
 .claude/settings.local.json
+# Also per-machine: which dev server someone runs and on what port. SKILL.md gives the
+# one-line http.server command, so nothing depends on this existing.
+.claude/launch.json
 .DS_Store
 
 # out/ is where every experiment writes, and the debris of runs whose conclusions are
