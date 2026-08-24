@@ -41,6 +41,18 @@ their defaults.
 
 ### 2. Write the patch
 
+`references/examples/` holds five complete working instruments, one per architecture
+family, with `measured.md` naming what each one gets right and what it gets wrong. Read
+the one whose family matches the target sound.
+
+Read one **especially** for FM, noise-sourced texture, and per-note filter sweeps. In
+those three the mapping from parameters to timbre is emergent rather than specified, and
+they are where writing blind goes wrong. Subtractive and additive are predictable enough
+to write directly.
+
+Every listed defect in those files is deliberate, so they double as the harness's
+regression set. Do not copy a patch without reading its defects first.
+
 Write to a `.dsp` file. Expose 4 to 7 macros named for what a musician would call them,
 with defaults set so the patch sounds right untouched.
 
