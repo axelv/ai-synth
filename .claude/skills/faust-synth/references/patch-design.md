@@ -101,7 +101,7 @@ on it.
 between 0.45 and 0.62, which is a vector of shrugs rather than a chosen sound. Asymmetric
 ranges with an off-centre default read as decided: `snap` at 0.07 within 0.01 to 0.40.
 
-**Target peak -6 to -1 dBFS on the audition pattern**, at the polyphony the pattern uses.
+**Target peak -6 to -1 dBFS on the measurement pattern**, at the polyphony it uses.
 Set the master level as a final measured step rather than guessing a constant. Three of
 ten render invocations in the measured batch were spent purely trimming master gain.
 

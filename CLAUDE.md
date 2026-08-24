@@ -56,7 +56,7 @@ repo-root `scripts/`, which belongs to track B.**
 | file | role |
 |---|---|
 | `SKILL.md` | the workflow. Read it before touching the rest |
-| `scripts/faust_render.py` | offline audition renderer, `Instrument`, the four patterns |
+| `scripts/faust_render.py` | offline renderer and the four patterns. `Instrument` backs measure.py |
 | `scripts/measure.py` | the verification pass. Macro sweeps, voice coherence, register |
 | `scripts/build_page.py` | one `.dsp` to one self-contained playable page |
 | `references/faust-poly.md` | poly conventions and the failures that are silent |

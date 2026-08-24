@@ -34,7 +34,7 @@ node. Install it only if the user wants VST or AU output later.
 Read `references/faust-poly.md` first, every time. It carries the polyphonic skeleton and
 three things that fail silently rather than erroring: the two declarations that change
 the parameter path, the fact that every voice is a bit-identical copy, and how to make
-a patch work outside the register it was auditioned in.
+a patch work outside the register it gets measured in.
 
 Read `references/patch-design.md` when choosing which macros to expose, their ranges, and
 their defaults.
@@ -59,14 +59,19 @@ with defaults set so the patch sounds right untouched.
 Do not pretend to iterate on timbre before rendering. Write one considered version, then
 measure it.
 
-### 3. Render an audition
+### 3. Measure
 
 ```bash
-uv run python $SK/scripts/faust_render.py patch.dsp out/patch.wav pad
+uv run python $SK/scripts/measure.py patch.dsp bass
 ```
 
-The last argument picks the audition pattern, which must suit the instrument. A bass
-judged on a held pad chord is being judged on material it was never written for.
+This compiles and renders internally, so it is also the check that the patch works at
+all. Fix every `FAIL` before going further. Read every `warn` against what the macro was
+meant to do; they are warnings precisely because they need that judgement.
+
+The last argument picks the pattern it measures on, which must suit the instrument. A
+bass measured on a held pad chord is being measured on material it was never written
+for, and the pattern bounds what can be seen at all.
 
 | pattern | material | exposes |
 |---|---|---|
@@ -75,30 +80,35 @@ judged on a held pad chord is being judged on material it was never written for.
 | `lead` | sustained melodic phrase plus a held tail | vibrato, legato |
 | `pluck` | fast repeats then a five-note chord | decay length, voice stealing |
 
-### 4. Measure
+### 4. Build the playable page
 
 ```bash
-uv run python $SK/scripts/measure.py patch.dsp bass
-```
-
-Fix every `FAIL` before going further. Read every `warn` against what the macro was
-meant to do; they are warnings precisely because they need that judgement.
-
-### 5. Build the playable page
-
-```bash
-uv run python $SK/scripts/build_page.py patch.dsp out/patch.html "Display Name"
+uv run python $SK/scripts/build_page.py patch.dsp patches/patch.html "Display Name"
 ```
 
 One self-contained HTML file: the Faust wasm, its metadata, the runtime, an on-screen
 keyboard, a QWERTY mapping, MIDI input, and a slider per macro generated from the DSP's
 own metadata. Typically under 300 KiB.
 
-### 6. Hand it over and listen
+### 5. Audition by playing it, not by rendering it
 
-Measurement cannot tell anyone whether the patch sounds like the description. Give the
-user the rendered wav and the page, and ask two questions per patch: is it recognisably
-the described sound, and does anything sound broken. Revise from their answer.
+**Build the page before auditioning. Do not judge a patch from a rendered wav.**
+
+Measured the hard way: five patches were judged from offline renders of a fixed pattern
+and three of the five were called wrong. The same five, played, were all fine. A canned
+pattern misrepresents an instrument, because it fixes the register, the velocities, the
+note lengths and the voice count at whatever one guess was baked into the pattern, and
+an instrument is the thing that has to hold up when none of those is fixed.
+
+So hand over the page and let a person play it. Ask two questions: is it recognisably the
+described sound, and does anything sound broken. Revise from that answer.
+
+Rendering a wav is still useful for sending someone a fixed example, and it is what
+`measure.py` does internally. It is not the audition.
+
+```bash
+uv run python $SK/scripts/faust_render.py patch.dsp patches/patch.wav pad
+```
 
 ## Reading the measurement report
 
@@ -134,7 +144,7 @@ The other lines:
 Both were found by it reporting a working control as broken. Do not trust a `does
 nothing` verdict without checking these:
 
-- **The audition pattern bounds what can be seen.** A release control is invisible on a
+- **The measurement pattern bounds what can be seen.** A release control is invisible on a
   pattern whose chords overlap. The harness retries a suspected-inert macro on an
   isolated note and says so, but any macro the pattern does not exercise is unmeasured.
 - **Everything except `width` folds to mono.** A correct mid/side widener leaves the mono
@@ -151,7 +161,7 @@ The generated page serves two roles from one file:
 - **Served locally**, where Web MIDI works and a hardware keyboard can play it.
 
 ```bash
-python -m http.server 8777 --directory out
+python -m http.server 8777 --directory patches
 ```
 
 The page degrades quietly, reporting which case it is in. Do not add a MIDI failure path

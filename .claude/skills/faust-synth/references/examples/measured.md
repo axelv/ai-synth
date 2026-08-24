@@ -42,7 +42,8 @@ warn  tail is inert on the pad pattern but moves the release tail by 23.4 dB
 
 Not a patch defect. `tail` works; the `pad` pattern holds chords with 0.2 s gaps so the
 release is always masked. This is the harness reporting its own coverage limit, and it is
-the reason the inert check retries on an isolated note.
+the reason the inert check retries on an isolated note. It is also why a patch is
+auditioned by playing it, never by listening to one of these renders.
 
 ### fm-bass.dsp — 1 fail, 3 warn
 

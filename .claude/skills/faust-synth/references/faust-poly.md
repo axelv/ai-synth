@@ -86,7 +86,7 @@ patch that claims drift, air, breath, or width is broken if it reads +12.
 
 ## Playing across the keyboard
 
-The audition pattern covers one register. The instrument has to work over five.
+The measurement pattern covers one register. The instrument has to work over five.
 
 **Keyboard tracking.** A filter at a fixed cutoff turns muddy low and thin high. Track it
 at partial strength so the top stays soft:

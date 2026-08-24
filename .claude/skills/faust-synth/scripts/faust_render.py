@@ -1,14 +1,20 @@
 """Render an arbitrary polyphonic Faust instrument to a wav, via dawdreamer.
 
-Spike 2 harness. `scripts/synth.py` can only render its own DSP: PadRenderer asserts
-that every name in PARAMS survived the compiler, and it owns the note list. This takes
-any source that follows the Faust poly convention (`process` is one voice reading
-freq/gain/gate, optional `effect` is the shared chain) and plays a fixed audition
-pattern through it, so five candidate patches are heard under identical conditions.
+Takes any source following the Faust poly convention (`process` is one voice reading
+freq/gain/gate, optional `effect` is the shared chain) and plays a fixed pattern through
+it. `measure.py` is built on this; `Instrument` is the part it uses, since a macro sweep
+is dozens of renders of one DSP and recompiling per render would dominate the time.
 
-Patterns are per-instrument-type on purpose. A bass patch auditioned on a four-note
-held pad chord is being judged on material it was never written for, which would
-measure the pattern rather than the patch.
+**This is not the audition.** A fixed pattern pins the register, the velocities, the note
+lengths and the voice count to one guess, and an instrument is precisely the thing that
+has to hold up when none of those is fixed. Measured: five patches judged from renders of
+these patterns had three called wrong, and the same five played were all fine. Build the
+page and play it. What renders here are inputs to measurement, plus the occasional fixed
+example worth sending someone.
+
+Patterns are per-instrument-type on purpose. A bass measured on a four-note held pad
+chord is being measured on material it was never written for, which measures the pattern
+rather than the patch.
 """
 
 from __future__ import annotations
