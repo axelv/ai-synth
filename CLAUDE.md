@@ -50,8 +50,8 @@ required for anything currently in the repo.
 uv run python .claude/skills/faust-synth/scripts/<script>.py
 ```
 
-Paths below are relative to `.claude/skills/faust-synth/`, except where they start with
-`spikes/`. **Track A never uses the repo-root `scripts/`, which belongs to track B.**
+Paths below are relative to `.claude/skills/faust-synth/`. **Track A never uses the
+repo-root `scripts/`, which belongs to track B.**
 
 | file | role |
 |---|---|
@@ -61,8 +61,6 @@ Paths below are relative to `.claude/skills/faust-synth/`, except where they sta
 | `scripts/build_page.py` | one `.dsp` to one self-contained playable page |
 | `references/faust-poly.md` | poly conventions and the failures that are silent |
 | `references/patch-design.md` | what makes a macro a macro; ranges and defaults |
-| `spikes/dsp/*.dsp` | five measured patches. The regression set for any skill change |
-| `spikes/out/measure-report.txt` | their measurements, and the evidence behind the rules |
 
 ### Track B
 
