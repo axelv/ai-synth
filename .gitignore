@@ -20,6 +20,9 @@ out/*.png
 .claude/worktrees/
 # Per-machine: records which output style one person selected, not a project decision.
 .claude/settings.local.json
+# Also per-machine: which dev server someone runs and on what port. SKILL.md gives the
+# one-line http.server command, so nothing depends on this existing.
+.claude/launch.json
 .DS_Store
 
 # out/ is where every experiment writes, and the debris of runs whose conclusions are
@@ -29,3 +32,10 @@ out/*.png
 #   patch.json  the incumbent, loss 1.544635, and the default --patch everywhere
 out/*
 !out/patch.json
+
+# Where build_page.py output goes. Generated: a page rebuilds from its .dsp plus
+# `npm install`, so nothing here is worth a place in history.
+patches/
+
+# Node is only here for faustwasm, which is 28 MB of libfaust.
+node_modules/
