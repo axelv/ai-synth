@@ -13,11 +13,11 @@ gate = button("gate");
 //======================================================================
 // Macros, per voice
 //======================================================================
-brightness = hslider("brightness", 0.44, 0, 1, 0.001) : si.smoo;
-resonance  = hslider("resonance", 0.20, 0, 1, 0.001) : si.smoo;
-sweep      = hslider("sweep", 0.42, 0, 1, 0.001) : si.smoo;
-tone       = hslider("tone", 0.62, 0, 1, 0.001) : si.smoo;
-swell      = hslider("swell", 0.26, 0, 1, 0.001);
+brightness = hslider("brightness[panel:VCF][idx:1]", 0.44, 0, 1, 0.001) : si.smoo;
+resonance  = hslider("resonance[panel:VCF][idx:2]", 0.20, 0, 1, 0.001) : si.smoo;
+sweep      = hslider("sweep[panel:VCF][idx:3]", 0.42, 0, 1, 0.001) : si.smoo;
+tone       = hslider("tone[panel:DCO][idx:1]", 0.62, 0, 1, 0.001) : si.smoo;
+swell      = hslider("swell[panel:ENV][idx:1]", 0.26, 0, 1, 0.001);
 
 //======================================================================
 // Voice
@@ -131,7 +131,7 @@ process = voice * amp <: _,_;
 //======================================================================
 // Off / I / II, as three positions rather than a continuous control, because that
 // is what the machine has: two buttons, and both up is off.
-chorus = hslider("chorus", 0.5, 0, 1, 0.5);
+chorus = hslider("chorus[panel:CHORUS][positions:OFF|I|II]", 0.5, 0, 1, 0.5);
 
 chOn = chorus > 0.25;
 fast = chorus > 0.75;

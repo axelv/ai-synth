@@ -8,20 +8,25 @@ hands `FaustPolyDspGenerator.createNode` already-compiled modules instead.
 
 Usage:
     uv run python <skill>/scripts/build_page.py patch.dsp out/patch.html "Display Name"
+    uv run python <skill>/scripts/build_page.py juno.dsp out/juno.html "Juno-106" --skin juno
 """
 
 from __future__ import annotations
 
+import argparse
 import base64
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-TEMPLATE = os.path.join(os.path.dirname(HERE), "assets", "page_template.html")
+ASSETS = os.path.join(os.path.dirname(HERE), "assets")
+TEMPLATE = os.path.join(ASSETS, "page_template.html")
+SKINS = os.path.join(ASSETS, "skins")
 REL = os.path.join("node_modules", "@grame", "faustwasm", "scripts", "faust2wasm.js")
 
 
@@ -49,6 +54,32 @@ BLURB = ("Faust compiled to WebAssembly, running in an AudioWorklet. "
          "Press start, then play the keys.")
 
 
+def load_skin(name: str) -> tuple[str, str]:
+    """Return a skin's (css, js).
+
+    A skin is one HTML fragment holding a <style> and a <script>. It is spliced into
+    the shared template rather than replacing it, so the keyboard, the MIDI handling
+    and the boot path exist in exactly one place however many skins there are. The JS
+    lands inside the page's module, which is what lets it assign to SKIN.
+    """
+    if name == "plain":
+        return "", ""
+    path = os.path.join(SKINS, name + ".html")
+    if not os.path.exists(path):
+        have = sorted(f[:-5] for f in os.listdir(SKINS) if f.endswith(".html"))
+        raise RuntimeError(f"no skin {name!r}. Available: plain, {', '.join(have)}")
+    with open(path) as fh:
+        frag = fh.read()
+
+    def block(tag: str) -> str:
+        m = re.search(rf"<{tag}[^>]*>(.*?)</{tag}>", frag, re.S)
+        if not m:
+            raise RuntimeError(f"skin {name!r} has no <{tag}> block")
+        return m.group(1)
+
+    return block("style"), block("script")
+
+
 def compile_dsp(dsp_path: str, out_dir: str) -> None:
     faust2wasm = find_faust2wasm()
     if not os.path.exists(faust2wasm):
@@ -64,11 +95,12 @@ def compile_dsp(dsp_path: str, out_dir: str) -> None:
 
 
 def build(dsp_path: str, out_path: str, voices: int = 16,
-          title: str | None = None) -> dict[str, int]:
+          title: str | None = None, skin: str = "plain") -> dict[str, int]:
     name = os.path.splitext(os.path.basename(dsp_path))[0]
     # The Faust name has to stay the slug (it keys the worklet processor registration);
     # only the heading and <title> get the readable form.
     display = title or name.replace("-", " ").title()
+    skin_css, skin_js = load_skin(skin)
     tmp = tempfile.mkdtemp(prefix="faustbuild-")
     try:
         compile_dsp(dsp_path, tmp)
@@ -100,12 +132,18 @@ def build(dsp_path: str, out_path: str, voices: int = 16,
 
         with open(TEMPLATE) as fh:
             html = fh.read()
+        # The skin goes in first: its CSS and JS are allowed to contain none of the
+        # other markers, and substituting it last would let a marker inside it expand.
         html = (html
+                .replace("__SKIN_CSS__", skin_css)
+                .replace("__SKIN_JS__", skin_js)
+                .replace("__SKIN__", skin)
                 .replace("__FAUSTWASM__", runtime)
                 .replace("__PAYLOAD__", json.dumps(payload))
                 .replace("__VOICES__", str(voices))
                 .replace("__TITLE__", display)
                 .replace("__EYEBROW__", "ai-synth")
+                .replace("__TAGLINE__", f"{voices}-voice polyphonic synthesizer")
                 .replace("__BLURB__", BLURB))
 
         os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
@@ -124,10 +162,18 @@ def build(dsp_path: str, out_path: str, voices: int = 16,
 
 
 if __name__ == "__main__":
-    stats = build(sys.argv[1], sys.argv[2],
-                  title=sys.argv[3] if len(sys.argv) > 3 else None)
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("dsp")
+    ap.add_argument("out")
+    ap.add_argument("title", nargs="?")
+    ap.add_argument("--voices", type=int, default=16)
+    ap.add_argument("--skin", default="plain",
+                    help="panel look: plain, or a name under assets/skins/")
+    a = ap.parse_args()
+
+    stats = build(a.dsp, a.out, voices=a.voices, title=a.title, skin=a.skin)
     total = stats["page"]
-    print(f"{sys.argv[2]}")
+    print(f"{a.out}  [skin: {a.skin}]")
     for k, v in stats.items():
         print(f"  {k:12} {v/1024:9.1f} KiB")
     print(f"  {'cap':12} {16*1024:9.1f} KiB  ({100*total/(16*1024*1024):.2f}% used)")

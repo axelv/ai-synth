@@ -45,6 +45,10 @@
     font-size: clamp(1.8rem, 5vw, 2.4rem); font-weight: 700;
     letter-spacing: -.02em; line-height: 1.1; margin: 0 0 .6rem; text-wrap: balance;
   }
+  .tagline {
+    font-family: var(--mono); font-size: .72rem; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 .6rem;
+  }
   .standfirst { margin: 0; color: var(--muted); max-width: 42rem; }
 
   .bar {
@@ -117,10 +121,13 @@
   }
 </style>
 
-<div class="wrap">
+<style>__SKIN_CSS__</style>
+
+<div class="wrap" data-skin="__SKIN__">
   <header>
     <p class="eyebrow">__EYEBROW__</p>
     <h1>__TITLE__</h1>
+    <p class="tagline">__TAGLINE__</p>
     <p class="standfirst">__BLURB__</p>
   </header>
 
@@ -130,17 +137,19 @@
     <span class="status" id="midi">MIDI: checking</span>
   </div>
 
-  <div class="section">
+  <div class="section keyboard">
     <h2>Keyboard</h2>
     <div class="keys" id="keys"></div>
     <p class="note">
-      Click the keys, or play the computer keyboard: <kbd>z</kbd> <kbd>s</kbd> <kbd>x</kbd> <kbd>d</kbd> <kbd>c</kbd>&hellip;
-      for the lower octave, <kbd>q</kbd> <kbd>2</kbd> <kbd>w</kbd> <kbd>3</kbd> <kbd>e</kbd>&hellip; for the upper.
+      Click the keys, or play the computer keyboard:
+      <span id="lowkeys"><kbd>z</kbd> <kbd>s</kbd> <kbd>x</kbd> <kbd>d</kbd> <kbd>c</kbd></span>&hellip;
+      for the lower octave,
+      <span id="highkeys"><kbd>q</kbd> <kbd>2</kbd> <kbd>w</kbd> <kbd>3</kbd> <kbd>e</kbd></span>&hellip; for the upper.
       <kbd>&larr;</kbd> and <kbd>&rarr;</kbd> shift octave.
     </p>
   </div>
 
-  <div class="section">
+  <div class="section controls">
     <h2>Macros</h2>
     <div class="macros" id="macros"></div>
   </div>
@@ -238,26 +247,77 @@ function noteOff(n) {
 }
 
 // ---- computer keyboard ----
+// Keyed on e.code, the physical position, not on e.key, the character the layout
+// happens to produce there. The two rows of piano keys then fall under the same
+// fingers on AZERTY, QWERTZ and QWERTY alike, which is what a player wants: the
+// shape of the instrument does not move when the printing on the caps does. The
+// legend is relabelled below from what the keys actually say.
 const KEYMAP = {
-  z:0, s:1, x:2, d:3, c:4, v:5, g:6, b:7, h:8, n:9, j:10, m:11,
-  q:12, 2:13, w:14, 3:15, e:16, r:17, 5:18, t:19, 6:20, y:21, 7:22, u:23,
+  KeyZ:0, KeyS:1, KeyX:2, KeyD:3, KeyC:4, KeyV:5,
+  KeyG:6, KeyB:7, KeyH:8, KeyN:9, KeyJ:10, KeyM:11,
+  KeyQ:12, Digit2:13, KeyW:14, Digit3:15, KeyE:16, KeyR:17,
+  Digit5:18, KeyT:19, Digit6:20, KeyY:21, Digit7:22, KeyU:23,
 };
+// The note each held key started, so shifting octave mid-note still releases the
+// note that was actually sounded rather than the one that key would start now.
+const downCodes = new Map();
+
 addEventListener("keydown", (e) => {
   if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
-  if (e.key === "ArrowLeft")  { octave = Math.max(-2, octave - 1); return; }
-  if (e.key === "ArrowRight") { octave = Math.min(2, octave + 1); return; }
-  const off = KEYMAP[e.key.toLowerCase()];
-  if (off === undefined) return;
+  if (e.code === "ArrowLeft")  { octave = Math.max(-2, octave - 1); return; }
+  if (e.code === "ArrowRight") { octave = Math.min(2, octave + 1); return; }
+  const off = KEYMAP[e.code];
+  if (off === undefined || downCodes.has(e.code)) return;
   e.preventDefault();
-  noteOn(60 + off + octave * 12, 100);
+  const n = 60 + off + octave * 12;
+  downCodes.set(e.code, n);
+  noteOn(n, 100);
 });
 addEventListener("keyup", (e) => {
-  const off = KEYMAP[e.key.toLowerCase()];
-  if (off === undefined) return;
-  noteOff(60 + off + octave * 12);
+  const n = downCodes.get(e.code);
+  if (n === undefined) return;
+  downCodes.delete(e.code);
+  noteOff(n);
 });
+// A keyup that lands on another window never reaches us, so forget what is held.
+addEventListener("blur", () => downCodes.clear());
+
+// What a US board prints on those keys, and the fallback wherever the browser will
+// not report the layout. Firefox and Safari do not implement getLayoutMap, so an
+// AZERTY player there plays the right keys under a legend naming the QWERTY ones.
+const usLabel = (code) =>
+  code.startsWith("Digit") ? code.slice(5) : code.slice(3).toLowerCase();
+
+async function labelKeymap() {
+  let map = null;
+  try {
+    if (navigator.keyboard && navigator.keyboard.getLayoutMap) {
+      map = await navigator.keyboard.getLayoutMap();
+    }
+  } catch (err) {
+    map = null;                     // the markup already carries the US labels
+  }
+  if (!map) return;
+  const relabel = (id, codes) => {
+    const host = $(id);
+    host.textContent = "";
+    codes.forEach((c, i) => {
+      if (i) host.appendChild(document.createTextNode(" "));
+      const k = document.createElement("kbd");
+      k.textContent = map.get(c) || usLabel(c);
+      host.appendChild(k);
+    });
+  };
+  relabel("lowkeys",  ["KeyZ", "KeyS", "KeyX", "KeyD", "KeyC"]);
+  relabel("highkeys", ["KeyQ", "Digit2", "KeyW", "Digit3", "KeyE"]);
+}
 
 // ---- macros ----
+// A skin owns how a control is drawn, and nothing else. Everything below this line
+// (keyboard, MIDI, boot) is shared, so a skin cannot fork it and let it rot.
+const SKIN = { name: "plain", renderControls: null };
+__SKIN_JS__
+
 function buildMacros() {
   const host = $("macros");
   host.innerHTML = "";
@@ -269,7 +329,11 @@ function buildMacros() {
   walk(node.getUI());
 
   const skip = new Set(["freq", "gain", "gate"]);
-  items.filter(it => !skip.has(it.label)).forEach(it => {
+  const macros = items.filter(it => !skip.has(it.label));
+  const set = (address, v) => node.setParamValue(address, v);
+  if (SKIN.renderControls) { SKIN.renderControls(macros, host, set); return; }
+
+  macros.forEach(it => {
     const min = +it.min, max = +it.max, init = +it.init;
     const step = +it.step || (max - min) / 200;
     const d = document.createElement("div");
@@ -286,7 +350,7 @@ function buildMacros() {
     const show = (v) => { val.textContent = (+v).toFixed(Math.abs(max - min) > 20 ? 0 : 3); };
     show(init);
     inp.addEventListener("input", () => {
-      node.setParamValue(it.address, +inp.value);
+      set(it.address, +inp.value);
       show(inp.value);
     });
     host.appendChild(d);
@@ -326,6 +390,7 @@ function onMidi(ev) {
 
 // ---- boot ----
 buildKeys();
+labelKeymap();
 
 $("start").addEventListener("click", async () => {
   const btn = $("start");

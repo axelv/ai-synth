@@ -1,0 +1,393 @@
+<!-- Juno-style panel skin.
+
+A visual homage to the 1984 Roland Juno-106 front panel, drawn from the public-domain
+photograph at commons.wikimedia.org/wiki/File:Roland-Juno-106.jpg. The grammar it copies
+is the panel's, not any trademark: charcoal face, a red section band carrying white
+section names, white hairlines dividing sections full height, vertical faders against a
+printed tick scale, and cream/orange buttons with LEDs above them. No maker's mark is
+reproduced; the left plate carries whatever eyebrow the page was built with.
+
+A skin supplies CSS and a control renderer. It never forks the page markup, so the
+keyboard, the MIDI handling and the boot path stay in one place.
+-->
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Michroma&display=swap");
+
+body { background: #101214; color: #edebe5; }
+
+.wrap[data-skin="juno"] {
+  --case:    #202325;
+  --case-lo: #16181a;
+  --panel:   #4a4a48;
+  --panel-lo:#3b3b39;
+  --rule:    #e9e7e0;
+  --red:     #b3232b;
+  --blue:    #4a86bd;
+  --cream:   #ded9c6;
+  --orange:  #e5922c;
+  --led:     #ff4034;
+  --led-off: #4a1f1d;
+  --legend:  #edebe5;
+  --legend-d:#b8b6ae;
+  --slot:    #131516;
+}
+
+/* ---- the case, and the one strip that carries plate, panel and wordmark ---- */
+.wrap[data-skin="juno"] {
+  max-width: 78rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0;
+  margin: 1.5rem auto;
+  padding: 1.1rem;
+  background: linear-gradient(180deg, var(--case) 0%, var(--case-lo) 100%);
+  border: 1px solid #000;
+  border-radius: 7px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 18px 44px rgba(0,0,0,.55);
+}
+[data-skin="juno"] header      { display: contents; }
+[data-skin="juno"] .eyebrow    { grid-area: 1 / 1 / 3 / 2; }
+[data-skin="juno"] .controls   { grid-area: 1 / 2 / 3 / 3; }
+[data-skin="juno"] h1          { grid-area: 1 / 3 / 2 / 4; }
+[data-skin="juno"] .tagline    { grid-area: 2 / 3 / 3 / 4; }
+[data-skin="juno"] .standfirst { grid-area: 3 / 1 / 4 / 4; }
+[data-skin="juno"] .bar        { grid-area: 4 / 1 / 5 / 4; }
+[data-skin="juno"] .keyboard   { grid-area: 5 / 1 / 6 / 4; }
+
+/* the maker's plate: cream, and the only light mass on the strip */
+[data-skin="juno"] .eyebrow {
+  display: flex; align-items: center; justify-content: center;
+  margin: 0; padding: 0 1.4rem; min-width: 8.5rem;
+  background: linear-gradient(180deg, #efeada 0%, var(--cream) 45%, #c9c4b0 100%);
+  color: #23262a; font-family: var(--sans); font-weight: 700;
+  font-size: .95rem; letter-spacing: .06em; text-transform: lowercase;
+  border-radius: 3px 0 0 3px;
+}
+
+/* ---- the wordmark block ---- */
+[data-skin="juno"] h1 {
+  display: flex; align-items: flex-end;
+  margin: 0; padding: .55rem 1.1rem .3rem 1.4rem;
+  background: var(--panel);
+  border-top: 9px solid var(--blue);
+  font-family: "Michroma", var(--sans);
+  font-size: clamp(1.1rem, 2.3vw, 1.85rem);
+  font-weight: 400; letter-spacing: .01em; line-height: 1;
+  color: #f4f2ec; text-transform: uppercase; white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(0,0,0,.55);
+}
+[data-skin="juno"] .tagline {
+  margin: 0; padding: .35rem 1.1rem .5rem 1.45rem;
+  background: var(--panel);
+  border-top: 3px solid var(--blue);
+  border-radius: 0 0 3px 0;
+  font-family: var(--sans); font-size: .6rem; font-weight: 500;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--legend);
+  white-space: nowrap;
+}
+
+/* ---- the panel proper ---- */
+[data-skin="juno"] .controls { display: block; }
+[data-skin="juno"] .section h2 { display: none; }
+[data-skin="juno"] .macros {
+  display: flex; align-items: stretch; height: 100%;
+  gap: 0; padding: 0; border: 0; border-radius: 0;
+  background: linear-gradient(180deg, #515150 0%, var(--panel) 20%, var(--panel-lo) 100%);
+  box-shadow: none;
+  border-bottom: 3px solid var(--red);
+  border-left: 2px solid var(--rule);
+  border-right: 2px solid var(--rule);
+}
+[data-skin="juno"] .sect {
+  display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0;
+}
+/* the hairline runs the full height of the strip, band included, as on the panel */
+[data-skin="juno"] .sect + .sect { border-left: 2px solid var(--rule); }
+
+[data-skin="juno"] .sect-name {
+  margin: 0; padding: .18rem .5rem .2rem;
+  background: var(--red); color: #fff;
+  font-family: var(--sans); font-size: .74rem; font-weight: 700;
+  letter-spacing: .1em; text-align: center; text-transform: uppercase;
+  text-shadow: 0 1px 1px rgba(0,0,0,.35);
+}
+[data-skin="juno"] .sect-body {
+  display: flex; justify-content: center; gap: .15rem;
+  flex: 1 1 auto; padding: .5rem .45rem .55rem;
+}
+
+/* ---- one fader ---- */
+[data-skin="juno"] .fader {
+  display: flex; flex-direction: column; align-items: center; gap: .3rem;
+  width: 4.4rem;
+}
+[data-skin="juno"] .cap {
+  font-family: var(--sans); font-size: .55rem; font-weight: 600;
+  letter-spacing: .09em; text-transform: uppercase; text-align: center;
+  color: var(--legend); line-height: 1.25; min-height: 1.4em;
+}
+[data-skin="juno"] .slot {
+  position: relative; display: flex; align-items: stretch; justify-content: center;
+  gap: 3px; height: 8.2rem;
+}
+/* printed scale: exact by construction, space-between over the travel */
+[data-skin="juno"] .scale {
+  display: flex; flex-direction: column; justify-content: space-between;
+  width: 10px; padding: 7px 0;
+}
+[data-skin="juno"] .scale i { height: 1px; background: #cfcdc6; width: 50%; }
+[data-skin="juno"] .scale i.maj { width: 100%; height: 2px; background: #fbfaf6; }
+[data-skin="juno"] .scale.right i { align-self: flex-end; }
+[data-skin="juno"] .nums {
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 4px 0; font-family: var(--mono); font-size: .48rem;
+  color: var(--legend-d); text-align: right; width: 11px;
+}
+
+/* the groove the cap rides in */
+[data-skin="juno"] .slot input[type=range] {
+  -webkit-appearance: none; appearance: none;
+  writing-mode: vertical-rl; direction: rtl;   /* value increases upward */
+  width: 26px; height: 100%; margin: 0; padding: 0;
+  background: linear-gradient(90deg,
+      transparent 0 9px, #35383a 9px 10px, #08090a 10px 13px,
+      #35383a 13px 14px, transparent 14px 100%);
+  cursor: ns-resize;
+}
+[data-skin="juno"] .slot input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 26px; height: 14px; border-radius: 2px;
+  background: linear-gradient(180deg, #4a4d4f 0%, #26292b 34%, #f1efe8 44%,
+                                      #f1efe8 56%, #191b1c 66%, #060708 100%);
+  border: 1px solid #000;
+  box-shadow: 0 2px 3px rgba(0,0,0,.75), 0 1px 0 rgba(255,255,255,.12) inset;
+}
+[data-skin="juno"] .slot input[type=range]::-moz-range-thumb {
+  width: 26px; height: 14px; border-radius: 2px; border: 1px solid #000;
+  background: linear-gradient(180deg, #4a4d4f 0%, #26292b 34%, #f1efe8 44%,
+                                      #f1efe8 56%, #191b1c 66%, #060708 100%);
+}
+[data-skin="juno"] .slot input[type=range]::-moz-range-track {
+  background: #0c0e0f; width: 6px;
+}
+[data-skin="juno"] .slot input[type=range]:focus-visible {
+  outline: 2px solid var(--blue); outline-offset: 2px;
+}
+/* the cap's white index line, drawn over the thumb's centre */
+[data-skin="juno"] .val {
+  font-family: var(--mono); font-size: .55rem; color: var(--legend-d);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- a discrete control: the chorus buttons ---- */
+[data-skin="juno"] .switch {
+  display: flex; flex-direction: column; align-items: center; gap: .3rem;
+  padding: 0 .2rem; height: 100%;
+}
+/* the auto margins centre the LEDs and buttons in whatever the label leaves */
+[data-skin="juno"] .switch .leds { margin-top: auto; }
+[data-skin="juno"] .switch .row  { margin-bottom: auto; }
+[data-skin="juno"] .switch .leds {
+  display: flex; gap: .3rem; justify-content: center;
+}
+[data-skin="juno"] .switch .led {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--led-off); box-shadow: 0 0 0 1px rgba(0,0,0,.5) inset;
+}
+[data-skin="juno"] .switch .led.on {
+  background: var(--led); box-shadow: 0 0 6px var(--led);
+}
+[data-skin="juno"] .switch .row { display: flex; gap: .18rem; }
+[data-skin="juno"] .switch button {
+  width: 2.05rem; height: 1.55rem; padding: 0;
+  border: 1px solid #24262a; border-radius: 2px;
+  background: linear-gradient(180deg, #f2eddd 0%, var(--cream) 50%, #bdb8a5 100%);
+  color: #24262a; font-family: var(--sans); font-size: .58rem; font-weight: 700;
+  letter-spacing: .06em; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+[data-skin="juno"] .switch button[aria-checked="true"] {
+  background: linear-gradient(180deg, #f5b559 0%, var(--orange) 50%, #b9701d 100%);
+  box-shadow: 0 1px 1px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.25) inset;
+}
+[data-skin="juno"] .switch button:focus-visible {
+  outline: 2px solid var(--blue); outline-offset: 2px;
+}
+
+/* ---- the strip below: transport, then the keyboard in the same case ---- */
+[data-skin="juno"] .standfirst {
+  margin: .9rem 0 0; padding: 0 .1rem; max-width: none;
+  font-size: .74rem; color: #8d9094;
+}
+[data-skin="juno"] .bar {
+  margin-top: .75rem; gap: .6rem 1rem;
+  background: linear-gradient(180deg, #303436, #232628);
+  border: 1px solid #000; border-radius: 3px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.05) inset;
+}
+[data-skin="juno"] .bar button {
+  background: linear-gradient(180deg, #f5b559 0%, var(--orange) 50%, #b9701d 100%);
+  border: 1px solid #24262a; border-radius: 2px; color: #23262a;
+  font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase;
+  box-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+[data-skin="juno"] .bar button:disabled {
+  background: linear-gradient(180deg, #f2eddd 0%, var(--cream) 50%, #bdb8a5 100%);
+  opacity: 1; color: #55585c;
+}
+[data-skin="juno"] .status { color: var(--legend-d); }
+[data-skin="juno"] .status b { color: #7fe0a8; }
+
+[data-skin="juno"] .keyboard { margin-top: .75rem; }
+[data-skin="juno"] .keys {
+  height: 11rem; background: #17191a;
+  border: 1px solid #000; border-radius: 3px 3px 4px 4px;
+  box-shadow: 0 6px 14px rgba(0,0,0,.45) inset;
+}
+[data-skin="juno"] .key.white {
+  background: linear-gradient(180deg, #fbfaf6 0%, #eae7de 88%, #cdcabf 100%);
+  border-right: 1px solid #9a988f;
+}
+[data-skin="juno"] .key.white.on {
+  background: linear-gradient(180deg, #cfe0ee 0%, #9dbdd8 90%, #7ea3c2 100%);
+}
+[data-skin="juno"] .key.black {
+  background: linear-gradient(180deg, #303336 0%, #121415 70%, #202325 100%);
+  border-radius: 0 0 3px 3px;
+}
+[data-skin="juno"] .key.black.on {
+  background: linear-gradient(180deg, #4a86bd 0%, #2d5f8c 100%);
+}
+[data-skin="juno"] .key .lbl { color: #7a786f; }
+[data-skin="juno"] .note { color: #8d9094; }
+[data-skin="juno"] kbd {
+  background: #2a2d2f; border-color: #3d4144; color: var(--legend-d);
+}
+
+@media (max-width: 60rem) {
+  .wrap[data-skin="juno"] { grid-template-columns: 1fr; }
+  [data-skin="juno"] .eyebrow  { grid-area: 1 / 1 / 2 / 2; border-radius: 3px 3px 0 0; padding: .5rem; }
+  [data-skin="juno"] h1        { grid-area: 2 / 1 / 3 / 2; }
+  [data-skin="juno"] .tagline  { grid-area: 3 / 1 / 4 / 2; }
+  [data-skin="juno"] .controls { grid-area: 4 / 1 / 5 / 2; margin-top: .6rem; }
+  [data-skin="juno"] .standfirst { grid-area: 5 / 1 / 6 / 2; }
+  [data-skin="juno"] .bar      { grid-area: 6 / 1 / 7 / 2; }
+  [data-skin="juno"] .keyboard { grid-area: 7 / 1 / 8 / 2; }
+  [data-skin="juno"] .macros   { flex-wrap: wrap; }
+}
+</style>
+
+<script>
+// The panel's own left-to-right order. A section the DSP does not name falls to the end.
+const PANEL_ORDER = ["LFO", "DCO", "HPF", "VCF", "VCA", "ENV", "CHORUS"];
+
+const el = (tag, cls, text) => {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+};
+
+// Faust hands metadata over as a list of one-key objects.
+const metaOf = (it) => Object.assign({}, ...(it.meta || []));
+
+// Eleven ticks over the travel, longer at 0, 5 and 10, as printed on the panel.
+// A lone control named after its own section would print the same word twice.
+function caption(it, m, section) {
+  const c = m.cap || it.label;
+  return c.toUpperCase() === section ? "" : c;
+}
+
+function scale(side) {
+  const s = el("div", "scale " + side);
+  for (let i = 0; i <= 10; i++) s.appendChild(el("i", i % 5 === 0 ? "maj" : ""));
+  return s;
+}
+
+function fader(it, m, set, section) {
+  const min = +it.min, max = +it.max;
+  const wrap = el("div", "fader");
+  wrap.appendChild(el("div", "cap", caption(it, m, section)));
+
+  const slot = el("div", "slot");
+  const nums = el("div", "nums");
+  ["10", "5", "0"].forEach(n => nums.appendChild(el("span", "", n)));
+  const inp = document.createElement("input");
+  inp.type = "range";
+  inp.min = min; inp.max = max;
+  inp.step = +it.step || (max - min) / 200;
+  inp.value = +it.init;
+  inp.setAttribute("orient", "vertical");          // Firefox
+  inp.setAttribute("aria-label", it.label);
+  slot.append(nums, scale("left"), inp, scale("right"));
+  wrap.appendChild(slot);
+
+  const val = el("div", "val");
+  const show = (v) => { val.textContent = (+v).toFixed(Math.abs(max - min) > 20 ? 0 : 2); };
+  show(it.init);
+  inp.addEventListener("input", () => { set(it.address, +inp.value); show(inp.value); });
+  wrap.appendChild(val);
+  return wrap;
+}
+
+function switchRow(it, m, set, section) {
+  const min = +it.min, max = +it.max, step = +it.step;
+  const n = Math.round((max - min) / step) + 1;
+  const names = (m.positions || "").split("|").filter(Boolean);
+  const wrap = el("div", "switch");
+  wrap.appendChild(el("div", "cap", caption(it, m, section)));
+
+  const leds = el("div", "leds");
+  const row = el("div", "row");
+  const btns = [];
+  for (let i = 0; i < n; i++) {
+    const v = min + i * step;
+    const led = el("div", "led");
+    const b = el("button", "", names[i] !== undefined ? names[i] : String(v));
+    b.type = "button";
+    b.setAttribute("role", "radio");
+    b.setAttribute("aria-label", it.label + " " + b.textContent);
+    b.addEventListener("click", () => { set(it.address, v); paint(i); });
+    leds.appendChild(led); row.appendChild(b); btns.push({ b, led });
+  }
+  const paint = (sel) => btns.forEach(({ b, led }, i) => {
+    b.setAttribute("aria-checked", String(i === sel));
+    led.classList.toggle("on", i === sel);
+  });
+  paint(Math.round((+it.init - min) / step));
+  row.setAttribute("role", "radiogroup");
+  wrap.append(leds, row);
+  return wrap;
+}
+
+SKIN.name = "juno";
+SKIN.renderControls = (items, host, set) => {
+  host.innerHTML = "";
+  const groups = new Map();
+  for (const it of items) {
+    const m = metaOf(it);
+    const key = (m.panel || "PATCH").toUpperCase();
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push({ it, m });
+  }
+  const rank = (k) => { const i = PANEL_ORDER.indexOf(k); return i < 0 ? 99 : i; };
+  const keys = [...groups.keys()].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+
+  for (const key of keys) {
+    const sect = el("section", "sect");
+    sect.appendChild(el("h3", "sect-name", key));
+    const body = el("div", "sect-body");
+    // a section is as wide as it has controls, the way the panel's own are
+    sect.style.flexGrow = String(groups.get(key).length);
+    // Faust emits controls alphabetically, so panel order has to be declared.
+    const ctrls = groups.get(key).sort((a, b) => (+a.m.idx || 0) - (+b.m.idx || 0));
+    for (const { it, m } of ctrls) {
+      const steps = +it.step > 0 ? Math.round((+it.max - +it.min) / +it.step) + 1 : 0;
+      const discrete = m.positions !== undefined || (steps >= 2 && steps <= 4);
+      body.appendChild(discrete ? switchRow(it, m, set, key) : fader(it, m, set, key));
+    }
+    sect.appendChild(body);
+    host.appendChild(sect);
+  }
+};
+</script>

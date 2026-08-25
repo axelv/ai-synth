@@ -103,8 +103,69 @@ uv run python $SK/scripts/build_page.py patch.dsp patches/patch.html "Display Na
 ```
 
 One self-contained HTML file: the Faust wasm, its metadata, the runtime, an on-screen
-keyboard, a QWERTY mapping, MIDI input, and a slider per macro generated from the DSP's
-own metadata. Typically under 300 KiB.
+keyboard, a computer-keyboard mapping, MIDI input, and a slider per macro generated from
+the DSP's own metadata. Typically under 300 KiB.
+
+The computer keyboard is mapped by **physical position** (`e.code`), never by the
+character a layout produces (`e.key`), so the piano keys fall under the same fingers on
+AZERTY, QWERTZ and QWERTY. The printed legend is relabelled from
+`navigator.keyboard.getLayoutMap()` where the browser reports it, which is Chromium
+only; Firefox and Safari keep the QWERTY labels while the keys themselves still play
+correctly.
+
+#### Panel skins
+
+`--skin <name>` picks how the controls are drawn. A skin supplies CSS and a control
+renderer and nothing else, so the keyboard, the MIDI handling and the boot path stay in
+one place however many skins exist. Skins live in `assets/skins/<name>.html`.
+
+| skin | use |
+|---|---|
+| `plain` | the default. One labelled horizontal slider per macro |
+| `juno` | a Juno-106 style panel: vertical faders in red-banded sections, discrete controls as lit buttons |
+
+**Reach for `juno` when the user asks for a Juno, a Roland-style polysynth, or a
+juno-ish pad**, which is the case where the machine's own panel is the layout the person
+already has in their head. It is a homage to the panel's visual grammar, drawn from the
+public-domain photograph at `commons.wikimedia.org/wiki/File:Roland-Juno-106.jpg`. No
+maker's mark is reproduced.
+
+```bash
+uv run python $SK/scripts/build_page.py juno.dsp patches/juno.html "Juno-106" --skin juno
+```
+
+The skin reads four optional metadata keys off each slider label. They are inert
+everywhere else: `measure.py` addresses macros by label and Faust strips metadata out of
+the label, so adding them does not move a single measurement.
+
+| key | effect |
+|---|---|
+| `[panel:VCF]` | which panel section the control sits in. Sections are laid out in the machine's own order: LFO, DCO, HPF, VCF, VCA, ENV, CHORUS, then anything else. A section with no controls is not drawn |
+| `[idx:2]` | position within the section. **Required if order matters**: Faust emits controls alphabetically, not in source order |
+| `[cap:RES]` | a shorter panel caption. Defaults to the macro name, which is usually the better label |
+| `[positions:OFF\|I\|II]` | names for a discrete control's steps. A control with 2 to 4 steps is drawn as a row of lit buttons rather than a fader |
+
+```faust
+brightness = hslider("brightness[panel:VCF][idx:1]", 0.44, 0, 1, 0.001) : si.smoo;
+chorus     = hslider("chorus[panel:CHORUS][positions:OFF|I|II]", 0.5, 0, 1, 0.5);
+```
+
+`references/examples/juno-106.dsp` carries the full set and is the one to copy.
+
+#### Two things that fail silently when verifying a page
+
+Both were found by driving the built page from a browser, and both make a control look
+right while being wrong:
+
+- **Set a range input's `step` before its `value`.** A range input snaps its value to the
+  step on assignment and the step defaults to 1, so assigning `value` first rounded 0.44
+  to 0 while the readout printed beside it still said 0.44. The fader sat at the bottom,
+  the DSP kept its own default, and nothing errored. The two disagreed until first touch.
+- **`getParamValue` on the poly node reads one call stale.** Setting a parameter and
+  reading it back in the same tick returns the *previous* value, so a working control
+  reports as dead and the next check inherits the answer to the one before it. It cost a
+  wrong conclusion here. Let a tick pass before reading, and confirm against a value the
+  previous call did not already write.
 
 ### 5. Audition by playing it, not by rendering it
 
