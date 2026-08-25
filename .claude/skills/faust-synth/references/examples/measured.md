@@ -3,7 +3,7 @@
 Complete working instruments. Five were written one-shot from a plain-language
 description with no reference material, one per architecture family; the sixth models a
 named machine and is the only one here with a clean report. All six compile, all six
-play. They serve two purposes:
+play, and all six have been auditioned by a person. They serve two purposes:
 
 1. **Worked examples.** Read the one whose family matches the sound being built. The
    families differ in how predictable the mapping from parameters to timbre is, and the
@@ -130,6 +130,11 @@ entry is here to be copied. All three are written up in `references/faust-poly.m
 cutoff ceiling `ve.moog_vcf` needs before it returns NaN, the DC an odd saturator makes
 from an asymmetric oscillator mix, and the direction a ladder's resonance makeup has to
 go.
+
+Auditioned by playing it, and nothing was reported broken. Worth recording as the plain
+verdict it was: `warm-pad` is written up here as having been judged to sound right, and
+this one was judged to sound fine. A 0 fail, 0 warn report and a person not objecting are
+two different statements and neither one is the other.
 
 ### What is a hardware fact rather than a measurement
 
