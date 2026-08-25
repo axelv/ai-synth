@@ -41,9 +41,14 @@ their defaults.
 
 ### 2. Write the patch
 
-`references/examples/` holds five complete working instruments, one per architecture
-family, with `measured.md` naming what each one gets right and what it gets wrong. Read
-the one whose family matches the target sound.
+`references/examples/` holds six complete working instruments, with `measured.md` naming
+what each one gets right and what it gets wrong. Read the one whose family matches the
+target sound.
+
+Five of them carry deliberate defects and are read for warnings. `juno-106.dsp` is the
+one that measures clean, so it is the one to copy the shape of, and it is also the worked
+example of modelling a named machine rather than a description: its `measured.md` entry
+separates what was measured here from what is a fact about the hardware.
 
 Read one **especially** for FM, noise-sourced texture, and per-note filter sweeps. In
 those three the mapping from parameters to timbre is emergent rather than specified, and

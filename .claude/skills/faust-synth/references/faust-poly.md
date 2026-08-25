@@ -81,6 +81,14 @@ Two voices on the SAME pitch are still identical. That is unavoidable, and it ma
 much less: a player rarely holds the same note twice, and a chord is what the rule is
 about.
 
+**There is one legitimate exception, and it is a whole class of instrument.** A DCO
+synth locks its oscillators to a digital reset, so its voices really are phase-coherent
+and `+12.04 dB` is the machine rather than a defect. `references/examples/juno-106.dsp`
+is the case: its chorus exists precisely because its oscillators do not drift, and
+decorrelating them would remove the reason the instrument sounds the way it does. Before
+treating a `+12.04` reading as something to fix, decide whether the thing being modelled
+drifts at all.
+
 `measure.py` reports this as `voices +12.04 dB ... bit-identical voices`. Whether that is
 a defect depends on the patch. A purely deterministic patch is legitimately coherent. A
 patch that claims drift, air, breath, or width is broken if it reads +12.

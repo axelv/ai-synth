@@ -61,7 +61,7 @@ repo-root `scripts/`, which belongs to track B.**
 | `scripts/build_page.py` | one `.dsp` to one self-contained playable page |
 | `references/faust-poly.md` | poly conventions and the failures that are silent |
 | `references/patch-design.md` | what makes a macro a macro; ranges and defaults |
-| `references/examples/*.dsp` | five working instruments, one per architecture family |
+| `references/examples/*.dsp` | six working instruments. `juno-106` is the clean one |
 | `references/examples/measured.md` | what each gets right and wrong. The regression set |
 
 ### Track B
