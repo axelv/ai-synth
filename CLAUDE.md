@@ -93,7 +93,12 @@ Current state lives in `out/patch.json` and `out/render.wav`.
 - **Write renders with `synth.write_render`** (PCM_24). soundfile's default PCM_16 costs
   0.089 of loss here, because the log-magnitude term sees the 16-bit floor in the
   6-16 kHz band. Score from the file on disk, not the array in memory.
-- **`synth.PARAMS` is append-only.** `out/patch.json` depends on the order.
+- **`synth.PAD.params` is append-only.** `out/patch.json` depends on the order.
+- **A DSP and its parameter names travel together, as a `synth.Architecture`.**
+  `PadRenderer(arch)` and `Objective(notes, arch=...)` take one. Passing a foreign
+  Faust source alone used to compile fine and then set nothing, because the names
+  came from a module global. `synth.PAD` is the fitted pad; `arch.with_dsp(src)`
+  is a variant build over the same vocabulary.
 - **`eq_stage`'s engine cache keys on the signal**, not just its length. It bakes the
   playback buffer in at construction, so a length-only key silently returns the first
   signal filtered.

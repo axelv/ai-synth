@@ -8,7 +8,7 @@ Two stages were added later to attack the two mismatches the first fit could not
 close: `drive`, a tanh waveshaper before the filter, for the 250-900 Hz energy a
 lowpassed saw cannot produce, and `spread`, per-note constant-power panning, for the
 L/R decorrelation a mono voice sum into a stereo reverb cannot produce. Both are
-appended to PARAMS with identity defaults, so an old 27-parameter vector padded with
+appended to PAD_PARAMS with identity defaults, so an old 27-parameter vector padded with
 them renders bit-identically.
 
 Two timbre stages were added after that, both for the same finding: an oracle ladder
@@ -54,7 +54,7 @@ because the loss punishes the empty gaps between partials that clean sinusoids l
 and the target fills. The unison detune, chorus and reverb are doing real work filling
 those gaps, so nothing here replaces them.
 
-The EQ bands are appended to PARAMS with identity defaults (0 dB) and the identity is
+The EQ bands are appended to PAD_PARAMS with identity defaults (0 dB) and the identity is
 exact in algebra, so the pre-timbre patch padded with them renders to the same audio:
 measured 5.9e-08 relative, i.e. 0.0 of loss against a recorded 1.5446351990.
 
@@ -63,7 +63,7 @@ measured 5.9e-08 relative, i.e. 0.0 of loss against a recorded 1.5446351990.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 
 import dawdreamer as daw
 import numpy as np
@@ -328,9 +328,79 @@ class Param:
     default: float
     log: bool = False
 
+    def denorm(self, v: float) -> float:
+        """One coordinate of the [0,1] search vector as a real parameter value."""
+        v = float(np.clip(v, 0.0, 1.0))
+        if self.log:
+            return float(np.exp(np.log(self.lo) + v * (np.log(self.hi) - np.log(self.lo))))
+        return float(self.lo + v * (self.hi - self.lo))
+
+    def normalize(self, value: float) -> float:
+        """Inverse of denorm for a single parameter."""
+        if self.log:
+            return float((np.log(value) - np.log(self.lo)) / (np.log(self.hi) - np.log(self.lo)))
+        return float((value - self.lo) / (self.hi - self.lo))
+
+
+@dataclass(frozen=True)
+class Architecture:
+    """A Faust source and the parameter vocabulary that addresses it, as one value.
+
+    These were separate: the source travelled as a `dsp=` argument while the names
+    lived in module globals. That made a second architecture look supported when it was
+    not. A foreign DSP compiled, exposed none of the pad's slider names, and
+    `set_params` skipped every one of them in silence, so the render came out at the
+    Faust defaults and scored as if the parameters simply did not help. Fitting a
+    second architecture means constructing one of these, not passing another string.
+
+    `index` is derived rather than given, and this is frozen, hence the
+    object.__setattr__ that computing it needs. It is excluded from comparison so that
+    the class stays hashable with a dict on it.
+    """
+
+    name: str
+    dsp: str
+    params: tuple[Param, ...]
+    index: dict[str, int] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "index", {p.name: i for i, p in enumerate(self.params)})
+
+    def denorm(self, x: np.ndarray) -> dict[str, float]:
+        """Map a normalized [0,1] vector to real parameter values."""
+        return {p.name: p.denorm(x[i]) for i, p in enumerate(self.params)}
+
+    def normalize(self, values: dict[str, float]) -> np.ndarray:
+        """Inverse of denorm: real parameter values back to the [0,1] search vector."""
+        return np.clip([p.normalize(values[p.name]) for p in self.params], 0.0, 1.0)
+
+    def norm_defaults(self) -> np.ndarray:
+        return self.normalize({p.name: p.default for p in self.params})
+
+    def padded(self, x: np.ndarray) -> np.ndarray:
+        """Extend a normalized vector fitted before `params` grew, using the new defaults.
+
+        `params` is append-only, so the leading coordinates of an old patch.json still
+        mean what they meant; the appended parameters have identity defaults, hence a
+        padded old vector must render to the same audio. verify_new_stages asserts that
+        for drive and spread, verify_timbre_stages for the EQ and the wavetable morph.
+        """
+        x = np.asarray(x, dtype=float)
+        if len(x) > len(self.params):
+            raise ValueError(f"vector of {len(x)} is longer than {self.name} ({len(self.params)})")
+        out = self.norm_defaults()
+        out[: len(x)] = x
+        return out
+
+    def with_dsp(self, dsp: str) -> "Architecture":
+        """The same vocabulary over a variant build: the wavetable bank, a legacy
+        chain a verification script wants to score against. Same parameter order, so
+        the same normalized vector means the same thing in both."""
+        return replace(self, dsp=dsp)
+
 
 # Search space for stage 2. Order defines the CMA-ES vector.
-PARAMS: tuple[Param, ...] = (
+PAD_PARAMS: tuple[Param, ...] = (
     Param("detune", 2.0, 60.0, 22.0),
     Param("uniMix", 0.0, 1.0, 0.75),
     Param("subLvl", 0.0, 1.0, 0.45),
@@ -370,35 +440,21 @@ PARAMS: tuple[Param, ...] = (
     # (Powell) is the efficient way at them, not CMA-ES.
     *(Param(f"eq{i}", -EQ_LIMIT, EQ_LIMIT, 0.0) for i in range(N_EQ)),
 )
-PARAM_INDEX = {p.name: i for i, p in enumerate(PARAMS)}
 
+# The pad: the architecture this project fitted, and PadRenderer's default.
+PAD = Architecture(name="pad", dsp=DSP, params=PAD_PARAMS)
 
-def denorm(x: np.ndarray) -> dict[str, float]:
-    """Map a normalized [0,1] vector to real parameter values."""
-    out: dict[str, float] = {}
-    for i, p in enumerate(PARAMS):
-        v = float(np.clip(x[i], 0.0, 1.0))
-        if p.log:
-            out[p.name] = float(np.exp(np.log(p.lo) + v * (np.log(p.hi) - np.log(p.lo))))
-        else:
-            out[p.name] = float(p.lo + v * (p.hi - p.lo))
-    return out
-
-
-def normalize_one(p: Param, value: float) -> float:
-    """Inverse of denorm for a single parameter."""
-    if p.log:
-        return float((np.log(value) - np.log(p.lo)) / (np.log(p.hi) - np.log(p.lo)))
-    return float((value - p.lo) / (p.hi - p.lo))
-
-
-def normalize(values: dict[str, float]) -> np.ndarray:
-    """Inverse of denorm: real parameter values back to the [0,1] search vector."""
-    return np.clip([normalize_one(p, values[p.name]) for p in PARAMS], 0.0, 1.0)
-
-
-def norm_defaults() -> np.ndarray:
-    return normalize({p.name: p.default for p in PARAMS})
+# Module-level shorthand for the pad, and nothing else. These are the same objects
+# under another name, not a second way to reach them: live code takes an Architecture
+# explicitly. They stay because the superseded scripts import them by name, and a
+# measured negative result that no longer imports is worth less than one that runs.
+PARAMS = PAD.params
+PARAM_INDEX = PAD.index
+denorm = PAD.denorm
+normalize = PAD.normalize
+norm_defaults = PAD.norm_defaults
+pad_normalized = PAD.padded
+normalize_one = Param.normalize          # normalize_one(p, v) is p.normalize(v)
 
 
 def write_render(path: str, audio: np.ndarray, sr: int = SR) -> None:
@@ -413,26 +469,11 @@ def write_render(path: str, audio: np.ndarray, sr: int = SR) -> None:
     sf.write(path, np.asarray(audio).T, sr, subtype=RENDER_SUBTYPE)
 
 
-def pad_normalized(x: np.ndarray) -> np.ndarray:
-    """Extend a normalized vector fitted before PARAMS grew, using the new defaults.
-
-    PARAMS is append-only, so the leading coordinates of an old patch.json still mean
-    what they meant; the appended parameters have identity defaults, hence a padded
-    old vector must render to the same audio. verify_new_stages asserts that for drive
-    and spread, verify_timbre_stages for the EQ and the wavetable morph.
-    """
-    x = np.asarray(x, dtype=float)
-    if len(x) > len(PARAMS):
-        raise ValueError(f"vector of {len(x)} is longer than PARAMS ({len(PARAMS)})")
-    out = norm_defaults()
-    out[: len(x)] = x
-    return out
-
-
 class PadRenderer:
     """Reusable dawdreamer engine; MIDI is set once, params change per render."""
 
-    def __init__(self, sr: int = SR, n_voices: int = 24, dsp: str = DSP) -> None:
+    def __init__(self, arch: Architecture = PAD, sr: int = SR, n_voices: int = 24) -> None:
+        self.arch = arch
         self.sr = sr
         self.engine = daw.RenderEngine(sr, BLOCK)
         self.proc = self.engine.make_faust_processor("pad")
@@ -440,7 +481,7 @@ class PadRenderer:
         self.proc.num_voices = n_voices
         self.proc.release_length = 4.0
         self.proc.group_voices = True
-        if not self.proc.set_dsp_string(dsp):
+        if not self.proc.set_dsp_string(arch.dsp):
             raise RuntimeError("faust compile failed")
         desc = self.proc.get_parameters_description()
         self.pidx = {d["label"]: d["index"] for d in desc}
@@ -448,8 +489,8 @@ class PadRenderer:
         self.ppath = {d["label"]: d["name"] for d in desc}
         # a variant DSP may replace a slider with a constant; only the sliders it still
         # declares have to come out the other side of the compiler
-        missing = [p.name for p in PARAMS
-                   if f'hslider("{p.name}"' in dsp and p.name not in self.pidx]
+        missing = [p.name for p in arch.params
+                   if f'hslider("{p.name}"' in arch.dsp and p.name not in self.pidx]
         if missing:
             raise RuntimeError(f"params not exposed by faust: {missing}")
         self.engine.load_graph([(self.proc, [])])
@@ -482,5 +523,5 @@ class PadRenderer:
 def render_with(x: np.ndarray, notes, dur: float, renderer: PadRenderer | None = None) -> np.ndarray:
     r = renderer or PadRenderer()
     r.set_notes(notes)
-    r.set_params(denorm(x))
+    r.set_params(r.arch.denorm(x))
     return r.render(dur)

@@ -37,6 +37,7 @@ from stage2 import DUR, Objective, load_notes
 from synth import (
     DSP,
     DSP_SAW,
+    PAD,
     PARAMS,
     PadRenderer,
     eq_faust,
@@ -128,18 +129,18 @@ def test_identity(x: np.ndarray, notes) -> dict[str, float]:
     # Compile and render timed apart, because they scale differently with the bank and a
     # fit pays the first once and the second thousands of times.
     t0 = time.time()
-    new_obj = Objective(notes, dsp=DSP)
+    new_obj = Objective(notes, arch=PAD.with_dsp(DSP))
     t_compile = time.time() - t0
     t0 = time.time()
     new_audio = new_obj.render(x)
     t_new = time.time() - t0
 
-    old_obj = Objective(notes, dsp=legacy_dsp())
+    old_obj = Objective(notes, arch=PAD.with_dsp(legacy_dsp()))
     t0 = time.time()
     old_audio = old_obj.render(x)
     t_old = time.time() - t0
 
-    saw_obj = Objective(notes, dsp=DSP_SAW)
+    saw_obj = Objective(notes, arch=PAD.with_dsp(DSP_SAW))
     saw_audio = saw_obj.render(x)
     ref = sf.read(REFERENCE, always_2d=True)[0].T.astype(np.float64)
 
@@ -195,7 +196,7 @@ def render_window(params: dict[str, float], dsp: str = DSP) -> np.ndarray:
     """
     r = _WIN_ENGINES.get(dsp)
     if r is None:
-        r = _WIN_ENGINES[dsp] = PadRenderer(n_voices=24, dsp=dsp)
+        r = _WIN_ENGINES[dsp] = PadRenderer(PAD.with_dsp(dsp), n_voices=24)
         r.set_notes(chord.notes_upto())
         r.set_bend(bend_curve(int(chord.WIN_T1 * SR) + SR))
     r.set_params(params)
@@ -216,7 +217,7 @@ def test_amplifier(params: dict[str, float]) -> dict[str, object]:
     for tag, body in bodies.items():
         out = []
         for m in ('m = hslider("m", 0, 0, 1, 0.001);', "m = 0.0;"):
-            eng = PadRenderer(n_voices=8, dsp=_PROBE % {"m": m, "body": body})
+            eng = PadRenderer(PAD.with_dsp(_PROBE % {"m": m, "body": body}), n_voices=8)
             eng.set_notes(_PROBE_NOTE)
             if "hslider" in m:
                 eng.set_params({"m": 0.0})

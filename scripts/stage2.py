@@ -20,18 +20,7 @@ import torch
 
 from bend2 import bend_curve
 from metrics import report
-from synth import (
-    DSP,
-    PARAM_INDEX,
-    PARAMS,
-    PadRenderer,
-    denorm,
-    norm_defaults,
-    normalize,
-    normalize_one,
-    pad_normalized,
-    write_render,
-)
+from synth import PAD, Architecture, PadRenderer, write_render
 
 SR = 44100
 DUR = 17.904
@@ -84,7 +73,9 @@ class Objective:
     and side terms separately so the two are always comparable.
     """
 
-    def __init__(self, notes, target_path: str = "data/original.wav", dsp: str = DSP) -> None:
+    def __init__(self, notes, target_path: str = "data/original.wav",
+                 arch: Architecture = PAD) -> None:
+        self.arch = arch
         y, _ = librosa.load(target_path, sr=SR, mono=True)
         self.n = len(y)
         self.target = torch.from_numpy(y).float().view(1, 1, -1)
@@ -103,7 +94,7 @@ class Objective:
             w_log_mag=1.0,
             w_lin_mag=0.0,
         )
-        self.renderer = PadRenderer(n_voices=24, dsp=dsp)
+        self.renderer = PadRenderer(arch, n_voices=24)
         self.renderer.set_notes(notes)
         # intro glide: sample-accurate bend, fixed (measured), never optimised
         self.renderer.set_bend(bend_curve(int(DUR * SR) + SR))
@@ -155,7 +146,7 @@ class Objective:
         return self.loss_parts(audio, w_env, w_side)["total"]
 
     def render(self, x: np.ndarray) -> np.ndarray:
-        self.renderer.set_params(denorm(x))
+        self.renderer.set_params(self.arch.denorm(x))
         return self.renderer.render(DUR)
 
     def loss_of(self, audio: np.ndarray, w_env: float = 0.35) -> float:
@@ -183,7 +174,7 @@ class Objective:
 
 def seeded_start() -> np.ndarray:
     """Seed from the stage-0 analysis rather than from the middle of the box."""
-    p = denorm(norm_defaults())
+    p = PAD.denorm(PAD.norm_defaults())
     p.update(
         detune=65.0,     # ~70 cent spread measured between unison partials
         uniMix=0.85,     # partials appear as clusters, little dry centre
@@ -201,11 +192,11 @@ def seeded_start() -> np.ndarray:
         revSize=0.9, revDamp=0.5, revWet=0.45,
         tilt=-0.2, outGain=0.5,
     )
-    return np.clip(normalize(p), 0.001, 0.999)
+    return np.clip(PAD.normalize(p), 0.001, 0.999)
 
 
 def run_cma(obj: Objective, x0: np.ndarray, free: list[str], gens: int, sigma: float, seed: int, label: str):
-    idx = [PARAM_INDEX[n] for n in free]
+    idx = [obj.arch.index[n] for n in free]
     base = x0.copy()
 
     def sub(z: np.ndarray) -> float:
@@ -259,7 +250,7 @@ def main() -> None:
     obj = Objective(notes)
 
     if args.init:
-        x0 = pad_normalized(json.load(open(args.init))["normalized"])
+        x0 = obj.arch.padded(json.load(open(args.init))["normalized"])
         print(f"warm start from {args.init}")
     else:
         x0 = seeded_start()
@@ -268,8 +259,9 @@ def main() -> None:
     for spec in args.pin:
         name, _, val = spec.partition("=")
         v = float(val)
-        nx = normalize_one(PARAMS[PARAM_INDEX[name]], v)
-        x0[PARAM_INDEX[name]] = float(np.clip(nx, 0.0, 1.0))
+        i = obj.arch.index[name]
+        nx = obj.arch.params[i].normalize(v)
+        x0[i] = float(np.clip(nx, 0.0, 1.0))
         pinned[name] = v
     if pinned:
         print("pinned:", pinned)
@@ -280,7 +272,7 @@ def main() -> None:
     print(f"seed loss: {obj(x0):.4f}")
 
     best_x, best_l = x0, obj(x0)
-    free_all = [p.name for p in PARAMS if p.name not in pinned]
+    free_all = [p.name for p in obj.arch.params if p.name not in pinned]
     for rs in range(args.restarts):
         print(f"\n--- restart {rs} : core ---")
         sig_c = args.sigma if args.sigma else 0.22 + 0.08 * rs
@@ -296,7 +288,7 @@ def main() -> None:
         best_x, best_l = obj.best[1], obj.best[0]
 
     print(f"\nfinal loss {best_l:.4f} after {obj.calls} renders")
-    vals = denorm(best_x)
+    vals = obj.arch.denorm(best_x)
     aud = obj.render(best_x)
     # default run owns out/render.wav + out/loss_history.npy; variants get a suffix
     stem = args.out.removesuffix(".json")
