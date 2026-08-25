@@ -29,7 +29,7 @@ out/*.png
 # already in CLAUDE.md is worth nothing: one patch_*.json and one log_*.txt per abandoned
 # experiment. The frozen stage-1 inputs used to live here and now sit in data/ beside
 # original.wav, which is the same category of thing. One file stays tracked:
-#   patch.json  the incumbent, loss 1.544635, and the default --patch everywhere
+#   patch.json  the incumbent, loss 1.382293, and the default --patch everywhere
 out/*
 !out/patch.json
 

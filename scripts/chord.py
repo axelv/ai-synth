@@ -88,7 +88,7 @@ class WindowScore:
 
     Same FFT sizes and same w_env as stage2.Objective, so candidates rank the same
     way they would in the full fit. The absolute number is NOT comparable to the
-    18 s loss (1.5446): different signal, different length. Compare within the
+    18 s loss (1.3823): different signal, different length. Compare within the
     window only.
     """
 

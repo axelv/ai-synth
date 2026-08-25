@@ -46,6 +46,21 @@ FX = ["chRate", "chDepth", "dlyTime", "dlyFb", "dlyWet", "revSize", "revDamp", "
 EQ = [f"eq{i}" for i in range(26)]
 
 
+INCUMBENT = "out/patch.json"
+
+
+def incumbent_loss(path: str = INCUMBENT) -> float:
+    """The loss of the patch currently on disk, for scripts that gate against it.
+
+    Read rather than written down. promote_eq and fit_eq_full both carried a literal
+    1.544635, which was the incumbent when they were written and is now the patch before
+    it: the EQ fit those very scripts performed moved it to 1.382293. A gate against a
+    stale constant silently accepts a fit 0.16 worse than what the repo already has, and
+    the constant goes stale every single time the gate lets something through.
+    """
+    return float(json.load(open(path))["loss"])
+
+
 def load_notes(path: str = "data/transcription.mid"):
     pm = pretty_midi.PrettyMIDI(path)
     notes = []

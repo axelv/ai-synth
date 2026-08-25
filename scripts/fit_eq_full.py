@@ -37,7 +37,7 @@ import eq_stage
 import synth
 from bend2 import bend_curve
 from metrics import env_l1
-from stage2 import DUR, SR, Objective, load_notes
+from stage2 import DUR, SR, Objective, incumbent_loss, load_notes
 
 FLAT = np.zeros(eq_stage.N_BANDS)
 
@@ -162,7 +162,7 @@ def main() -> None:
     flat = flat_render(a.patch)
     base_loss, base_lvl, base_corr = score(flat)
     print(f"flat EQ, level-optimal: loss {base_loss:.6f}  level {20*np.log10(base_lvl):+.2f} dB")
-    print(f"incumbent out/render.wav reference: 1.544635\n")
+    print(f"incumbent out/patch.json reference: {incumbent_loss():.6f}\n")
 
     x0 = oracle_start(flat, score)
     l0, _, _ = score(eq_stage.eq_window(flat, x0))

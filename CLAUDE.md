@@ -31,7 +31,7 @@ note list plus a parameter vector. Two stages, in dependency order:
    `data/transcription.mid` and `bend2.bend_curve` as inputs, not parameters. Re-opening
    this is a separate project and it confounds any judgement of stage 2.
 2. **Stage 2, patch fitting.** Synth parameters against a multi-resolution STFT loss.
-   **Paused, not abandoned**, at loss 1.544635 with `out/patch.json` as the incumbent.
+   **Paused, not abandoned**, at loss 1.382293 with `out/patch.json` as the incumbent.
 
 Paused means the code still runs, every finding below still holds, and none of it is
 retracted. It is not the place to start work without being asked to. Do not delete or
@@ -112,6 +112,19 @@ Current state lives in `out/patch.json` and `out/render.wav`.
   the mapping from Vital's open source, and gate it on the two-preset render check above.
   Arturia's Analog Lab V will not load headlessly at all, so its several thousand presets
   across ~30 architectures are out of reach without solving activation first.
+
+- **The incumbent scores 1.382293. The number 1.544635 is the patch BEFORE it.** That
+  is `out/patch_pretimbre.json`, and the gap between them, 0.162, is exactly what the EQ
+  stage bought. The stale figure had reached seven places including CLAUDE.md's own Track
+  B heading, and `promote_eq.py` gated on it: `ACCEPT if loss < 1.544635` would have
+  green-lit a fit 0.16 WORSE than what the repo already had. The cause is that a gate
+  hardcoded the incumbent, which goes stale the moment the gate lets something through,
+  so `stage2.incumbent_loss()` now reads it from `out/patch.json` instead. Two references
+  to 1.544635 are correct and were left alone: `synth.py`'s docstring and
+  `verify_timbre_stages.RECORDED_LOSS` are both about the pre-timbre patch on purpose, and
+  README's results table already reads 1.5446 "before" against 1.3823 "after". `fit_chord.py`
+  still misstates it in two places and is left alone as superseded; it calls
+  `Objective(dsp=...)` and cannot run since the Architecture change anyway.
 
 - **`data/original.wav` is 48 kHz.** Always `librosa.load(path, sr=44100)`. Reading it
   with `soundfile.read` and no resample silently compares audio 8.8% wrong in time and
