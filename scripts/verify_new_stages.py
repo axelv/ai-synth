@@ -26,7 +26,7 @@ import torch
 import faust_probe
 from metrics import band_db_error, lta_band_error, stereo_decorrelation
 from stage2 import Objective, load_notes
-from synth import DSP, PARAM_INDEX, PARAMS, PadRenderer, denorm, norm_defaults, pad_normalized
+from synth import DSP, PAD, PARAM_INDEX, PARAMS, PadRenderer, denorm, norm_defaults, pad_normalized
 from torch_common import Patch, default_n_samples, get_device, schedule
 from torch_synth import TorchPad, pan_gains, saturate
 
@@ -123,7 +123,7 @@ def test_compat(obj: Objective, notes, path: str = BASELINE27) -> dict[str, floa
     if x[PARAM_INDEX["drive"]] != 0.0 or x[PARAM_INDEX["spread"]] != 0.0:
         raise AssertionError(f"{path} does not have the new stages at their defaults")
     new_audio = obj.render(x)
-    old_obj = Objective(notes, dsp=legacy_dsp())
+    old_obj = Objective(notes, arch=PAD.with_dsp(legacy_dsp()))
     old_audio = old_obj.render(x)
     n = min(new_audio.shape[1], old_audio.shape[1])
     d = new_audio[:, :n] - old_audio[:, :n]

@@ -48,6 +48,23 @@ spread(l, r) = (l + s) / g, (r - s) / g
   with { s = (l - r) * w; g = sqrt(1 + w * w); };
 ```
 
+The rule is really about energy, not about gain, so it reaches further than the controls
+that obviously multiply. Pulse width modulation is the case that does not look like one:
+narrowing a pulse moves its energy up into harmonics a lowpass then removes, so a PWM
+sweep is partly a level sweep even though nothing in it multiplies anything. Normalise
+by the fundamental of a pulse of that width, `(4/pi)*sin(pi*pw)`:
+
+```faust
+// wrong: the width sweep is audible as level
+pul = os.pulsetrain(f0, pw);
+
+// right: floored so the divisor cannot approach zero
+pul = os.pulsetrain(f0, pw) / max(0.34, sin(ma.PI * pw));
+```
+
+Measured on a held note, sustain level swing went from 1.21 dB to 0.47 dB, against a
+0.28 dB floor with the modulation switched off entirely.
+
 ## Envelope macros are the exception
 
 A longer decay genuinely has more sustained energy. A higher sustain level is genuinely

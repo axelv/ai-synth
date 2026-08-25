@@ -8,6 +8,7 @@ failing in a batch of five patches written without it.
 - [Every voice is a bit-identical copy](#every-voice-is-a-bit-identical-copy)
 - [Playing across the keyboard](#playing-across-the-keyboard)
 - [Effects belong in the shared chain](#effects-belong-in-the-shared-chain)
+- [Primitives that compile and then misbehave](#primitives-that-compile-and-then-misbehave)
 - [Errors actually observed](#errors-actually-observed)
 
 ## The skeleton
@@ -80,6 +81,14 @@ Two voices on the SAME pitch are still identical. That is unavoidable, and it ma
 much less: a player rarely holds the same note twice, and a chord is what the rule is
 about.
 
+**There is one legitimate exception, and it is a whole class of instrument.** A DCO
+synth locks its oscillators to a digital reset, so its voices really are phase-coherent
+and `+12.04 dB` is the machine rather than a defect. `references/examples/juno-106.dsp`
+is the case: its chorus exists precisely because its oscillators do not drift, and
+decorrelating them would remove the reason the instrument sounds the way it does. Before
+treating a `+12.04` reading as something to fix, decide whether the thing being modelled
+drifts at all.
+
 `measure.py` reports this as `voices +12.04 dB ... bit-identical voices`. Whether that is
 a defect depends on the patch. A purely deterministic patch is legitimately coherent. A
 patch that claims drift, air, breath, or width is broken if it reads +12.
@@ -126,6 +135,55 @@ Long tails need render headroom. A note whose decay outlasts the host's release 
 truncated mid-ring. `measure.py` fails on this as `still sounding ... when the render
 ends`.
 
+## Primitives that compile and then misbehave
+
+Compiling is not the bar. Each of these returned a working DSP and then produced audio
+that was wrong, in a way no exception reports.
+
+**`ve.moog_vcf` returns non-finite samples above a cutoff that depends on resonance.**
+Not a soft degradation: the render fills with NaN. Measured on a saw at 44.1 kHz, peak
+of the render, `NaN` where it blew up:
+
+| res | 5 kHz | 6 kHz | 6.5 kHz | 7 kHz | 7.5 kHz | 8 kHz | 8.8 kHz |
+|---|---|---|---|---|---|---|---|
+| 0.05 | 0.827 | 0.838 | 0.842 | 0.846 | 1.034 | 1.361 | NaN |
+| 0.40 | 0.404 | 0.427 | 0.632 | NaN | NaN | NaN | NaN |
+| 0.92 | 0.276 | NaN | NaN | NaN | NaN | NaN | NaN |
+
+Two things to read off it. The safe ceiling falls as resonance rises, so a fixed cutoff
+clamp is not enough; the clamp has to be a function of the resonance control. And at low
+resonance it clips before it breaks, so a patch can be over the line and merely sound
+loud. Clamp against `ma.SR` rather than a constant, because the boundary scales with
+sample rate and a page built for the browser may run at 48 kHz:
+
+```faust
+fcMax = ma.SR * (0.142 - 0.036 * resonance);
+fc    = max(60, min(fcMax, /* whatever the envelope and tracking ask for */));
+```
+
+**`ve.moogLadder` is not the way out of that.** It is stable everywhere and it is also
+inert. Measured against `fi.lowpass(4, 1000)`, which gives a 548 Hz spectral centroid on
+the same saw, `ve.moogLadder(1000/ma.SR, 1)` gives 2 Hz and `ve.moogLadder(1000/(ma.SR/2), 1)`
+gives 3 Hz, so neither reading of its normalised frequency argument is the one it wants.
+Sweeping Q from 0.5 to 25 at a fixed cutoff moved the peak from 0.022 to 0.022.
+`ve.moogHalfLadder` is better and still wrong, at 125 Hz. Do not spend an afternoon on
+which normalisation is intended; the resonance does not work either way.
+
+**An odd saturator makes DC out of an asymmetric mix.** `sat(x) = x / sqrt(1 + k*x*x)` is
+an odd function, so it cannot make DC from a symmetric wave, and it is easy to conclude
+it can never make DC at all. A sawtooth plus a narrow pulse is not symmetric about zero,
+and an odd curve applied to it has a nonzero mean. Measured +0.039 on a patch whose only
+nonlinearity was that `sat`, against a `measure.py` threshold of 0.01, and exactly 0.000
+with the saturator bypassed. Put `fi.dcblocker` after the nonlinearity. `warm-pad.dsp`
+uses the same saturator and escapes this only because a `fi.highpass(2, 30)` happens to
+sit after its filter, which is luck rather than design.
+
+**A ladder's resonance makeup multiplies, it does not divide.** A resonant lowpass loses
+passband level as it resonates, so compensation has to boost. Writing the obvious divider
+turned a `resonance` macro into 13.2 dB of level for 7.4 dB of shape, which is the
+volume-control failure from `patch-design.md` with the sign flipped. The same control
+with `makeup = 1 + k*resonance` measured 1.1 dB of level for 7.7 dB of shape.
+
 ## Errors actually observed
 
 Faust fluency is not the bottleneck. Across ten render invocations from five independent
@@ -138,3 +196,7 @@ Everything else compiled first try, including `re.zita_rev1_stereo`'s six argume
 `ve.moog_vcf(res, freq)` argument order, `en.adsre`, `ba.take` being 1-indexed, and
 `select2` polarity. Do not spend effort on an API cheat sheet; spend it on the rules
 above, which is where the real failures were.
+
+That `ve.moog_vcf` compiled first try is the point of the section above it. Getting the
+arguments right is not the same as getting audio out, and the failures that cost real
+time here were all on the far side of the compiler.

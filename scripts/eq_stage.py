@@ -128,7 +128,7 @@ EQ_FAUST = faust_source()
 
 
 def param_specs(n: int = N_BANDS) -> tuple[tuple[str, float, float, float], ...]:
-    """(name, lo, hi, default) per band, to be appended to synth.PARAMS."""
+    """(name, lo, hi, default) per band, to be appended to synth.PAD_PARAMS."""
     return tuple((f"eq{i}", -GAIN_LIMIT, GAIN_LIMIT, 0.0) for i in range(n))
 
 

@@ -41,9 +41,14 @@ their defaults.
 
 ### 2. Write the patch
 
-`references/examples/` holds five complete working instruments, one per architecture
-family, with `measured.md` naming what each one gets right and what it gets wrong. Read
-the one whose family matches the target sound.
+`references/examples/` holds six complete working instruments, with `measured.md` naming
+what each one gets right and what it gets wrong. Read the one whose family matches the
+target sound.
+
+Five of them carry deliberate defects and are read for warnings. `juno-106.dsp` is the
+one that measures clean, so it is the one to copy the shape of, and it is also the worked
+example of modelling a named machine rather than a description: its `measured.md` entry
+separates what was measured here from what is a fact about the hardware.
 
 Read one **especially** for FM, noise-sourced texture, and per-note filter sweeps. In
 those three the mapping from parameters to timbre is emergent rather than specified, and
@@ -72,6 +77,17 @@ meant to do; they are warnings precisely because they need that judgement.
 The last argument picks the pattern it measures on, which must suit the instrument. A
 bass measured on a held pad chord is being measured on material it was never written
 for, and the pattern bounds what can be seen at all.
+
+If the change was to `measure.py` itself, or to a rule the examples are written against,
+run the regression pass over all six of them:
+
+```bash
+uv run python $SK/scripts/measure.py --check
+```
+
+It exits nonzero if any of them now measures differently, and prints what moved.
+`--update` re-records `references/examples/expected.json` once the change is understood
+and intended.
 
 | pattern | material | exposes |
 |---|---|---|
@@ -139,16 +155,27 @@ The other lines:
   any time-valued macro claims; an exponential envelope through an exponential mapping
   can deliver 90% of its travel in a twentieth of its declared time.
 
-### Two limits of the harness
+### Three limits, two of the harness and one of measuring around it
 
-Both were found by it reporting a working control as broken. Do not trust a `does
-nothing` verdict without checking these:
+The first two were found by the harness reporting a working control as broken. Do not
+trust a `does nothing` verdict without checking them:
 
 - **The measurement pattern bounds what can be seen.** A release control is invisible on a
   pattern whose chords overlap. The harness retries a suspected-inert macro on an
   isolated note and says so, but any macro the pattern does not exercise is unmeasured.
 - **Everything except `width` folds to mono.** A correct mid/side widener leaves the mono
   sum untouched by construction.
+
+The third is about probes written alongside `measure.py` rather than about `measure.py`,
+which windows correctly:
+
+- **An RMS window shorter than the note's period measures waveform phase, not level.** A
+  hand-rolled probe using 128 samples, 2.9 ms, on a MIDI 62 note whose period is 3.4 ms
+  reported 4.7 to 8.9 dB of level swing on a held note. The same signal at 2048 samples,
+  46 ms, reads 0.23 to 0.47 dB. The first number is an artefact and it is convincing
+  enough to get a patch changed over it, which is what happened. Window several periods
+  of the lowest note being measured, and confirm any swing by switching off the thing
+  that supposedly causes it.
 
 ## Delivery
 

@@ -45,10 +45,10 @@ FLAT = np.zeros(eq_stage.N_BANDS)
 def flat_render(patch_path: str = "out/patch.json") -> np.ndarray:
     """The 18 s clip at `patch_path` with every EQ band at 0 dB, mono.
 
-    DSP_SAW rather than DSP: the 160-partial bank costs 23x render time and the
-    workflow measured its contribution at exactly zero, so it is not in the loop.
+    synth.PAD is the bank-free build: the 160-partial bank costs 23x render time and
+    the workflow measured its contribution at exactly zero, so it is not in the loop.
     """
-    r = synth.PadRenderer(n_voices=24, dsp=synth.DSP_SAW)
+    r = synth.PadRenderer(synth.PAD, n_voices=24)
     r.set_notes(load_notes())
     p = dict(json.load(open(patch_path))["params"])
     p.update(eq_stage.gain_dict(FLAT))
@@ -70,8 +70,8 @@ class FullScore:
 
     NFFT = 2048
 
-    def __init__(self, dsp: str = synth.DSP_SAW) -> None:
-        self.obj = Objective(load_notes(), dsp=dsp)
+    def __init__(self, arch: synth.Architecture = synth.PAD) -> None:
+        self.obj = Objective(load_notes(), arch=arch)
         self.target = self.obj.target.numpy().ravel()
         self._tmag: dict[int, np.ndarray] = {}
 

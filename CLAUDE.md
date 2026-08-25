@@ -57,12 +57,13 @@ repo-root `scripts/`, which belongs to track B.**
 |---|---|
 | `SKILL.md` | the workflow. Read it before touching the rest |
 | `scripts/faust_render.py` | offline renderer and the four patterns. `Instrument` backs measure.py |
-| `scripts/measure.py` | the verification pass. Macro sweeps, voice coherence, register |
+| `scripts/measure.py` | the verification pass. Macro sweeps, voice coherence, register. `--check` runs the whole example set |
 | `scripts/build_page.py` | one `.dsp` to one self-contained playable page |
 | `references/faust-poly.md` | poly conventions and the failures that are silent |
 | `references/patch-design.md` | what makes a macro a macro; ranges and defaults |
-| `references/examples/*.dsp` | five working instruments, one per architecture family |
-| `references/examples/measured.md` | what each gets right and wrong. The regression set |
+| `references/examples/*.dsp` | six working instruments. `juno-106` is the clean one |
+| `references/examples/measured.md` | what each gets right and wrong, and why |
+| `references/examples/expected.json` | what each is expected to measure. The regression set, enforced by `--check` |
 
 ### Track B
 
@@ -93,7 +94,12 @@ Current state lives in `out/patch.json` and `out/render.wav`.
 - **Write renders with `synth.write_render`** (PCM_24). soundfile's default PCM_16 costs
   0.089 of loss here, because the log-magnitude term sees the 16-bit floor in the
   6-16 kHz band. Score from the file on disk, not the array in memory.
-- **`synth.PARAMS` is append-only.** `out/patch.json` depends on the order.
+- **`synth.PAD.params` is append-only.** `out/patch.json` depends on the order.
+- **A DSP and its parameter names travel together, as a `synth.Architecture`.**
+  `PadRenderer(arch)` and `Objective(notes, arch=...)` take one. Passing a foreign
+  Faust source alone used to compile fine and then set nothing, because the names
+  came from a module global. `synth.PAD` is the fitted pad; `arch.with_dsp(src)`
+  is a variant build over the same vocabulary.
 - **`eq_stage`'s engine cache keys on the signal**, not just its length. It bakes the
   playback buffer in at construction, so a length-only key silently returns the first
   signal filtered.

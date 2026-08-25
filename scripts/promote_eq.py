@@ -40,7 +40,7 @@ def patch_params(gains: np.ndarray, level: float,
     """
     p = dict(json.load(open(base))["params"])
     p.update(eq_stage.gain_dict(gains))
-    lo, hi = next((q.lo, q.hi) for q in synth.PARAMS if q.name == "outGain")
+    lo, hi = next((q.lo, q.hi) for q in synth.PAD.params if q.name == "outGain")
     want = p["outGain"] * level
     if not lo <= want <= hi:
         raise ValueError(f"outGain {want:.4f} outside [{lo}, {hi}]; level {level:.4f}")
@@ -49,7 +49,7 @@ def patch_params(gains: np.ndarray, level: float,
 
 
 def render_full(params: dict[str, float]) -> np.ndarray:
-    r = synth.PadRenderer(n_voices=24, dsp=synth.DSP_SAW)
+    r = synth.PadRenderer(synth.PAD, n_voices=24)
     r.set_notes(load_notes())
     r.set_params(params)
     r.set_bend(bend_curve(int(DUR * SR) + SR))
@@ -77,7 +77,7 @@ def main() -> None:
     gains = np.asarray(doc["gains"], dtype=float)
     params = patch_params(gains, doc["level"])
 
-    obj = Objective(load_notes(), dsp=synth.DSP_SAW)
+    obj = Objective(load_notes())
     audio = render_full(params)
     loss = obj.loss_of(audio)
     print(f"full clip, rendered through the sliders : {loss:.6f}")
@@ -156,7 +156,7 @@ def main() -> None:
     print("  (single-chord fit for comparison: max 18.0, jump 10.2, alternations 9, railed 3)")
 
     synth.write_render(a.wav, audio)
-    json.dump({"normalized": synth.normalize(params).tolist(), "params": params,
+    json.dump({"normalized": synth.PAD.normalize(params).tolist(), "params": params,
                "full_clip_loss": loss, "lam": doc.get("lam"),
                "windows": {f"{t0}-{t1}": window_score(t0, t1)[0](audio[:, window_score(t0, t1)[1]])
                            for t0, t1 in WINDOWS},
