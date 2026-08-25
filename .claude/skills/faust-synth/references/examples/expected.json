@@ -1,0 +1,474 @@
+{
+ "note": "What each example patch measures. Regenerate with measure.py --update, check with measure.py --check. A diff here is either a fix or a regression and the difference matters; read it, do not absorb it.",
+ "patches": {
+  "acid-lead.dsp": {
+   "findings": [
+    {
+     "kind": "moves level more than shape (# dB against # dB); correct for an envelope-length control, a defect for a timbre control",
+     "macro": "drive",
+     "message": "moves level more than shape (10.9 dB against 4.5 dB); correct for an envelope-length control, a defect for a timbre control",
+     "severity": "warn"
+    }
+   ],
+   "macros": {
+    "accent": {
+     "centroid_ratio": 0.963,
+     "level_dB": 0.02,
+     "peak_hi": 0.568,
+     "peak_lo": 0.569,
+     "shape_dB": 1.82,
+     "width_dB": 0.04
+    },
+    "brightness": {
+     "centroid_ratio": 1.61,
+     "level_dB": 3.46,
+     "peak_hi": 0.565,
+     "peak_lo": 0.586,
+     "shape_dB": 2.51,
+     "width_dB": 1.69
+    },
+    "decay": {
+     "centroid_ratio": 1.413,
+     "level_dB": 1.15,
+     "peak_hi": 0.556,
+     "peak_lo": 0.535,
+     "shape_dB": 3.53,
+     "width_dB": 0.27
+    },
+    "drive": {
+     "centroid_ratio": 0.476,
+     "level_dB": 10.87,
+     "peak_hi": 0.579,
+     "peak_lo": 0.489,
+     "shape_dB": 4.46,
+     "width_dB": 0.05
+    },
+    "movement": {
+     "centroid_ratio": 1.125,
+     "level_dB": 0.44,
+     "peak_hi": 0.567,
+     "peak_lo": 0.586,
+     "shape_dB": 7.37,
+     "width_dB": 0.23
+    },
+    "squelch": {
+     "centroid_ratio": 1.317,
+     "level_dB": 1.19,
+     "peak_hi": 0.572,
+     "peak_lo": 0.532,
+     "shape_dB": 2.24,
+     "width_dB": 1.27
+    },
+    "width": {
+     "centroid_ratio": 1.024,
+     "level_dB": 1.28,
+     "peak_hi": 0.668,
+     "peak_lo": 0.504,
+     "shape_dB": 0.15,
+     "width_dB": 14.81
+    }
+   },
+   "pattern": "bass",
+   "register_dB": [
+    -15.3,
+    -14.8,
+    -15.9,
+    -15.7,
+    -24.1
+   ],
+   "release_below_peak_dB": -234.0,
+   "voices_dB": 12.04
+  },
+  "bell-lead.dsp": {
+   "findings": [
+    {
+     "kind": "peaks # at decay=# (max of its declared range)",
+     "macro": "decay",
+     "message": "peaks 1.116 at decay=14 (max of its declared range)",
+     "severity": "fail"
+    },
+    {
+     "kind": "moves level more than shape (# dB against # dB); correct for an envelope-length control, a defect for a timbre control",
+     "macro": "decay",
+     "message": "moves level more than shape (15.5 dB against 8.4 dB); correct for an envelope-length control, a defect for a timbre control",
+     "severity": "warn"
+    }
+   ],
+   "macros": {
+    "attack": {
+     "centroid_ratio": 0.998,
+     "level_dB": 0.41,
+     "peak_hi": 0.594,
+     "peak_lo": 0.721,
+     "shape_dB": 7.51,
+     "width_dB": 0.18
+    },
+    "brightness": {
+     "centroid_ratio": 1.205,
+     "level_dB": 0.72,
+     "peak_hi": 0.881,
+     "peak_lo": 0.606,
+     "shape_dB": 8.72,
+     "width_dB": 3.0
+    },
+    "decay": {
+     "centroid_ratio": 0.982,
+     "level_dB": 15.53,
+     "peak_hi": 1.116,
+     "peak_lo": 0.491,
+     "shape_dB": 8.37,
+     "width_dB": 1.83
+    },
+    "shimmer": {
+     "centroid_ratio": 1.002,
+     "level_dB": 0.46,
+     "peak_hi": 0.786,
+     "peak_lo": 0.619,
+     "shape_dB": 1.42,
+     "width_dB": 0.02
+    },
+    "space": {
+     "centroid_ratio": 0.973,
+     "level_dB": 3.64,
+     "peak_hi": 0.706,
+     "peak_lo": 0.806,
+     "shape_dB": 0.58,
+     "width_dB": 17.12
+    },
+    "sparkle": {
+     "centroid_ratio": 1.001,
+     "level_dB": 0.0,
+     "peak_hi": 0.712,
+     "peak_lo": 0.701,
+     "shape_dB": 10.31,
+     "width_dB": 0.05
+    },
+    "width": {
+     "centroid_ratio": 0.981,
+     "level_dB": 0.04,
+     "peak_hi": 0.707,
+     "peak_lo": 0.752,
+     "shape_dB": 7.44,
+     "width_dB": 2.96
+    }
+   },
+   "pattern": "lead",
+   "register_dB": [
+    -23.4,
+    -20.5,
+    -19.1,
+    -19.8,
+    -20.1
+   ],
+   "release_below_peak_dB": -144.0,
+   "voices_dB": 12.04
+  },
+  "breathy-texture.dsp": {
+   "findings": [
+    {
+     "kind": "moves level more than shape (# dB against # dB); correct for an envelope-length control, a defect for a timbre control",
+     "macro": "air",
+     "message": "moves level more than shape (8.0 dB against 5.3 dB); correct for an envelope-length control, a defect for a timbre control",
+     "severity": "warn"
+    }
+   ],
+   "macros": {
+    "air": {
+     "centroid_ratio": 2.949,
+     "level_dB": 7.99,
+     "peak_hi": 0.647,
+     "peak_lo": 0.797,
+     "shape_dB": 5.26,
+     "width_dB": 0.25
+    },
+    "bloom": {
+     "centroid_ratio": 0.974,
+     "level_dB": 1.77,
+     "peak_hi": 0.693,
+     "peak_lo": 0.734,
+     "shape_dB": 0.19,
+     "width_dB": 0.03
+    },
+    "brightness": {
+     "centroid_ratio": 2.768,
+     "level_dB": 0.3,
+     "peak_hi": 0.721,
+     "peak_lo": 0.715,
+     "shape_dB": 4.32,
+     "width_dB": 0.03
+    },
+    "fade": {
+     "centroid_ratio": 1.056,
+     "level_dB": 1.71,
+     "peak_hi": 0.752,
+     "peak_lo": 0.714,
+     "shape_dB": 0.4,
+     "width_dB": 0.03
+    },
+    "movement": {
+     "centroid_ratio": 1.468,
+     "level_dB": 0.16,
+     "peak_hi": 0.726,
+     "peak_lo": 0.711,
+     "shape_dB": 1.62,
+     "width_dB": 0.34
+    },
+    "space": {
+     "centroid_ratio": 0.861,
+     "level_dB": 1.56,
+     "peak_hi": 0.718,
+     "peak_lo": 0.724,
+     "shape_dB": 1.35,
+     "width_dB": 2.4
+    },
+    "width": {
+     "centroid_ratio": 1.034,
+     "level_dB": 1.07,
+     "peak_hi": 0.785,
+     "peak_lo": 0.634,
+     "shape_dB": 0.71,
+     "width_dB": 16.38
+    }
+   },
+   "pattern": "pad",
+   "register_dB": [
+    -31.5,
+    -27.7,
+    -26.7,
+    -28.9,
+    -26.4
+   ],
+   "release_below_peak_dB": -91.0,
+   "voices_dB": 10.72
+  },
+  "fm-bass.dsp": {
+   "findings": [
+    {
+     "kind": "moves level more than shape (# dB against # dB); correct for an envelope-length control, a defect for a timbre control",
+     "macro": "body",
+     "message": "moves level more than shape (10.6 dB against 6.2 dB); correct for an envelope-length control, a defect for a timbre control",
+     "severity": "warn"
+    },
+    {
+     "kind": "moves level more than shape (# dB against # dB); correct for an envelope-length control, a defect for a timbre control",
+     "macro": "decay",
+     "message": "moves level more than shape (6.7 dB against 4.2 dB); correct for an envelope-length control, a defect for a timbre control",
+     "severity": "warn"
+    },
+    {
+     "kind": "moves level more than shape (# dB against # dB); correct for an envelope-length control, a defect for a timbre control",
+     "macro": "drive",
+     "message": "moves level more than shape (10.6 dB against 2.9 dB); correct for an envelope-length control, a defect for a timbre control",
+     "severity": "warn"
+    },
+    {
+     "kind": "peaks # at width=# (max of its declared range)",
+     "macro": "width",
+     "message": "peaks 1.277 at width=1 (max of its declared range)",
+     "severity": "fail"
+    }
+   ],
+   "macros": {
+    "bite": {
+     "centroid_ratio": 1.316,
+     "level_dB": 0.31,
+     "peak_hi": 0.766,
+     "peak_lo": 0.824,
+     "shape_dB": 1.54,
+     "width_dB": 0.02
+    },
+    "body": {
+     "centroid_ratio": 0.211,
+     "level_dB": 10.55,
+     "peak_hi": 0.815,
+     "peak_lo": 0.777,
+     "shape_dB": 6.25,
+     "width_dB": 8.2
+    },
+    "brightness": {
+     "centroid_ratio": 4.953,
+     "level_dB": 2.28,
+     "peak_hi": 0.786,
+     "peak_lo": 0.607,
+     "shape_dB": 12.13,
+     "width_dB": 4.72
+    },
+    "decay": {
+     "centroid_ratio": 1.254,
+     "level_dB": 6.71,
+     "peak_hi": 0.842,
+     "peak_lo": 0.704,
+     "shape_dB": 4.2,
+     "width_dB": 5.14
+    },
+    "drive": {
+     "centroid_ratio": 0.58,
+     "level_dB": 10.6,
+     "peak_hi": 0.895,
+     "peak_lo": 0.61,
+     "shape_dB": 2.89,
+     "width_dB": 4.07
+    },
+    "snap": {
+     "centroid_ratio": 4.538,
+     "level_dB": 1.23,
+     "peak_hi": 0.71,
+     "peak_lo": 0.8,
+     "shape_dB": 6.2,
+     "width_dB": 3.74
+    },
+    "width": {
+     "centroid_ratio": 1.001,
+     "level_dB": 0.01,
+     "peak_hi": 1.277,
+     "peak_lo": 0.547,
+     "shape_dB": 0.06,
+     "width_dB": 70.83
+    }
+   },
+   "pattern": "bass",
+   "register_dB": [
+    -19.5,
+    -20.2,
+    -21.0,
+    -21.2,
+    -21.1
+   ],
+   "release_below_peak_dB": -237.0,
+   "voices_dB": 12.04
+  },
+  "juno-106.dsp": {
+   "findings": [],
+   "macros": {
+    "brightness": {
+     "centroid_ratio": 2.645,
+     "level_dB": 4.03,
+     "peak_hi": 0.791,
+     "peak_lo": 0.561,
+     "shape_dB": 26.39,
+     "width_dB": 0.73
+    },
+    "chorus": {
+     "centroid_ratio": 1.042,
+     "level_dB": 1.85,
+     "peak_hi": 0.68,
+     "peak_lo": 0.749,
+     "shape_dB": 0.5,
+     "width_dB": 74.58
+    },
+    "resonance": {
+     "centroid_ratio": 2.289,
+     "level_dB": 1.09,
+     "peak_hi": 0.84,
+     "peak_lo": 0.827,
+     "shape_dB": 7.73,
+     "width_dB": 0.16
+    },
+    "sweep": {
+     "centroid_ratio": 1.417,
+     "level_dB": 0.52,
+     "peak_hi": 0.753,
+     "peak_lo": 0.723,
+     "shape_dB": 14.99,
+     "width_dB": 0.03
+    },
+    "swell": {
+     "centroid_ratio": 1.004,
+     "level_dB": 1.29,
+     "peak_hi": 0.806,
+     "peak_lo": 0.714,
+     "shape_dB": 1.73,
+     "width_dB": 0.11
+    },
+    "tone": {
+     "centroid_ratio": 0.824,
+     "level_dB": 4.54,
+     "peak_hi": 0.761,
+     "peak_lo": 0.471,
+     "shape_dB": 5.56,
+     "width_dB": 0.33
+    }
+   },
+   "pattern": "pad",
+   "register_dB": [
+    -30.5,
+    -27.2,
+    -26.2,
+    -25.8,
+    -25.8
+   ],
+   "release_below_peak_dB": -230.0,
+   "voices_dB": 12.04
+  },
+  "warm-pad.dsp": {
+   "findings": [
+    {
+     "kind": "is inert on the pad pattern but moves the release tail by # dB, so the audition pattern does not exercise it",
+     "macro": "tail",
+     "message": "is inert on the pad pattern but moves the release tail by 23.4 dB, so the audition pattern does not exercise it",
+     "severity": "warn"
+    }
+   ],
+   "macros": {
+    "brightness": {
+     "centroid_ratio": 2.566,
+     "level_dB": 6.09,
+     "peak_hi": 0.67,
+     "peak_lo": 0.343,
+     "shape_dB": 26.41,
+     "width_dB": 0.01
+    },
+    "detune": {
+     "centroid_ratio": 0.969,
+     "level_dB": 2.53,
+     "peak_hi": 0.664,
+     "peak_lo": 0.769,
+     "shape_dB": 1.02,
+     "width_dB": 0.24
+    },
+    "space": {
+     "centroid_ratio": 1.006,
+     "level_dB": 2.59,
+     "peak_hi": 0.714,
+     "peak_lo": 0.708,
+     "shape_dB": 1.29,
+     "width_dB": 3.7
+    },
+    "swell": {
+     "centroid_ratio": 1.091,
+     "level_dB": 0.8,
+     "peak_hi": 0.714,
+     "peak_lo": 0.692,
+     "shape_dB": 2.13,
+     "width_dB": 0.07
+    },
+    "tail": {
+     "centroid_ratio": 1.05,
+     "level_dB": 0.29,
+     "peak_hi": 0.639,
+     "peak_lo": 0.683,
+     "shape_dB": 0.48,
+     "width_dB": 0.09
+    },
+    "width": {
+     "centroid_ratio": 1.002,
+     "level_dB": 1.61,
+     "peak_hi": 0.806,
+     "peak_lo": 0.537,
+     "shape_dB": 0.67,
+     "width_dB": 4.83
+    }
+   },
+   "pattern": "pad",
+   "register_dB": [
+    -22.4,
+    -26.5,
+    -28.3,
+    -27.7,
+    -28.4
+   ],
+   "release_below_peak_dB": -130.0,
+   "voices_dB": 12.04
+  }
+ }
+}

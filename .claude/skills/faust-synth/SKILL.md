@@ -78,6 +78,17 @@ The last argument picks the pattern it measures on, which must suit the instrume
 bass measured on a held pad chord is being measured on material it was never written
 for, and the pattern bounds what can be seen at all.
 
+If the change was to `measure.py` itself, or to a rule the examples are written against,
+run the regression pass over all six of them:
+
+```bash
+uv run python $SK/scripts/measure.py --check
+```
+
+It exits nonzero if any of them now measures differently, and prints what moved.
+`--update` re-records `references/examples/expected.json` once the change is understood
+and intended.
+
 | pattern | material | exposes |
 |---|---|---|
 | `pad` | slow four-note chords, long holds | swell, tail, movement |

@@ -57,12 +57,13 @@ repo-root `scripts/`, which belongs to track B.**
 |---|---|
 | `SKILL.md` | the workflow. Read it before touching the rest |
 | `scripts/faust_render.py` | offline renderer and the four patterns. `Instrument` backs measure.py |
-| `scripts/measure.py` | the verification pass. Macro sweeps, voice coherence, register |
+| `scripts/measure.py` | the verification pass. Macro sweeps, voice coherence, register. `--check` runs the whole example set |
 | `scripts/build_page.py` | one `.dsp` to one self-contained playable page |
 | `references/faust-poly.md` | poly conventions and the failures that are silent |
 | `references/patch-design.md` | what makes a macro a macro; ranges and defaults |
 | `references/examples/*.dsp` | six working instruments. `juno-106` is the clean one |
-| `references/examples/measured.md` | what each gets right and wrong. The regression set |
+| `references/examples/measured.md` | what each gets right and wrong, and why |
+| `references/examples/expected.json` | what each is expected to measure. The regression set, enforced by `--check` |
 
 ### Track B
 

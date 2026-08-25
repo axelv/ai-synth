@@ -17,17 +17,32 @@ read: whether 6 dB of level change on `brightness` is a defect depends on what t
 was meant to do. Only checks that are wrong under ANY intent are raised as failures.
 
 Usage:
-    uv run python <skill>/scripts/measure.py patch.dsp bass
+    uv run python <skill>/scripts/measure.py patch.dsp bass    # one patch, human report
+    uv run python <skill>/scripts/measure.py --check           # the whole example set
+    uv run python <skill>/scripts/measure.py --update          # re-record what it expects
+
+`--check` is the regression pass over `references/examples/`. It used to be a paragraph
+in `measured.md` asking whoever changed this file to re-run six patches and diff the
+output by eye, which is a claim nothing enforced: expectations written as prose drift
+from the code the moment someone does not do it by hand. What each patch is expected to
+report now lives in `references/examples/expected.json`, and changing it is a diff.
 """
 
 from __future__ import annotations
 
+import argparse
+import json
+import os
+import re
 import sys
 from dataclasses import dataclass, field
 
 import numpy as np
 
 from faust_render import PATTERNS, Instrument
+
+EXAMPLES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "examples")
+EXPECTED = os.path.join(EXAMPLES, "expected.json")
 
 # Ten octave edges from 31.25 Hz, giving nine bands up to 16 kHz. Octave rather than
 # third-octave because this compares gross spectral shape between two renders, and
@@ -388,5 +403,149 @@ def render_report(rep: Report) -> str:
     return "\n".join(out)
 
 
+# ---------------------------------------------------------------- regression pass
+
+# Renders here are deterministic, so in principle every digit should reproduce. These
+# tolerances are for a different machine or a moved library version, where the last
+# place or two moves without anything being wrong. A drift larger than this is a real
+# change and should be read, not absorbed.
+TOL = {"dB": 0.5, "ratio": 0.05, "peak": 0.02}
+
+
+def finding_kind(message: str) -> str:
+    """The message with its numbers removed.
+
+    Findings are compared on this rather than on their text, because the text carries
+    the measured value: `peaks 1.277 at width=1` would differ from `peaks 1.281` and
+    report a regression where the only thing that moved is the last digit. The numbers
+    are still compared, through the macro table.
+    """
+    return re.sub(r"[-+]?\d*\.?\d+", "#", message)
+
+
+def summarize(rep: Report, pattern: str) -> dict:
+    """The part of a report worth holding still, as plain data."""
+    return {
+        "pattern": pattern,
+        "findings": [
+            {"severity": f.severity, "macro": f.macro,
+             "kind": finding_kind(f.message), "message": f.message}
+            for f in rep.findings
+        ],
+        "macros": {
+            m["macro"]: {
+                "level_dB": round(m["rms_delta_dB"], 2),
+                "shape_dB": round(m["shape_delta_dB"], 2),
+                "width_dB": round(m["width_delta_dB"], 2),
+                "centroid_ratio": round(m["centroid_ratio"], 3),
+                "peak_lo": round(m["peak_min"], 3),
+                "peak_hi": round(m["peak_max"], 3),
+            }
+            for m in rep.macros
+        },
+        "voices_dB": round(rep.voice["unison_gain_dB"], 2),
+        "register_dB": [round(r["rms_dB"], 1) for r in rep.register],
+        "release_below_peak_dB": round(rep.release["tail_below_peak_dB"], 0),
+    }
+
+
+def _diff_numbers(want: dict, got: dict, path: str, tol: float) -> list[str]:
+    out = []
+    for k in sorted(set(want) | set(got)):
+        if k not in want:
+            out.append(f"{path}.{k}: appeared, now {got[k]}")
+        elif k not in got:
+            out.append(f"{path}.{k}: gone, was {want[k]}")
+        elif abs(float(want[k]) - float(got[k])) > tol:
+            out.append(f"{path}.{k}: {want[k]} -> {got[k]}")
+    return out
+
+
+def compare(want: dict, got: dict) -> list[str]:
+    """Every way the two summaries disagree, as one line each."""
+    out: list[str] = []
+
+    wf = {(f["severity"], f["macro"], f["kind"]): f for f in want["findings"]}
+    gf = {(f["severity"], f["macro"], f["kind"]): f for f in got["findings"]}
+    for key in gf.keys() - wf.keys():
+        out.append(f"new finding: {gf[key]['severity']} {gf[key]['macro'] or ''} {gf[key]['message']}")
+    for key in wf.keys() - gf.keys():
+        out.append(f"finding gone: {wf[key]['severity']} {wf[key]['macro'] or ''} {wf[key]['message']}")
+
+    for name in sorted(set(want["macros"]) | set(got["macros"])):
+        if name not in want["macros"]:
+            out.append(f"macro {name}: appeared")
+            continue
+        if name not in got["macros"]:
+            out.append(f"macro {name}: gone")
+            continue
+        w, g = want["macros"][name], got["macros"][name]
+        for field_, tol in (("level_dB", TOL["dB"]), ("shape_dB", TOL["dB"]),
+                            ("width_dB", TOL["dB"]), ("centroid_ratio", TOL["ratio"]),
+                            ("peak_lo", TOL["peak"]), ("peak_hi", TOL["peak"])):
+            if abs(w[field_] - g[field_]) > tol:
+                out.append(f"macro {name}.{field_}: {w[field_]} -> {g[field_]}")
+
+    if abs(want["voices_dB"] - got["voices_dB"]) > TOL["dB"]:
+        out.append(f"voices_dB: {want['voices_dB']} -> {got['voices_dB']}")
+    if len(want["register_dB"]) != len(got["register_dB"]):
+        out.append("register: different number of pitches")
+    else:
+        for i, (w, g) in enumerate(zip(want["register_dB"], got["register_dB"])):
+            if abs(w - g) > TOL["dB"]:
+                out.append(f"register[{i}]: {w} -> {g}")
+    return out
+
+
+def run_set(update: bool) -> int:
+    """Measure every patch the expectations name, and either diff or re-record."""
+    with open(EXPECTED) as fh:
+        doc = json.load(fh)
+    patches = doc["patches"]
+    fresh, bad = {}, 0
+    for name in sorted(patches):
+        pattern = patches[name]["pattern"]
+        got = summarize(measure(os.path.join(EXAMPLES, name), pattern), pattern)
+        fresh[name] = got
+        if update:
+            print(f"  recorded  {name} ({pattern})")
+            continue
+        diffs = compare(patches[name], got)
+        if diffs:
+            bad += 1
+            print(f"  CHANGED   {name}")
+            for d in diffs:
+                print(f"              {d}")
+        else:
+            f = sum(1 for x in got["findings"] if x["severity"] == "fail")
+            w = len(got["findings"]) - f
+            print(f"  ok        {name:<22} {f} fail, {w} warn")
+
+    if update:
+        doc["patches"] = fresh
+        with open(EXPECTED, "w") as fh:
+            json.dump(doc, fh, indent=1, sort_keys=True)
+            fh.write("\n")
+        print(f"\nwrote {os.path.relpath(EXPECTED)}")
+        return 0
+    print(f"\n{len(patches) - bad} of {len(patches)} unchanged")
+    return 1 if bad else 0
+
+
 if __name__ == "__main__":
-    print(render_report(measure(sys.argv[1], sys.argv[2])))
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("dsp", nargs="?", help="path to a .dsp file")
+    ap.add_argument("pattern", nargs="?", choices=sorted(PATTERNS),
+                    help="which measurement pattern to play")
+    ap.add_argument("--check", action="store_true",
+                    help="measure every patch in references/examples/ and diff against "
+                         "expected.json; exits nonzero if anything moved")
+    ap.add_argument("--update", action="store_true",
+                    help="re-record expected.json from what the patches measure now")
+    a = ap.parse_args()
+
+    if a.check or a.update:
+        sys.exit(run_set(a.update))
+    if not a.dsp or not a.pattern:
+        ap.error("give a .dsp and a pattern, or --check")
+    print(render_report(measure(a.dsp, a.pattern)))

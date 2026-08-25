@@ -9,9 +9,14 @@ play. They serve two purposes:
    families differ in how predictable the mapping from parameters to timbre is, and the
    three where it is emergent rather than specified are the ones worth reading before
    writing rather than after.
-2. **A regression set.** The expected findings below are what `measure.py` reported. Change
-   the harness or a rule, re-run all six, and diff. A finding that disappears is either a
-   fix or a regression, and the difference matters.
+2. **A regression set**, which is now `measure.py --check` rather than this file. What
+   each patch is expected to report lives in `expected.json`, and a change there is a
+   diff rather than a paragraph asking someone to re-run six patches by eye. A finding
+   that disappears is either a fix or a regression, and the difference matters.
+
+The findings quoted below are illustration for the prose around them. They are not the
+expectations the check compares against, so they cannot silently disagree with the code:
+`expected.json` is the record, and it is regenerated with `--update`.
 
 Every defect in the first five is deliberate and left in place. They are the cases the
 harness exists to catch, and a corpus of only clean patches cannot test it. `juno-106` is
@@ -30,11 +35,16 @@ warnings. **Do not copy any of the other five without reading its defects first.
 | `acid-lead.dsp` | resonant per-note sweep | emergent: envelope through a nonlinear mapping | `bass` |
 | `juno-106.dsp` | subtractive, DCO | direct, and modelled on a specific machine | `pad` |
 
-Reproduce any row with:
+Reproduce one row, or check them all:
 
 ```bash
 uv run python <skill>/scripts/measure.py <skill>/references/examples/warm-pad.dsp pad
+uv run python <skill>/scripts/measure.py --check
 ```
+
+`--check` measures all six and exits nonzero if anything moved. Run it after changing
+`measure.py`, after changing a rule that the patches are written against, and before
+adding a seventh.
 
 ## Expected findings
 
@@ -96,11 +106,7 @@ texture, which is the defect the voice-decorrelation rule exists to prevent.
 ### juno-106.dsp — 0 fail, 0 warn
 
 ```
-  macro            level   shape   width  centroid  peak lo  peak hi
   brightness        4.0d   26.4d    0.7d      2.65x    0.561    0.791
-  resonance         1.1d    7.7d    0.2d      2.29x    0.827    0.840
-  sweep             0.5d   15.0d    0.0d      1.42x    0.723    0.753
-  tone              4.5d    5.6d    0.3d      0.82x    0.471    0.761
   voices    +12.04 dB for 4x unison at MIDI 62: bit-identical voices
 ```
 
