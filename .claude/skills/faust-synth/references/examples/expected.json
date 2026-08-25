@@ -338,66 +338,229 @@
    "voices_dB": 12.04
   },
   "juno-106.dsp": {
-   "findings": [],
+   "findings": [
+    {
+     "kind": "moves level more than shape (# dB against # dB); correct for an envelope-length control, a defect for a timbre control",
+     "macro": "hpf",
+     "message": "moves level more than shape (6.9 dB against 6.7 dB); correct for an envelope-length control, a defect for a timbre control",
+     "severity": "warn"
+    },
+    {
+     "kind": "moves level more than shape (# dB against # dB); correct for an envelope-length control, a defect for a timbre control",
+     "macro": "level",
+     "message": "moves level more than shape (221.6 dB against 17.6 dB); correct for an envelope-length control, a defect for a timbre control",
+     "severity": "warn"
+    },
+    {
+     "kind": "is a volume control: # dB of level for # dB of spectral shape",
+     "macro": "sustain",
+     "message": "is a volume control: 8.1 dB of level for 0.84 dB of spectral shape",
+     "severity": "fail"
+    }
+   ],
    "macros": {
-    "brightness": {
-     "centroid_ratio": 2.645,
-     "level_dB": 4.03,
-     "peak_hi": 0.791,
-     "peak_lo": 0.561,
-     "shape_dB": 26.39,
-     "width_dB": 0.73
+    "attack": {
+     "centroid_ratio": 1.005,
+     "level_dB": 1.26,
+     "peak_hi": 0.62,
+     "peak_lo": 0.5,
+     "shape_dB": 1.83,
+     "width_dB": 0.15
     },
     "chorus": {
-     "centroid_ratio": 1.042,
-     "level_dB": 1.85,
-     "peak_hi": 0.68,
-     "peak_lo": 0.749,
-     "shape_dB": 0.5,
-     "width_dB": 74.58
+     "centroid_ratio": 1.029,
+     "level_dB": 1.73,
+     "peak_hi": 0.516,
+     "peak_lo": 0.587,
+     "shape_dB": 0.48,
+     "width_dB": 74.57
     },
-    "resonance": {
-     "centroid_ratio": 2.289,
-     "level_dB": 1.09,
-     "peak_hi": 0.84,
-     "peak_lo": 0.827,
-     "shape_dB": 7.73,
+    "cutoff": {
+     "centroid_ratio": 2.338,
+     "level_dB": 1.42,
+     "peak_hi": 0.588,
+     "peak_lo": 0.588,
+     "shape_dB": 25.01,
+     "width_dB": 0.47
+    },
+    "dcoLfo": {
+     "centroid_ratio": 0.976,
+     "level_dB": 0.52,
+     "peak_hi": 0.655,
+     "peak_lo": 0.562,
+     "shape_dB": 0.62,
+     "width_dB": 0.01
+    },
+    "decay": {
+     "centroid_ratio": 0.978,
+     "level_dB": 0.98,
+     "peak_hi": 0.602,
+     "peak_lo": 0.565,
+     "shape_dB": 0.95,
+     "width_dB": 0.21
+    },
+    "delay": {
+     "centroid_ratio": 0.975,
+     "level_dB": 0.57,
+     "peak_hi": 0.557,
+     "peak_lo": 0.565,
+     "shape_dB": 0.48,
+     "width_dB": 0.09
+    },
+    "envPol": {
+     "centroid_ratio": 0.365,
+     "level_dB": 15.96,
+     "peak_hi": 0.076,
+     "peak_lo": 0.565,
+     "shape_dB": 19.39,
+     "width_dB": 1.96
+    },
+    "hpf": {
+     "centroid_ratio": 1.584,
+     "level_dB": 6.91,
+     "peak_hi": 0.32,
+     "peak_lo": 0.576,
+     "shape_dB": 6.67,
+     "width_dB": 0.3
+    },
+    "kybd": {
+     "centroid_ratio": 1.078,
+     "level_dB": 0.34,
+     "peak_hi": 0.597,
+     "peak_lo": 0.561,
+     "shape_dB": 5.12,
      "width_dB": 0.16
     },
-    "sweep": {
-     "centroid_ratio": 1.417,
-     "level_dB": 0.52,
-     "peak_hi": 0.753,
-     "peak_lo": 0.723,
-     "shape_dB": 14.99,
-     "width_dB": 0.03
+    "level": {
+     "centroid_ratio": 0.0,
+     "level_dB": 221.58,
+     "peak_hi": 0.706,
+     "peak_lo": 0.0,
+     "shape_dB": 17.57,
+     "width_dB": 5.68
     },
-    "swell": {
-     "centroid_ratio": 1.004,
-     "level_dB": 1.29,
-     "peak_hi": 0.806,
-     "peak_lo": 0.714,
-     "shape_dB": 1.73,
+    "noise": {
+     "centroid_ratio": 1.068,
+     "level_dB": 0.82,
+     "peak_hi": 0.559,
+     "peak_lo": 0.567,
+     "shape_dB": 1.69,
+     "width_dB": 0.09
+    },
+    "pulse": {
+     "centroid_ratio": 1.073,
+     "level_dB": 3.1,
+     "peak_hi": 0.565,
+     "peak_lo": 0.447,
+     "shape_dB": 2.15,
+     "width_dB": 0.35
+    },
+    "pwm": {
+     "centroid_ratio": 1.117,
+     "level_dB": 0.42,
+     "peak_hi": 0.605,
+     "peak_lo": 0.611,
+     "shape_dB": 0.8,
+     "width_dB": 0.04
+    },
+    "pwmMode": {
+     "centroid_ratio": 1.012,
+     "level_dB": 0.27,
+     "peak_hi": 0.598,
+     "peak_lo": 0.565,
+     "shape_dB": 0.76,
+     "width_dB": 0.16
+    },
+    "range": {
+     "centroid_ratio": 2.292,
+     "level_dB": 2.28,
+     "peak_hi": 0.557,
+     "peak_lo": 0.493,
+     "shape_dB": 12.86,
+     "width_dB": 1.21
+    },
+    "rate": {
+     "centroid_ratio": 1.018,
+     "level_dB": 0.4,
+     "peak_hi": 0.57,
+     "peak_lo": 0.589,
+     "shape_dB": 0.37,
+     "width_dB": 0.09
+    },
+    "release": {
+     "centroid_ratio": 1.019,
+     "level_dB": 0.19,
+     "peak_hi": 0.565,
+     "peak_lo": 0.589,
+     "shape_dB": 0.52,
+     "width_dB": 0.17
+    },
+    "res": {
+     "centroid_ratio": 2.171,
+     "level_dB": 0.69,
+     "peak_hi": 0.705,
+     "peak_lo": 0.614,
+     "shape_dB": 7.04,
      "width_dB": 0.11
     },
-    "tone": {
-     "centroid_ratio": 0.824,
-     "level_dB": 4.54,
-     "peak_hi": 0.761,
-     "peak_lo": 0.471,
-     "shape_dB": 5.56,
-     "width_dB": 0.33
+    "saw": {
+     "centroid_ratio": 1.063,
+     "level_dB": 4.29,
+     "peak_hi": 0.565,
+     "peak_lo": 0.427,
+     "shape_dB": 2.24,
+     "width_dB": 0.26
+    },
+    "sub": {
+     "centroid_ratio": 0.854,
+     "level_dB": 0.47,
+     "peak_hi": 0.659,
+     "peak_lo": 0.542,
+     "shape_dB": 4.96,
+     "width_dB": 0.45
+    },
+    "sustain": {
+     "centroid_ratio": 1.05,
+     "level_dB": 8.06,
+     "peak_hi": 0.622,
+     "peak_lo": 0.565,
+     "shape_dB": 0.84,
+     "width_dB": 0.08
+    },
+    "vcaMode": {
+     "centroid_ratio": 0.977,
+     "level_dB": 2.02,
+     "peak_hi": 0.609,
+     "peak_lo": 0.565,
+     "shape_dB": 0.35,
+     "width_dB": 0.05
+    },
+    "vcfEnv": {
+     "centroid_ratio": 1.698,
+     "level_dB": 0.36,
+     "peak_hi": 0.567,
+     "peak_lo": 0.52,
+     "shape_dB": 20.88,
+     "width_dB": 0.14
+    },
+    "vcfLfo": {
+     "centroid_ratio": 1.033,
+     "level_dB": 0.15,
+     "peak_hi": 0.571,
+     "peak_lo": 0.565,
+     "shape_dB": 10.95,
+     "width_dB": 0.06
     }
    },
    "pattern": "pad",
    "register_dB": [
-    -30.5,
-    -27.2,
-    -26.2,
-    -25.8,
-    -25.8
+    -33.3,
+    -30.2,
+    -28.8,
+    -28.4,
+    -28.5
    ],
-   "release_below_peak_dB": -230.0,
+   "release_below_peak_dB": -229.0,
    "voices_dB": 12.04
   },
   "warm-pad.dsp": {

@@ -34,7 +34,7 @@ body { background: #101214; color: #edebe5; }
 
 /* ---- the case, and the one strip that carries plate, panel and wordmark ---- */
 .wrap[data-skin="juno"] {
-  max-width: 78rem;
+  max-width: 126rem;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 0;
@@ -57,7 +57,7 @@ body { background: #101214; color: #edebe5; }
 /* the maker's plate: cream, and the only light mass on the strip */
 [data-skin="juno"] .eyebrow {
   display: flex; align-items: center; justify-content: center;
-  margin: 0; padding: 0 1.4rem; min-width: 8.5rem;
+  margin: 0; padding: 0 1rem; min-width: 5.5rem;
   background: linear-gradient(180deg, #efeada 0%, var(--cream) 45%, #c9c4b0 100%);
   color: #23262a; font-family: var(--sans); font-weight: 700;
   font-size: .95rem; letter-spacing: .06em; text-transform: lowercase;
@@ -87,19 +87,23 @@ body { background: #101214; color: #edebe5; }
 }
 
 /* ---- the panel proper ---- */
-[data-skin="juno"] .controls { display: block; }
+[data-skin="juno"] .controls { display: block; min-width: 0; }
 [data-skin="juno"] .section h2 { display: none; }
 [data-skin="juno"] .macros {
   display: flex; align-items: stretch; height: 100%;
+  flex-wrap: wrap; align-content: flex-start;
+  overflow-x: auto; overflow-y: hidden;
   gap: 0; padding: 0; border: 0; border-radius: 0;
   background: linear-gradient(180deg, #515150 0%, var(--panel) 20%, var(--panel-lo) 100%);
   box-shadow: none;
-  border-bottom: 3px solid var(--red);
   border-left: 2px solid var(--rule);
   border-right: 2px solid var(--rule);
 }
 [data-skin="juno"] .sect {
-  display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0;
+  display: flex; flex-direction: column;
+  flex: 1 0 auto;               /* grows to fill a row, never shrinks below its content */
+  min-width: min-content;
+  border-bottom: 3px solid var(--red);
 }
 /* the hairline runs the full height of the strip, band included, as on the panel */
 [data-skin="juno"] .sect + .sect { border-left: 2px solid var(--rule); }
@@ -112,58 +116,62 @@ body { background: #101214; color: #edebe5; }
   text-shadow: 0 1px 1px rgba(0,0,0,.35);
 }
 [data-skin="juno"] .sect-body {
-  display: flex; justify-content: center; gap: .15rem;
+  display: flex; justify-content: center; gap: .1rem;
   flex: 1 1 auto; padding: .5rem .45rem .55rem;
 }
 
 /* ---- one fader ---- */
 [data-skin="juno"] .fader {
-  display: flex; flex-direction: column; align-items: center; gap: .3rem;
-  width: 4.4rem;
+  display: flex; flex-direction: column; align-items: center; gap: .25rem;
+  flex: 0 0 auto; width: 2.7rem;
 }
+/* The printed scale is numbered once per section on the real panel, not on every
+   fader, which is also what makes a 24-control panel fit at all. */
+[data-skin="juno"] .fader.numbered { width: 3.5rem; }
 [data-skin="juno"] .cap {
-  font-family: var(--sans); font-size: .55rem; font-weight: 600;
-  letter-spacing: .09em; text-transform: uppercase; text-align: center;
+  font-family: var(--sans); font-size: .5rem; font-weight: 600;
+  letter-spacing: .05em; text-transform: uppercase; text-align: center;
   color: var(--legend); line-height: 1.25; min-height: 1.4em;
+  max-width: 100%; overflow-wrap: anywhere;
 }
 [data-skin="juno"] .slot {
   position: relative; display: flex; align-items: stretch; justify-content: center;
-  gap: 3px; height: 8.2rem;
+  flex: 0 0 auto; gap: 2px; height: 8.2rem;
 }
 /* printed scale: exact by construction, space-between over the travel */
 [data-skin="juno"] .scale {
   display: flex; flex-direction: column; justify-content: space-between;
-  width: 10px; padding: 7px 0;
+  width: 6px; padding: 7px 0;
 }
 [data-skin="juno"] .scale i { height: 1px; background: #cfcdc6; width: 50%; }
 [data-skin="juno"] .scale i.maj { width: 100%; height: 2px; background: #fbfaf6; }
 [data-skin="juno"] .scale.right i { align-self: flex-end; }
 [data-skin="juno"] .nums {
   display: flex; flex-direction: column; justify-content: space-between;
-  padding: 4px 0; font-family: var(--mono); font-size: .48rem;
-  color: var(--legend-d); text-align: right; width: 11px;
+  padding: 4px 0; font-family: var(--mono); font-size: .45rem;
+  color: var(--legend-d); text-align: right; width: 9px;
 }
 
 /* the groove the cap rides in */
 [data-skin="juno"] .slot input[type=range] {
   -webkit-appearance: none; appearance: none;
   writing-mode: vertical-rl; direction: rtl;   /* value increases upward */
-  width: 26px; height: 100%; margin: 0; padding: 0;
+  width: 20px; height: 100%; margin: 0; padding: 0;
   background: linear-gradient(90deg,
-      transparent 0 9px, #35383a 9px 10px, #08090a 10px 13px,
-      #35383a 13px 14px, transparent 14px 100%);
+      transparent 0 6px, #35383a 6px 7px, #08090a 7px 10px,
+      #35383a 10px 11px, transparent 11px 100%);
   cursor: ns-resize;
 }
 [data-skin="juno"] .slot input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
-  width: 26px; height: 14px; border-radius: 2px;
+  width: 21px; height: 12px; border-radius: 2px;
   background: linear-gradient(180deg, #4a4d4f 0%, #26292b 34%, #f1efe8 44%,
                                       #f1efe8 56%, #191b1c 66%, #060708 100%);
   border: 1px solid #000;
   box-shadow: 0 2px 3px rgba(0,0,0,.75), 0 1px 0 rgba(255,255,255,.12) inset;
 }
 [data-skin="juno"] .slot input[type=range]::-moz-range-thumb {
-  width: 26px; height: 14px; border-radius: 2px; border: 1px solid #000;
+  width: 21px; height: 12px; border-radius: 2px; border: 1px solid #000;
   background: linear-gradient(180deg, #4a4d4f 0%, #26292b 34%, #f1efe8 44%,
                                       #f1efe8 56%, #191b1c 66%, #060708 100%);
 }
@@ -175,14 +183,14 @@ body { background: #101214; color: #edebe5; }
 }
 /* the cap's white index line, drawn over the thumb's centre */
 [data-skin="juno"] .val {
-  font-family: var(--mono); font-size: .55rem; color: var(--legend-d);
+  font-family: var(--mono); font-size: .48rem; color: var(--legend-d);
   font-variant-numeric: tabular-nums;
 }
 
 /* ---- a discrete control: the chorus buttons ---- */
 [data-skin="juno"] .switch {
   display: flex; flex-direction: column; align-items: center; gap: .3rem;
-  padding: 0 .2rem; height: 100%;
+  flex: 0 0 auto; padding: 0 .2rem; height: 100%;
 }
 /* the auto margins centre the LEDs and buttons in whatever the label leaves */
 [data-skin="juno"] .switch .leds { margin-top: auto; }
@@ -197,13 +205,20 @@ body { background: #101214; color: #edebe5; }
 [data-skin="juno"] .switch .led.on {
   background: var(--led); box-shadow: 0 0 6px var(--led);
 }
-[data-skin="juno"] .switch .row { display: flex; gap: .18rem; }
+[data-skin="juno"] .switch .row { display: flex; gap: 0; }
+[data-skin="juno"] .switch .row button + button { margin-left: -1px; }
+[data-skin="juno"] .switch .row button { border-radius: 0; }
+[data-skin="juno"] .switch .row button:first-child { border-radius: 2px 0 0 2px; }
+[data-skin="juno"] .switch .row button:last-child  { border-radius: 0 2px 2px 0; }
+[data-skin="juno"] .switch .row button:only-child  { border-radius: 2px; }
+/* a latching waveform switch: one button under its printed name, as on the panel */
+[data-skin="juno"] .switch button.latch { min-width: 2rem; }
 [data-skin="juno"] .switch button {
-  width: 2.05rem; height: 1.55rem; padding: 0;
+  min-width: 1.65rem; height: 1.25rem; padding: 0 .22rem;
   border: 1px solid #24262a; border-radius: 2px;
   background: linear-gradient(180deg, #f2eddd 0%, var(--cream) 50%, #bdb8a5 100%);
-  color: #24262a; font-family: var(--sans); font-size: .58rem; font-weight: 700;
-  letter-spacing: .06em; cursor: pointer;
+  color: #24262a; font-family: var(--sans); font-size: .5rem; font-weight: 700;
+  letter-spacing: .02em; cursor: pointer;
   box-shadow: 0 1px 2px rgba(0,0,0,.5);
 }
 [data-skin="juno"] .switch button[aria-checked="true"] {
@@ -265,7 +280,7 @@ body { background: #101214; color: #edebe5; }
 }
 
 @media (max-width: 60rem) {
-  .wrap[data-skin="juno"] { grid-template-columns: 1fr; }
+  .wrap[data-skin="juno"] { grid-template-columns: minmax(0, 1fr); }
   [data-skin="juno"] .eyebrow  { grid-area: 1 / 1 / 2 / 2; border-radius: 3px 3px 0 0; padding: .5rem; }
   [data-skin="juno"] h1        { grid-area: 2 / 1 / 3 / 2; }
   [data-skin="juno"] .tagline  { grid-area: 3 / 1 / 4 / 2; }
@@ -273,7 +288,6 @@ body { background: #101214; color: #edebe5; }
   [data-skin="juno"] .standfirst { grid-area: 5 / 1 / 6 / 2; }
   [data-skin="juno"] .bar      { grid-area: 6 / 1 / 7 / 2; }
   [data-skin="juno"] .keyboard { grid-area: 7 / 1 / 8 / 2; }
-  [data-skin="juno"] .macros   { flex-wrap: wrap; }
 }
 </style>
 
@@ -304,14 +318,17 @@ function scale(side) {
   return s;
 }
 
-function fader(it, m, set, section) {
+function fader(it, m, set, section, numbered) {
   const min = +it.min, max = +it.max;
   const wrap = el("div", "fader");
   wrap.appendChild(el("div", "cap", caption(it, m, section)));
 
+  if (numbered) wrap.classList.add("numbered");
   const slot = el("div", "slot");
+  // Only the numbered fader gets the column at all. Left in place empty it still
+  // reserved its width, which pushed the slot past the fader and clipped it.
   const nums = el("div", "nums");
-  ["10", "5", "0"].forEach(n => nums.appendChild(el("span", "", n)));
+  if (numbered) ["10", "5", "0"].forEach(n => nums.appendChild(el("span", "", n)));
   const inp = document.createElement("input");
   inp.type = "range";
   inp.min = min; inp.max = max;
@@ -319,7 +336,7 @@ function fader(it, m, set, section) {
   inp.value = +it.init;
   inp.setAttribute("orient", "vertical");          // Firefox
   inp.setAttribute("aria-label", it.label);
-  slot.append(nums, scale("left"), inp, scale("right"));
+  slot.append(...(numbered ? [nums] : []), scale("left"), inp, scale("right"));
   wrap.appendChild(slot);
 
   const val = el("div", "val");
@@ -336,9 +353,32 @@ function switchRow(it, m, set, section) {
   const names = (m.positions || "").split("|").filter(Boolean);
   const wrap = el("div", "switch");
   wrap.appendChild(el("div", "cap", caption(it, m, section)));
-
   const leds = el("div", "leds");
   const row = el("div", "row");
+
+  // OFF/ON is one latching button that lights, not a pair of buttons. That is what
+  // the panel has for each waveform, and a pair reads as two separate things while
+  // taking twice the width. The button carries no text because the name is printed
+  // directly above it, exactly as the waveform symbols are on the hardware.
+  if (n === 2 && names[0] === "OFF" && names[1] === "ON") {
+    const led = el("div", "led");
+    const b = el("button", "latch");
+    b.type = "button";
+    b.setAttribute("role", "switch");
+    b.setAttribute("aria-label", it.label);
+    let on = +it.init >= max;
+    const paint = () => {
+      b.setAttribute("aria-checked", String(on));
+      led.classList.toggle("on", on);
+    };
+    b.addEventListener("click", () => { on = !on; set(it.address, on ? max : min); paint(); });
+    paint();
+    leds.appendChild(led);
+    row.appendChild(b);
+    wrap.append(leds, row);
+    return wrap;
+  }
+
   const btns = [];
   for (let i = 0; i < n; i++) {
     const v = min + i * step;
@@ -348,7 +388,10 @@ function switchRow(it, m, set, section) {
     b.setAttribute("role", "radio");
     b.setAttribute("aria-label", it.label + " " + b.textContent);
     b.addEventListener("click", () => { set(it.address, v); paint(i); });
-    leds.appendChild(led); row.appendChild(b); btns.push({ b, led });
+    // A two-position either/or is a slide switch on the panel and carries no lamp;
+    // only the multi-position selectors do.
+    if (n > 2) leds.appendChild(led);
+    row.appendChild(b); btns.push({ b, led });
   }
   const paint = (sel) => btns.forEach(({ b, led }, i) => {
     b.setAttribute("aria-checked", String(i === sel));
@@ -381,10 +424,13 @@ SKIN.renderControls = (items, host, set) => {
     sect.style.flexGrow = String(groups.get(key).length);
     // Faust emits controls alphabetically, so panel order has to be declared.
     const ctrls = groups.get(key).sort((a, b) => (+a.m.idx || 0) - (+b.m.idx || 0));
+    let numbered = true;                 // the section's first fader carries the scale
     for (const { it, m } of ctrls) {
       const steps = +it.step > 0 ? Math.round((+it.max - +it.min) / +it.step) + 1 : 0;
       const discrete = m.positions !== undefined || (steps >= 2 && steps <= 4);
-      body.appendChild(discrete ? switchRow(it, m, set, key) : fader(it, m, set, key));
+      if (discrete) { body.appendChild(switchRow(it, m, set, key)); continue; }
+      body.appendChild(fader(it, m, set, key, numbered));
+      numbered = false;
     }
     sect.appendChild(body);
     host.appendChild(sect);

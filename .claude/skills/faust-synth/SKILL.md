@@ -46,9 +46,12 @@ what each one gets right and what it gets wrong. Read the one whose family match
 target sound.
 
 Five of them carry deliberate defects and are read for warnings. `juno-106.dsp` is the
-one that measures clean, so it is the one to copy the shape of, and it is also the worked
-example of modelling a named machine rather than a description: its `measured.md` entry
-separates what was measured here from what is a fact about the hardware.
+one to copy the *shape* of, and it is the worked example of modelling a named machine
+rather than a description: its `measured.md` entry separates what was measured here from
+what is a fact about the hardware. It does **not** measure clean. Laying it out as the
+machine's own panel put 24 controls on it, and a hardware panel has faders that
+legitimately move level, so it carries one deliberate failure and two warnings, each
+named in its entry. No patch in the corpus currently shows a clean report.
 
 Read one **especially** for FM, noise-sourced texture, and per-note filter sweeps. In
 those three the mapping from parameters to timbre is emergent rather than specified, and
@@ -143,7 +146,7 @@ the label, so adding them does not move a single measurement.
 | `[panel:VCF]` | which panel section the control sits in. Sections are laid out in the machine's own order: LFO, DCO, HPF, VCF, VCA, ENV, CHORUS, then anything else. A section with no controls is not drawn |
 | `[idx:2]` | position within the section. **Required if order matters**: Faust emits controls alphabetically, not in source order |
 | `[cap:RES]` | a shorter panel caption. Defaults to the macro name, which is usually the better label |
-| `[positions:OFF\|I\|II]` | names for a discrete control's steps. A control with 2 to 4 steps is drawn as a row of lit buttons rather than a fader |
+| `[positions:OFF\|I\|II]` | names for a discrete control's steps. A control with 2 to 4 steps is drawn as buttons rather than a fader. `OFF\|ON` becomes one latching button with a lamp above it, the way each waveform switch is on the panel; three or more positions become a row of buttons each with its own lamp; any other two-position control becomes a plain pair, and gets no lamp, because the hardware uses an unlit slide switch there |
 
 ```faust
 brightness = hslider("brightness[panel:VCF][idx:1]", 0.44, 0, 1, 0.001) : si.smoo;
