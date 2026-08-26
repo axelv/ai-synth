@@ -188,8 +188,14 @@ fcMax = ma.SR * (0.142 - 0.036 * vcfRes);
 // and pinned it to the 60 Hz floor: measured 33.3 dB of level swing and a peak of
 // 0.012 against 0.598, which is the voice disappearing rather than a filter sweep.
 // A ratio also makes INV the mirror of NORM, which is what the switch claims.
-pol   = select2(vcfPol, 1.0, -1.0);
-fcMod = pow(1 + vcfEnv * 6.5 * env, pol) * pow(1 + 3.0 * vcfLfo, lfo);
+// NORM multiplies the cutoff by the envelope's depth and INV divides by the same
+// amount, which is the mirror the switch claims. Written as a select rather than
+// pow(depth, +-1): the exponent would come from a slider, so Faust cannot fold it
+// and would emit a runtime log/exp pair every sample in every voice to choose
+// between a number and its reciprocal. depth is never below 1, so the divide is
+// safe. The LFO term keeps its pow, whose exponent genuinely varies.
+envDepth = 1 + vcfEnv * 6.5 * env;
+fcMod = select2(vcfPol, envDepth, 1.0 / envDepth) * pow(1 + 3.0 * vcfLfo, lfo);
 fc = max(60, min(fcMax, cutBase * ktrack * (0.55 + 0.45 * vel) * fcMod));
 
 // Resonance also drives the filter harder and makes up the gain again, because a

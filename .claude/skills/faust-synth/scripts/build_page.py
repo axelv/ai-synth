@@ -20,7 +20,6 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -132,19 +131,25 @@ def build(dsp_path: str, out_path: str, voices: int = 16,
 
         with open(TEMPLATE) as fh:
             html = fh.read()
-        # The skin goes in first: its CSS and JS are allowed to contain none of the
-        # other markers, and substituting it last would let a marker inside it expand.
+        # The skin goes in LAST, so that nothing rescans it. Every replace runs over
+        # the whole document, including whatever the previous ones inserted, so a
+        # marker appearing inside a skin's CSS or JS would be expanded if the skin
+        # were substituted first. A skin is a separate file that a person edits
+        # without thinking about this file's markers, which is exactly the case worth
+        # protecting. The same reasoning does not save the runtime bundle, which has
+        # to go in before the markers it might contain are searched for; it has never
+        # contained one.
         html = (html
-                .replace("__SKIN_CSS__", skin_css)
-                .replace("__SKIN_JS__", skin_js)
-                .replace("__SKIN__", skin)
                 .replace("__FAUSTWASM__", runtime)
                 .replace("__PAYLOAD__", json.dumps(payload))
                 .replace("__VOICES__", str(voices))
                 .replace("__TITLE__", display)
                 .replace("__EYEBROW__", "ai-synth")
                 .replace("__TAGLINE__", f"{voices}-voice polyphonic synthesizer")
-                .replace("__BLURB__", BLURB))
+                .replace("__BLURB__", BLURB)
+                .replace("__SKIN_CSS__", skin_css)
+                .replace("__SKIN_JS__", skin_js)
+                .replace("__SKIN__", skin))
 
         os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
         with open(out_path, "w") as fh:

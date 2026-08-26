@@ -181,6 +181,18 @@ body { background: #101214; color: #edebe5; }
 [data-skin="juno"] .slot input[type=range]:focus-visible {
   outline: 2px solid var(--blue); outline-offset: 2px;
 }
+/* Chrome 121 and Safari 17.4 were the first to lay a range input out by
+   writing-mode, which is what lets the cap above be drawn at all. Older Safari
+   ignores it, and appearance:none there leaves a horizontal stub squeezed into a
+   20px column: seventeen unusable faders on a page that otherwise looks fine.
+   Those browsers get the native vertical slider instead, unstyled but playable.
+   The class is set from a layout probe in the renderer, because no feature query
+   distinguishes the two: writing-mode itself is supported everywhere, just not on
+   this element. */
+[data-skin="juno"].vrange-fallback .slot input[type=range] {
+  -webkit-appearance: slider-vertical;
+  background: none;
+}
 /* the cap's white index line, drawn over the thumb's centre */
 [data-skin="juno"] .val {
   font-family: var(--mono); font-size: .48rem; color: var(--legend-d);
@@ -342,8 +354,11 @@ function fader(it, m, set, section, numbered) {
   // detented control is numbered at every position, top down, the way the HPF's
   // 3 2 1 0 is printed; a continuous one gets the panel's 10 / 5 / 0.
   const nums = el("div", "nums");
+  // Rounded before printing. max - i*step is exact only for binary fractions, so a
+  // step of 0.2 produced "0.3999999999999999" and spilled an 18-character numeral
+  // sideways out of a column that is 9px wide and does not clip.
   const labels = det
-    ? Array.from({ length: det }, (_, i) => String(max - i * (+it.step)))
+    ? Array.from({ length: det }, (_, i) => String(+(max - i * (+it.step)).toFixed(6)))
     : ["10", "5", "0"];
   if (numbered) labels.forEach(n => nums.appendChild(el("span", "", n)));
   const inp = document.createElement("input");
@@ -366,9 +381,22 @@ function fader(it, m, set, section, numbered) {
   return wrap;
 }
 
+// Returns null when the control cannot be drawn as a switch, so the caller can fall
+// back to a fader. The count comes from the DSP's own step, and a panel switch has a
+// handful of positions: declaring [positions:...] on a step-0.001 slider asked for
+// 1001 buttons, and a step of 0 made the loop below run forever with audio already
+// started. Every continuous macro in juno-106.dsp uses step 0.001, so copying a
+// neighbouring line is exactly how that slip happens.
+const MAX_POSITIONS = 8;
+
 function switchRow(it, m, set, section) {
   const min = +it.min, max = +it.max, step = +it.step;
-  const n = Math.round((max - min) / step) + 1;
+  const n = step > 0 ? Math.round((max - min) / step) + 1 : 0;
+  if (n < 2 || n > MAX_POSITIONS) {
+    console.warn(`juno skin: "${it.label}" declares positions but has ` +
+                 `${n || "no"} steps, so it is drawn as a fader.`);
+    return null;
+  }
   const names = (m.positions || "").split("|").filter(Boolean);
   const nameOf = (i) => names[i] !== undefined ? names[i] : String(min + i * step);
   const wrap = el("div", "switch");
@@ -432,9 +460,32 @@ function switchRow(it, m, set, section) {
   return wrap;
 }
 
+// Does this browser lay a range input out vertically? Measured rather than queried,
+// because writing-mode is supported everywhere as a property and the question is
+// whether it reaches this element. Compared against a horizontal reference rather
+// than against its own width: an unsized range stretches to fill its container
+// either way, so width says nothing. What does change is the intrinsic height, from
+// one control's worth to a track's worth. See .vrange-fallback above.
+function verticalRangeSupported() {
+  const probeHeight = (vertical) => {
+    const t = document.createElement("input");
+    t.type = "range";
+    t.style.cssText = "position:absolute;visibility:hidden;width:auto;height:auto;"
+                    + (vertical ? "writing-mode:vertical-rl;" : "");
+    document.body.appendChild(t);
+    const h = t.offsetHeight;
+    t.remove();
+    return h;
+  };
+  const flat = probeHeight(false);
+  return flat > 0 && probeHeight(true) > flat * 2;
+}
+
 SKIN.name = "juno";
 SKIN.renderControls = (items, host, set) => {
   host.innerHTML = "";
+  const panel = host.closest('[data-skin="juno"]');
+  if (panel && !verticalRangeSupported()) panel.classList.add("vrange-fallback");
   const groups = new Map();
   for (const it of items) {
     const m = metaOf(it);
@@ -457,7 +508,9 @@ SKIN.renderControls = (items, host, set) => {
     for (const { it, m } of ctrls) {
       // Buttons only when the DSP names the positions. Inferring it from the step
       // count turned the HPF into a button row, and the HPF is a detented slider.
-      if (m.positions !== undefined) { body.appendChild(switchRow(it, m, set, key)); continue; }
+      // switchRow returns null if the control has too many positions to be one.
+      const sw = m.positions !== undefined ? switchRow(it, m, set, key) : null;
+      if (sw) { body.appendChild(sw); continue; }
       body.appendChild(fader(it, m, set, key, numbered));
       numbered = false;
     }
