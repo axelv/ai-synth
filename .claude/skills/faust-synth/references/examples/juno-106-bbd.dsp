@@ -1,5 +1,5 @@
-declare name "juno-106";
-declare description "Roland Juno-106 style polysynth, laid out as the machine's own panel. One DCO per voice with saw, PWM pulse, square sub and noise, a 1-pole HPF into a 4-pole resonant VCF with key follow, one ADSR serving both filter and amp, and the BBD stereo chorus.";
+declare name "juno-106-bbd";
+declare description "Roland Juno-106 style polysynth, laid out as the machine's own panel. One DCO per voice with saw, PWM pulse, square sub and noise, a 1-pole HPF into a 4-pole resonant VCF with key follow, one ADSR serving both filter and amp, and the BBD stereo chorus reproduced from the board schematic rather than sketched in the delay domain.";
 
 import("stdfaust.lib");
 
@@ -230,43 +230,147 @@ amp     = vca * (0.32 + 0.68 * vel) * vcaLevel * 0.38;
 process = voice * amp <: _,_;
 
 //======================================================================
-// Shared effect chain: the BBD chorus, and nothing else
+// Shared effect chain: the chorus BOARD, and nothing else
 //======================================================================
-// Off / I / II, as three positions rather than a continuous control, because that
-// is what the machine has: two buttons, and both up is off.
+// This is the only thing that differs from juno-106.dsp, and it is the whole
+// point of this variant. The chorus there is a delay-domain sketch: a triangle
+// written straight onto delay time, and one 2-pole lowpass standing in for the
+// filtering. Here the board is reproduced stage by stage, traced from a Juno-60
+// CHORUS BOARD sheet of 10 April 1983, on the grounds that the two machines
+// run the same design: two MN3009 bucket brigades on their own MN3101 clocks,
+// handed one triangle LFO in opposite polarity.
+//
+// What is 106 and what is 60 is kept straight deliberately, because this repo
+// has already been burned once for blurring it:
+//
+//   106, from its own service notes:  the topology, and the RATES below.
+//   60, from the chorus sheet:        every COMPONENT VALUE below.
+//
+// The component values are NOT verified for a 106. The 106's jack board would
+// settle them and nobody has read it. Nothing here was tuned by ear.
+
 chorus = hslider("chorus[panel:CHORUS][idx:1][positions:OFF|I|II]", 0.5, 0, 1, 0.5);
 
 chOn = chorus > 0.25;
 fast = chorus > 0.75;
 
-bbd(l, r) = l*dry + wl*wet, r*dry + wr*wet
+//----------------------------------------------------------------------
+// The board's filter idioms, written as the component values they are
+//----------------------------------------------------------------------
+// One corner on this board (clock rejection, 45.4 kHz) sits above Nyquist at
+// ordinary sample rates, where fi.lowpass designs an unstable section and the
+// output leaves for NaN. Clamping keeps the values in the source, which is the
+// reason for writing them as values at all.
+nyq(f) = min(f, 0.45 * ma.SR);
+
+rc(r, c) = fi.lowpass(1, nyq(1.0 / (2.0 * ma.PI * r * c)));   // series R, shunt C
+cr(c, r) = fi.highpass(1, nyq(1.0 / (2.0 * ma.PI * r * c)));  // coupling C, shunt R
+
+// Sallen-Key 2-pole, built the way the board builds them: two equal series
+// resistors into a unity-gain emitter follower, a feedback cap from their
+// junction to the emitter, a shunt cap to ground. f0 and Q are solved from the
+// four values rather than chosen.
+sk(r, cfb, csh) = fi.resonlp(f0, q, 1.0)
 with {
-    // Solved from the 106's own triangle oscillator: a 2SK30A shunts R3 2.2M across
-    // R4 680K to change the integrator drive. The 0.513 and 0.863 that stood here
-    // are measurements of a Juno-60, which is a different machine.
-    rate  = select2(fast, 0.553, 0.898);
-    depth = select2(fast, 2.55, 3.30);        // ms of deviation either side
-    base  = 4.60;                             // ms
-    // A triangle, not a sine. Both the 106 service notes and the Juno-60 chorus
-    // board draw the modulation LFO as a triangle, and the shape is not cosmetic:
-    // a triangle sweeping the BBD clock holds the detune at two nearly constant
-    // values per cycle, where a sine spends most of its time near the turnarounds.
-    clfo  = os.lf_triangle(rate);
-    // Antiphase on the two lines is what makes the width, and that IS the hardware:
-    // one LFO feeds the two MN3101 clock generators with opposite polarity, at TP3
-    // and TP4. An earlier comment here claimed the hardware inverts one wet output
-    // instead. It does not: both output mixers on the jack board are identical
-    // inverting summers, same ratio, same polarity.
-    dl = ma.SR * 0.001 * (base + depth * clfo);
-    dr = ma.SR * 0.001 * (base - depth * clfo);
-    // A bucket brigade is dark and noisy at the top. The lowpass is the part of
-    // that worth keeping.
-    wl = de.fdelay(2048, dl, l) : fi.lowpass(2, 7200);
-    wr = de.fdelay(2048, dr, r) : fi.lowpass(2, 7200);
-    dry = 1 - 0.28 * chOn;
-    wet = 0.62 * chOn;
+    rt = sqrt(r * r * cfb * csh);
+    f0 = nyq(1.0 / (2.0 * ma.PI * rt));
+    q  = rt / (csh * 2.0 * r);
+};
+
+// The board builds this same 4-pole three times: once shared ahead of both
+// bucket brigades as the anti-alias filter, and once after each of them as the
+// reconstruction filter. Solved, the sections are 9.69 kHz at Q 0.549 and
+// 10.38 kHz at Q 1.291. A 4th-order Butterworth wants Q 0.541 and 1.307 at one
+// frequency, so this is a Butterworth and Roland designed it as one.
+butter4 = sk(22e3, 820e-12, 680e-12) : sk(22e3, 1800e-12, 270e-12);
+
+//----------------------------------------------------------------------
+// MN3009, 256 stages
+//----------------------------------------------------------------------
+// Delay is 128 over the clock frequency, and the LFO sweeps the CLOCK, not the
+// delay. That is not a detail. Delay goes as 1/f, so sensitivity is highest
+// where the clock is lowest: the line whips out to its long delays and comes
+// straight back, sitting near its short ones the rest of the time. Measured off
+// this model in mode I, the delay spends 22.3% of the LFO cycle in the longer
+// half of its 2.05 to 7.14 ms range, mean 3.59 ms against an arithmetic
+// midpoint of 4.60 ms. juno-106.dsp writes a triangle onto delay time instead,
+// which spends 50% and departs from this by up to 1.54 ms, about 30% of the
+// whole sweep.
+STAGES = 256.0;
+
+// The clock centre and the LFO amplitude are set on the panel board, which is
+// not on the chorus sheet. These land the sweep on the ranges quoted for a 60.
+FCLK  = 40171.0;                          // Hz
+sweep = select2(fast, 0.554, 0.597);      // fraction of centre
+
+// 106, solved from its own triangle oscillator: a 2SK30A shunts R3 2.2M across
+// R4 680K to change the integrator drive. The 60's own rates are 0.513 and
+// 0.863, and they are deliberately NOT used here.
+rate = select2(fast, 0.553, 0.898);
+
+// The board carries no compander anywhere, which is why a real one hisses.
+// Held at zero so an A/B against juno-106.dsp isolates the circuit change
+// rather than measuring a noise floor. Raise it to hear the part honestly.
+HISS = 0.0;
+
+bbdLine(tri) = cr(0.1e-6, 100e3)      // C6 into R14 100K, 15.9 Hz
+             : rc(10e3, 2.2e-9)       // R15 10K into C7 0.0022, 7.23 kHz
+             : delayStage(tri)
+             : rc(1.594e3, 2.2e-9)    // R18/R19 3.3K pair into C10, 45.4 kHz
+             : butter4                // R22/R21/C9/C8 then R24/R26/C11/C3
+             : cr(1e-6, 22e3)         // C12 into R27 22K, 7.2 Hz
+with {
+    delayStage(t) = de.fdelay(4096, dsamp) : +(no.noise * HISS)
+    with {
+        fclk  = max(4000.0, FCLK * (1.0 + sweep * t));
+        dsamp = ma.SR * STAGES / (2.0 * fclk);
+    };
+};
+
+//----------------------------------------------------------------------
+// The board
+//----------------------------------------------------------------------
+// At the node after R78 the signal splits, and only ONE branch is filtered.
+// DIRECT SIG runs straight down the page to both mixers, unfiltered. The other
+// branch runs the 4-pole Butterworth and feeds BOTH bucket brigades. So the wet
+// carries nine poles to the dry's none, and that asymmetry is the character of
+// the effect. Modelling the dry as filtered, or the wet as one gentle lowpass,
+// both miss it.
+board(x) = mix(w1), mix(w2)
+with {
+    dry = x;                            // DIRECT SIG, unfiltered
+    fed = x : butter4;                  // TR19/TR18, shared anti-alias
+
+    tri = os.lf_triangle(rate);         // panel board, pin 9
+    w1  = fed : bbdLine(tri);
+    w2  = fed : bbdLine(-tri);          // pin 10, drawn as the inverse
+
+    // CHORUS OFF (pin 38, 1 = off) drives TR21 into the wet mute FETs TR8 and
+    // TR16. It mutes the WET ONLY. The dry is never touched, which is why the
+    // machine gets LOUDER when the chorus comes on, and why juno-106.dsp's
+    // `dry = 1 - 0.28 * chOn` is a compensation the board does not do. C44
+    // 4.7uF through 47K makes it a 0.22 s fade rather than a switch.
+    mute = chOn : si.smooth(ba.tau2pole(0.221));
+
+    // Both mixers are inverting summers: 100K feedback, dry through 47K, wet
+    // through 39K. Normalised so dry alone is unity, the wet sits at 47/39,
+    // which is 1.62 dB ABOVE the dry.
+    mix(w) = (dry + w * (47.0 / 39.0) * mute)
+           : cr(10e-6, 1.5e3);          // C40 10uF NP into R90 1.5K, 10.6 Hz
 };
 
 // No reverb. The 106 has none, and it is the one machine whose owners all agree
 // belongs in front of whatever reverb they already have.
-effect = bbd : par(i, 2, *(0.95));
+//
+// The board has one input, at pin 19. The voice above is mono duplicated, so
+// summing to mono here loses nothing and is what the hardware does.
+//
+// The 0.68 is headroom, and it is needed because the mixer above is faithful.
+// juno-106.dsp keeps its peaks near 0.6 by ducking the dry 2.85 dB whenever the
+// chorus is on; this board does not duck anything, so at the old 0.95 the patch
+// peaked at 1.18 and the harness failed seven macros for clipping at the top of
+// their range. Taking it out here instead leaves the 47K/39K ratio inside the
+// mixer untouched, which is the part that is sourced. On the machine this is
+// the VOLUME control, and turning it down is what a player does when the chorus
+// makes the instrument louder.
+effect(l, r) = board((l + r) * 0.5) : par(i, 2, *(0.68));
