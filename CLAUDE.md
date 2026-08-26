@@ -61,7 +61,7 @@ repo-root `scripts/`, which belongs to track B.**
 | `scripts/build_page.py` | one `.dsp` to one self-contained playable page |
 | `references/faust-poly.md` | poly conventions and the failures that are silent |
 | `references/patch-design.md` | what makes a macro a macro; ranges and defaults |
-| `references/examples/*.dsp` | six working instruments. `juno-106` is the clean one |
+| `references/examples/*.dsp` | six working instruments. `juno-106` models a hardware panel and is the one to copy the shape of |
 | `references/examples/measured.md` | what each gets right and wrong, and why |
 | `references/examples/expected.json` | what each is expected to measure. The regression set, enforced by `--check` |
 

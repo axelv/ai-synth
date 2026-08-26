@@ -46,9 +46,14 @@ what each one gets right and what it gets wrong. Read the one whose family match
 target sound.
 
 Five of them carry deliberate defects and are read for warnings. `juno-106.dsp` is the
-one that measures clean, so it is the one to copy the shape of, and it is also the worked
-example of modelling a named machine rather than a description: its `measured.md` entry
-separates what was measured here from what is a fact about the hardware.
+one to copy the *shape* of, and it is the worked example of modelling a named machine
+rather than a description: its `measured.md` entry separates what was measured here from
+what is a fact about the hardware. It does **not** measure clean. Laying it out as the
+machine's own panel put 24 controls on it, and a hardware panel has faders that
+legitimately move level, so it carries a deliberate failure and a warning for that,
+plus one more failure that is the harness describing itself rather than the patch.
+All three are named in its entry, which also records which of its hardware claims
+come from the service notes and which are still guesses. No patch in the corpus currently shows a clean report.
 
 Read one **especially** for FM, noise-sourced texture, and per-note filter sweeps. In
 those three the mapping from parameters to timbre is emergent rather than specified, and
@@ -103,8 +108,69 @@ uv run python $SK/scripts/build_page.py patch.dsp patches/patch.html "Display Na
 ```
 
 One self-contained HTML file: the Faust wasm, its metadata, the runtime, an on-screen
-keyboard, a QWERTY mapping, MIDI input, and a slider per macro generated from the DSP's
-own metadata. Typically under 300 KiB.
+keyboard, a computer-keyboard mapping, MIDI input, and a slider per macro generated from
+the DSP's own metadata. Typically under 300 KiB.
+
+The computer keyboard is mapped by **physical position** (`e.code`), never by the
+character a layout produces (`e.key`), so the piano keys fall under the same fingers on
+AZERTY, QWERTZ and QWERTY. The printed legend is relabelled from
+`navigator.keyboard.getLayoutMap()` where the browser reports it, which is Chromium
+only; Firefox and Safari keep the QWERTY labels while the keys themselves still play
+correctly.
+
+#### Panel skins
+
+`--skin <name>` picks how the controls are drawn. A skin supplies CSS and a control
+renderer and nothing else, so the keyboard, the MIDI handling and the boot path stay in
+one place however many skins exist. Skins live in `assets/skins/<name>.html`.
+
+| skin | use |
+|---|---|
+| `plain` | the default. One labelled horizontal slider per macro |
+| `juno` | a Juno-106 style panel: vertical faders in red-banded sections, discrete controls as lit buttons |
+
+**Reach for `juno` when the user asks for a Juno, a Roland-style polysynth, or a
+juno-ish pad**, which is the case where the machine's own panel is the layout the person
+already has in their head. It is a homage to the panel's visual grammar, drawn from the
+public-domain photograph at `commons.wikimedia.org/wiki/File:Roland-Juno-106.jpg`. No
+maker's mark is reproduced.
+
+```bash
+uv run python $SK/scripts/build_page.py juno.dsp patches/juno.html "Juno-106" --skin juno
+```
+
+The skin reads four optional metadata keys off each slider label. They are inert
+everywhere else: `measure.py` addresses macros by label and Faust strips metadata out of
+the label, so adding them does not move a single measurement.
+
+| key | effect |
+|---|---|
+| `[panel:VCF]` | which panel section the control sits in. Sections are laid out in the machine's own order: LFO, DCO, HPF, VCF, VCA, ENV, CHORUS, then anything else. A section with no controls is not drawn |
+| `[idx:2]` | position within the section. **Required if order matters**: Faust emits controls alphabetically, not in source order |
+| `[cap:RES]` | a shorter panel caption. Defaults to the macro name, which is usually the better label |
+| `[positions:OFF\|I\|II]` | names for a discrete control's steps. A control with 2 to 4 steps is drawn as buttons rather than a fader. `OFF\|ON` becomes one latching button with a lamp above it, the way each waveform switch is on the panel; three or more positions become a row of buttons each with its own lamp; any other two-position control becomes a plain pair, and gets no lamp, because the hardware uses an unlit slide switch there |
+
+```faust
+brightness = hslider("brightness[panel:VCF][idx:1]", 0.44, 0, 1, 0.001) : si.smoo;
+chorus     = hslider("chorus[panel:CHORUS][positions:OFF|I|II]", 0.5, 0, 1, 0.5);
+```
+
+`references/examples/juno-106.dsp` carries the full set and is the one to copy.
+
+#### Two things that fail silently when verifying a page
+
+Both were found by driving the built page from a browser, and both make a control look
+right while being wrong:
+
+- **Set a range input's `step` before its `value`.** A range input snaps its value to the
+  step on assignment and the step defaults to 1, so assigning `value` first rounded 0.44
+  to 0 while the readout printed beside it still said 0.44. The fader sat at the bottom,
+  the DSP kept its own default, and nothing errored. The two disagreed until first touch.
+- **`getParamValue` on the poly node reads one call stale.** Setting a parameter and
+  reading it back in the same tick returns the *previous* value, so a working control
+  reports as dead and the next check inherits the answer to the one before it. It cost a
+  wrong conclusion here. Let a tick pass before reading, and confirm against a value the
+  previous call did not already write.
 
 ### 5. Audition by playing it, not by rendering it
 
@@ -165,6 +231,16 @@ trust a `does nothing` verdict without checking them:
   isolated note and says so, but any macro the pattern does not exercise is unmeasured.
 - **Everything except `width` folds to mono.** A correct mid/side widener leaves the mono
   sum untouched by construction.
+- **The offline renderer truncates the release tail, so the tail is not measurable here
+  at all.** The poly engine stops a voice within about 0.2 s of note-off whatever the
+  patch's envelope says, and the output goes to exact digital silence rather than
+  decaying. It is not `release_length`, which changes nothing; it does move with
+  `group_voices`, and with grouping off an ADSR's R fader has no effect on the render
+  whatsoever. Measured on juno-106: R declaring a 12 s T60 delivered 0.19 s offline,
+  and R declaring 1.5 s delivered 0.07 s. The **same patch in the browser is correct** —
+  R=0.5 decays 1.5 s and R=1.0 extrapolates to about 14 s, sampled through an
+  AnalyserNode on the running page. So any `release does nothing` verdict, and the
+  report's `release` line, describe the harness. Confirm a tail on the page, never here.
 
 The third is about probes written alongside `measure.py` rather than about `measure.py`,
 which windows correctly:
