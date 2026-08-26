@@ -52,7 +52,10 @@ PATCH = "out/patch.json"
 # delivered render of exactly this patch through the DSP that predates both stages: an
 # external reference that does not depend on this file's reconstruction being right.
 REFERENCE = "out/render.wav"
-RECORDED_LOSS = 1.5446351990103722   # out/patch.json, the 18 s clip
+RECORDED_LOSS = 1.5446351990103722   # out/patch_pretimbre.json, the 18 s clip.
+                                     # NOT out/patch.json, which the EQ fit moved
+                                     # to 1.382293; this file checks the patch that
+                                     # predates both timbre stages.
 BASELINE_WINDOW = 1.5605             # chord.WindowScore of the same patch, from the brief
 WARM_PATH = "out/eq_warm_start.json"
 OUT_PATH = "out/timbre_stages.json"

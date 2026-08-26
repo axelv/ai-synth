@@ -46,6 +46,21 @@ FX = ["chRate", "chDepth", "dlyTime", "dlyFb", "dlyWet", "revSize", "revDamp", "
 EQ = [f"eq{i}" for i in range(26)]
 
 
+INCUMBENT = "out/patch.json"
+
+
+def incumbent_loss(path: str = INCUMBENT) -> float:
+    """The loss of the patch currently on disk, for scripts that gate against it.
+
+    Read rather than written down. promote_eq and fit_eq_full both carried a literal
+    1.544635, which was the incumbent when they were written and is now the patch before
+    it: the EQ fit those very scripts performed moved it to 1.382293. A gate against a
+    stale constant silently accepts a fit 0.16 worse than what the repo already has, and
+    the constant goes stale every single time the gate lets something through.
+    """
+    return float(json.load(open(path))["loss"])
+
+
 def load_notes(path: str = "data/transcription.mid"):
     pm = pretty_midi.PrettyMIDI(path)
     notes = []
@@ -74,10 +89,11 @@ class Objective:
     """
 
     def __init__(self, notes, target_path: str = "data/original.wav",
-                 arch: Architecture = PAD) -> None:
+                 arch: Architecture = PAD, loss: str | None = None) -> None:
         self.arch = arch
         y, _ = librosa.load(target_path, sr=SR, mono=True)
         self.n = len(y)
+        self.target_mono = y
         self.target = torch.from_numpy(y).float().view(1, 1, -1)
         self.target_env = self._env(self.target)
         # Stereo reference. Loaded separately and NOT with mono=True: original.wav is
@@ -98,6 +114,20 @@ class Objective:
         self.renderer.set_notes(notes)
         # intro glide: sample-accurate bend, fixed (measured), never optimised
         self.renderer.set_bend(bend_curve(int(DUR * SR) + SR))
+        # An alternative objective, for the bake-off. `loss_of` is deliberately left
+        # alone: it keeps its mono MRSTFT meaning and its historical numbers, so a run
+        # under a candidate loss still reports the incumbent figure alongside and the
+        # two stay comparable. Only __call__, what the optimiser actually descends,
+        # switches.
+        self.loss_name = loss
+        if loss is None:
+            self.alt = None
+        else:
+            from losses import LOSSES, load_candidates
+            load_candidates()
+            if loss not in LOSSES:
+                raise SystemExit(f"unknown loss {loss!r}; have {sorted(LOSSES)}")
+            self.alt = LOSSES[loss](y.astype(np.float32), SR)
         self.calls = 0
         self.best = (1e9, None)
         self.history: list[float] = []
@@ -164,9 +194,18 @@ class Objective:
         loss = spec + w_env * env
         return float(loss) if np.isfinite(loss) else 1e6
 
+    def alt_of(self, audio: np.ndarray) -> float:
+        """The candidate objective on an already rendered clip."""
+        mono = audio.mean(axis=0)
+        if not np.isfinite(mono).all():
+            return 1e6
+        v = self.alt(mono[: self.n].astype(np.float32))
+        return float(v) if np.isfinite(v) else 1e6
+
     def __call__(self, x: np.ndarray, w_env: float = 0.35) -> float:
         self.calls += 1
-        loss = self.loss_of(self.render(np.asarray(x)), w_env)
+        audio = self.render(np.asarray(x))
+        loss = self.alt_of(audio) if self.alt is not None else self.loss_of(audio, w_env)
         if loss < self.best[0]:
             self.best = (loss, np.array(x, dtype=float))
         return loss
@@ -195,7 +234,15 @@ def seeded_start() -> np.ndarray:
     return np.clip(PAD.normalize(p), 0.001, 0.999)
 
 
-def run_cma(obj: Objective, x0: np.ndarray, free: list[str], gens: int, sigma: float, seed: int, label: str):
+def run_cma(obj: Objective, x0: np.ndarray, free: list[str], gens: int, sigma: float,
+            seed: int, label: str, plateau: float | None = 0.99):
+    """CMA-ES over the named subset of the vector.
+
+    `plateau` is the fraction of the 20-generation-ago best that counts as progress;
+    None runs the full `gens`. It is a knob rather than a constant because telling a
+    stalled optimiser from a stopped one needs a run without it, and the self-recovery
+    bench is exactly that question.
+    """
     idx = [obj.arch.index[n] for n in free]
     base = x0.copy()
 
@@ -221,9 +268,9 @@ def run_cma(obj: Objective, x0: np.ndarray, free: list[str], gens: int, sigma: f
             print(f"  [{label}] gen {g:3d}  best {es.result.fbest:.4f}  "
                   f"({obj.calls} renders, {time.time() - t0:.0f}s)")
         # stop when the best loss has improved < 1% over 20 generations
-        if g % 20 == 0:
+        if plateau is not None and g % 20 == 0:
             fb = float(es.result.fbest)
-            if milestone is not None and fb > milestone * 0.99:
+            if milestone is not None and fb > milestone * plateau:
                 print(f"  [{label}] plateau at gen {g} ({milestone:.4f} -> {fb:.4f}), stopping")
                 break
             milestone = fb

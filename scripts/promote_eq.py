@@ -26,7 +26,7 @@ import eq_stage
 import metrics
 import synth
 from bend2 import bend_curve
-from stage2 import DUR, SR, Objective, load_notes
+from stage2 import DUR, SR, Objective, incumbent_loss, load_notes
 
 WINDOWS = ((4.95, 7.45), (7.45, 10.40), (10.40, 13.35))
 
@@ -80,10 +80,11 @@ def main() -> None:
     obj = Objective(load_notes())
     audio = render_full(params)
     loss = obj.loss_of(audio)
+    incumbent = incumbent_loss()
     print(f"full clip, rendered through the sliders : {loss:.6f}")
     print(f"  fit predicted (post-hoc cascade)      : {doc['loss']:.6f}"
           f"   delta {loss - doc['loss']:+.6f}")
-    print(f"  incumbent out/patch.json              : 1.544635")
+    print(f"  incumbent out/patch.json              : {incumbent:.6f}")
     print(f"  single-chord fit out/patch_chord.json : 1.531124\n")
 
     old, sr_o = sf.read("out/render.wav", always_2d=True)
@@ -165,7 +166,7 @@ def main() -> None:
                        "wavetable bank off (measured zero contribution)"},
               open(a.out, "w"), indent=1)
     print(f"\nwrote {a.out} and {a.wav}")
-    print("ACCEPT" if loss < 1.544635 and ok_windows else "REJECT: see WORSE flags above")
+    print("ACCEPT" if loss < incumbent and ok_windows else "REJECT: see WORSE flags above")
 
 
 if __name__ == "__main__":
