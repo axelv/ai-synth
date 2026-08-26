@@ -105,7 +105,7 @@ is the correct placement.
 Its noise is identical across voices, so a chord sums coherently instead of forming a
 texture, which is the defect the voice-decorrelation rule exists to prevent.
 
-### juno-106.dsp — 2 fail, 1 warn
+### juno-106.dsp — 3 fail, 1 warn
 
 ```
   cutoff            1.4d   25.0d    0.5d      2.34x    0.588    0.588
@@ -192,6 +192,18 @@ Probing the mix also confirmed what should be true and is: with both waveforms o
 the sub's odd harmonics remain, at f0/2, 3f0/2, 5f0/2, with the integer harmonics 75 dB
 down; and at the default width of 0.331 the pulse's third harmonic collapses by 30 dB,
 which is the null a duty of exactly 1/3 has on harmonic 3.
+
+**The chorus LFO is a triangle, and the third failure is the cost of saying so.** It was
+`os.osc`, a sine, while both the 106 service notes and the Juno-60 chorus board draw a
+triangle. The shape is not cosmetic: a triangle sweeping the BBD clock holds the detune at
+two nearly constant values per cycle where a sine lingers at the turnarounds. Making the
+change moved every peak in the report slightly, because the chorus colours every
+measurement, and that tipped `rate` from 0.31 dB level / 0.50 shape to 0.30 / 0.44, across
+the "does nothing" threshold. **The failure is exposed, not caused.** `rate` was already
+one hundredth of a decibel above the line, and `delay` at 0.11 / 0.36 already fails with
+the identical finding. They are one defect counted twice: the voice LFO does almost
+nothing in this pad voicing. Recorded rather than tuned away, because a threshold that
+only passes by luck was never passing.
 
 **Not yet re-auditioned.** The six-macro version of this patch was played by a person and
 reported fine. The panel version is a different instrument in the ways that matter to the
@@ -285,6 +297,51 @@ from two documents:
   the machine needs a chorus at all. The 16'/8'/4' switch selects 399K/200K/100K into a
   1 nF integrator, a 4:2:1 ratio.
 
+**From a second machine, and NOT verified for the 106:**
+
+A Juno-**60** chorus board schematic (sheet dated 10 April 1983) was read for this entry.
+It corroborates the antiphase mechanism above from an independent machine: panel board B
+sends two anti-phase triangles, drawn as the symbols at pins 40->9 and 39->10, one into
+each MN3101 clock VCO, and both output mixers are inverting summers of the same polarity.
+So the 60 and the 106 agree, and the "inverts one wet output" claim is now wrong twice.
+
+The rest of what that sheet gives is component values, and this repo has already been
+burned once importing Juno-60 figures into a 106 patch (the chorus rates). They are
+recorded here as leads to check against the 106 jack board, **not** as facts about the
+106, and none of them is in the DSP:
+
+- **The wet is louder than the dry, and by a stated ratio.** Both mixers on the 60 are
+  inverting summers with 100K feedback, the dry through 47K and the wet through 39K. That
+  puts the wet 1.205x above the dry, +1.62 dB. The patch has `dry = 0.72, wet = 0.62`,
+  which is the wet 1.3 dB *below* the dry, so the sign is opposite and the magnitude is
+  about 2.9 dB out.
+- **Engaging the chorus does not duck the dry.** CHORUS OFF (pin 38, 1 = off) drives TR21
+  into the wet mute FETs TR8 and TR16 only; the dry path is untouched, so the real machine
+  gets louder when the chorus comes on. The `dry = 1 - 0.28 * chOn` here is a level
+  compensation the board does not do. The mute is also soft, C44 4.7uF through 47K/470K,
+  rather than the hard switch modelled here.
+- **The wet path is much darker than one 2-pole at 7.2 kHz, and the dry is not filtered at
+  all.** Tracing the sheet properly: at the node after R78 the signal splits, and only one
+  branch is filtered. DIRECT SIG goes straight down the page to both mixers, unfiltered.
+  The other branch runs R83/R84 22K with C39 820 pF and C38 680 pF into emitter follower
+  TR19, then R81/R80 22K with C37 1800 pF and C36 270 pF into TR18, and **that** is what
+  feeds both bucket brigades. Solved, those two Sallen-Key sections are 9.69 kHz at Q
+  0.549 and 10.38 kHz at Q 1.291; a 4th-order Butterworth wants Q 0.541 and 1.307, so it
+  is a Butterworth anti-alias filter and Roland designed it as one. The identical circuit
+  appears again after each BBD as the reconstruction filter (R22/R21/C9/C8 then
+  R24/R26/C11/C3, around TR6 and TR7). The wet therefore carries nine poles to the dry's
+  none: 4-pole Butterworth shared, the 7.23 kHz R15/C7 pole per channel, a 45.4 kHz
+  clock-rejection pole, and a second 4-pole Butterworth. An earlier version of this note
+  said the dry ran through the TR19/TR18 filter. It does not, and the asymmetry is the
+  whole character of the effect.
+- **VR1 and VR2 are per-channel BBD bias trims**, set for minimum distortion, which is why
+  no two units match and why the wet path distorts asymmetrically. Not modelled.
+- **A weak bound on the clock, which does not close the open question above.** Designing
+  the anti-alias filter at 7.23 kHz implies a clock whose Nyquist sits above it, so
+  something above roughly 15 kHz, so a delay below roughly 8.5 ms. That trims the top of
+  the datasheet's 0.64 to 12.8 ms and no more. The 60's clock frequency is set by the
+  panel board, which is not on this sheet.
+
 **Still not verified, and unlikely to be:**
 
 - **The saw-to-pulse mixing ratio.** The waveshaper is a Roland/Matsushita MC5534A custom
@@ -300,6 +357,57 @@ from two documents:
   source found.
 - **The HPF corner frequencies are sourced but the boost shape is approximated**, as a
   first-order shelf rather than the actual two-path summing network.
+
+### juno-106-bbd.dsp — 1 fail, 2 warn
+
+```
+  chorus            2.1d    1.0d   76.3d      1.08x    0.426    0.649
+  sustain           7.9d    0.9d    0.4d      1.09x    0.658    0.713
+warn  delay is inert on the pad pattern but moves the release tail by 45.3 dB
+```
+
+**The same instrument with the chorus BOARD in place of a chorus sketch**, so the two
+files differ in their effect chain and nowhere else: lines 1 to 230 are a byte copy of
+`juno-106.dsp`. The board is traced from a Juno-**60** CHORUS BOARD sheet of 10 April
+1983, and the provenance is kept split inside the file, because this repo has already
+been burned once for blurring it. The rates are the 106's. Every component value is the
+60's and is **not** verified for a 106.
+
+What the circuit changes, measured against `juno-106.dsp` on the same four-note chord:
+
+| | juno-106 | juno-106-bbd |
+|---|---|---|
+| level, chorus OFF to I | -0.58 dB | **+2.95 dB** |
+| side/mid, chorus I | -5.3 dB | **-3.6 dB** |
+| DC on the output | 4.9e-06 | 7.4e-09 |
+| energy below 20 Hz | -55 dB | -66 dB |
+
+The level and width both move for one reason: the board's mixers are 100K feedback with
+the dry through 47K and the wet through 39K, so the **wet sits 1.62 dB above the dry** and
+nothing ducks the dry when the chorus engages. `juno-106.dsp` has that relationship
+inverted, and its compensation makes the machine slightly quieter when the chorus comes
+on. A real one gets louder. The extra width is the same fact seen from the other side:
+more wet in the mix is more of the only decorrelated thing in the instrument.
+
+**The filter modelling is correct and contributes nothing here, which is the result worth
+keeping.** The wet path carries nine poles to the dry's none: a 4-pole Butterworth shared
+ahead of both bucket brigades, a 7.23 kHz pole in each BBD input, a clock-rejection pole,
+and a second 4-pole Butterworth on the way out. Driven with pink noise the standalone
+board measures -8.9 dB at 8-12 kHz and -37.1 dB at 12-20 kHz against its own dry. Inside
+this instrument, level-normalised, the whole difference is -0.4 dB at 8-12 kHz and -0.6 dB
+at 12-20 kHz, because the pad's VCF has already removed everything up there. Nine poles
+cannot darken a band that holds no energy. On a bright patch it would pay; on this one the
+audible change is entirely the mixer ratio.
+
+Two things needed care. The board does not compensate its own level, so at the inherited
+0.95 output gain the patch peaked at 1.178 and the harness failed seven macros for
+clipping at the top of their range; the headroom is taken at the output instead, leaving
+the sourced 47K/39K ratio untouched. And the report's `centroid 285 -> 5 Hz` is a
+measurement artifact on silence, not a defect: the release tail is 228 dB below peak, and
+the patch is measurably cleaner down low than the original.
+
+The circuit on its own, with its derivation and the arithmetic, is
+`references/circuits/juno60-chorus.dsp`.
 
 ### acid-lead.dsp — 0 fail, 1 warn
 
