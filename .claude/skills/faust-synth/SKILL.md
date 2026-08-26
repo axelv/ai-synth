@@ -50,8 +50,10 @@ one to copy the *shape* of, and it is the worked example of modelling a named ma
 rather than a description: its `measured.md` entry separates what was measured here from
 what is a fact about the hardware. It does **not** measure clean. Laying it out as the
 machine's own panel put 24 controls on it, and a hardware panel has faders that
-legitimately move level, so it carries one deliberate failure and two warnings, each
-named in its entry. No patch in the corpus currently shows a clean report.
+legitimately move level, so it carries a deliberate failure and a warning for that,
+plus one more failure that is the harness describing itself rather than the patch.
+All three are named in its entry, which also records which of its hardware claims
+come from the service notes and which are still guesses. No patch in the corpus currently shows a clean report.
 
 Read one **especially** for FM, noise-sourced texture, and per-note filter sweeps. In
 those three the mapping from parameters to timbre is emergent rather than specified, and
@@ -229,6 +231,16 @@ trust a `does nothing` verdict without checking them:
   isolated note and says so, but any macro the pattern does not exercise is unmeasured.
 - **Everything except `width` folds to mono.** A correct mid/side widener leaves the mono
   sum untouched by construction.
+- **The offline renderer truncates the release tail, so the tail is not measurable here
+  at all.** The poly engine stops a voice within about 0.2 s of note-off whatever the
+  patch's envelope says, and the output goes to exact digital silence rather than
+  decaying. It is not `release_length`, which changes nothing; it does move with
+  `group_voices`, and with grouping off an ADSR's R fader has no effect on the render
+  whatsoever. Measured on juno-106: R declaring a 12 s T60 delivered 0.19 s offline,
+  and R declaring 1.5 s delivered 0.07 s. The **same patch in the browser is correct** —
+  R=0.5 decays 1.5 s and R=1.0 extrapolates to about 14 s, sampled through an
+  AnalyserNode on the running page. So any `release does nothing` verdict, and the
+  report's `release` line, describe the harness. Confirm a tail on the page, never here.
 
 The third is about probes written alongside `measure.py` rather than about `measure.py`,
 which windows correctly:

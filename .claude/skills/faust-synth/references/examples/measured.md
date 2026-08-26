@@ -105,7 +105,7 @@ is the correct placement.
 Its noise is identical across voices, so a chord sums coherently instead of forming a
 texture, which is the defect the voice-decorrelation rule exists to prevent.
 
-### juno-106.dsp — 1 fail, 2 warn
+### juno-106.dsp — 2 fail, 1 warn
 
 ```
   cutoff            1.4d   25.0d    0.5d      2.34x    0.588    0.588
@@ -122,8 +122,9 @@ all seven of its sections, because the deliverable is an instrument a Juno playe
 knows how to operate. `patch-design.md` still describes what to do when building from a
 description. This is what modelling a named panel costs instead.
 
-The failure and both warnings are that cost, and they are one shape: a hardware panel
-has controls that legitimately move level.
+One of the two failures and the warning are that cost, and they are one shape: a
+hardware panel has controls that legitimately move level. **The other failure is the
+harness describing itself**, and is written up below the panel findings.
 
 - **`sustain` fails as a volume control**, 8.1 dB of level for 0.84 dB of shape. It is the
   sustain *level* of an ADSR, so that is precisely what it is. The harness excepts
@@ -132,8 +133,16 @@ has controls that legitimately move level.
 - **`level` warns at 221.6 dB.** That is the VCA fader reaching digital silence at zero,
   so the number is an artefact of comparing silence against signal rather than a
   measurement of anything.
-- **`hpf` warns**, 6.9 dB level against 6.7 dB shape. A high-pass filter removes energy;
-  taking the bottom out of a pad is a level change as well as a timbral one.
+- **`delay` fails as inert, and is not.** See *What the harness cannot see* below: the
+  LFO's routing defaults to almost nothing, exactly as the panel's does.
+
+`hpf` no longer warns, and the way it stopped is worth recording. Modelled as a
+continuous fader it moved 6.9 dB of level against 6.7 dB of shape, which is the profile
+of a volume control wearing a filter's name. Modelled from the actual jack board, four
+one-pole paths with a bypass and a bass boost, it moves **7.0 dB of level against 8.6 dB
+of shape** and reads as the timbre control it is. Getting the circuit right moved a
+warning without anyone tuning for it, which is about as good a signal as this harness
+gives that a model is closer to the machine.
 
 **This file no longer carries a clean report, and the corpus now has none.**
 `warm-pad.dsp` is the nearest thing, at 0 fail and one warn that is a harness coverage
@@ -191,28 +200,106 @@ become four ADSR faders, and the standing cutoff no longer moves with the envelo
 amount. The defaults were chosen to land on the old voicing, and the measurements say the
 architecture is intact, but neither of those is an audition. Play it before believing it.
 
-### What is a hardware fact rather than a measurement
+### What the harness cannot see
 
-Everything else in this skill was measured in this repo. These were not. They come from
-what the machine is, they are what make the patch a Juno rather than a generic
-subtractive pad, and **they have not been verified against hardware**:
+- **The release tail does not exist in an offline render.** The poly engine stops a voice
+  within about 0.2 s of note-off whatever the envelope says, and the signal goes to exact
+  digital silence rather than decaying: R declaring a 12 s T60 delivered 0.19 s, R
+  declaring 1.5 s delivered 0.07 s, and with `group_voices` off the fader had no effect at
+  all. `release_length` changes none of it. The same patch in the browser, sampled through
+  an AnalyserNode, decays over 1.5 s at R=0.5 and extrapolates to about 14 s at R=1.0,
+  which is what the fader claims. The control is correct and the measurement is not. This
+  is now in `SKILL.md` under the harness's limits. `release` currently reads 1.0 dB and
+  does not trip the inert check, but it is measuring nothing either way.
+- **`delay does nothing`.** The LFO DELAY sets how fast the LFO ramps in, and at the
+  panel's defaults the LFO has almost nowhere to go: VCF LFO is at 0 and DCO LFO at 0.04,
+  which is where a Juno's own defaults sit. Measured, moving DELAY from 0 to 3 s shifts
+  the spectral centroid of the first quarter-second by 26 Hz. That is a real control with
+  nothing routed to it, not a broken one, and turning up either LFO amount makes it
+  audible immediately.
 
-- One DCO per voice, digitally reset, so voices phase-lock rather than drift.
-- **One** ADSR, wired to both the VCF and the VCA. Not two envelopes.
-- A 1-pole HPF ahead of the VCF, on a 4-position switch whose lowest position is a bass
-  boost rather than a bypass.
-- A 4-pole resonant VCF with keyboard tracking.
-- The sub oscillator is a square an octave down, not a sine.
-- PWM sweeps down from square toward a narrow pulse, rather than around 50%.
-- Chorus is two buttons: mode I near 0.5 Hz, mode II near 0.83 Hz, both up is bypass. The
-  hardware inverts one wet output, which is why a Juno through a mono desk loses the
-  chorus entirely. `juno-106.dsp` modulates two lines in antiphase instead, which keeps
-  the mono sum intact at the cost of that particular authenticity.
-- No reverb anywhere in the machine.
+Both were already almost inert before the panel rewrite, at 0.57 and 0.19 dB of level,
+sitting just under the threshold. Nothing changed about them; small shifts elsewhere
+pushed them across it and back, which is worth knowing about any finding this close to a
+limit.
 
-What is NOT reference material, and is fitted gain staging for this patch alone:
-`cutBase = 120 * pow(35, brightness)`, `makeup = 1 + 0.90 * resonance`, and the master
-`0.30`. Re-fit those for any patch that changes the oscillator mix.
+One more thing the harness stopped seeing, and it is a consequence of getting the HPF
+right. The `note` line used to report the filter travelling 301 to 1219 Hz within one
+note; it now reports 258 to 258. Nothing broke: `vcfEnv` still measures 19.9 dB of shape
+and a 1.68x centroid ratio, so the envelope still opens the filter. The default HPF
+position is the bypass, so the patch now carries much more low end, and a spectral
+centroid is an energy-weighted mean that the bass pins in place. **A fatter patch hides
+its own filter sweep from this metric.**
+
+### Hardware facts, and where each one comes from
+
+This entry models a specific machine, so some of what is in the DSP is not a measurement
+made here. Those claims used to be listed together as unverified. Most are now sourced,
+from two documents:
+
+- **The panel board schematic**, which carries the switches, their latching logic and the
+  lamps, and no audio at all.
+- **The Roland JUNO-106 Service Notes**, First Edition, 31 July 1984, scanned at
+  `archive.org/details/synthmanual-roland-juno-106-service-notes`. The audio sheets are
+  the jack board and the module board; component values are on the page images and not in
+  the OCR text.
+
+**Verified from the service notes:**
+
+- **The HPF is one pole, four positions, and global**, on the jack board after the
+  six-voice sum. A 4052 selects one of four paths into a 47K virtual earth with 47K
+  feedback: 4700 pF for 720 Hz, 0.015 uF for 226 Hz, direct for flat, and a shelf network
+  for about +10 dB below 72 Hz. **The bypass is position 1 and the lowest position is a
+  bass boost**, which is the opposite of what the name suggests and was modelled wrong
+  here twice. Modelled correctly it measures 7.0 dB level against 8.6 dB shape, where the
+  continuous-fader version measured 6.9 against 6.7 and warned. It is still per voice
+  here rather than global, which is wasteful but keeps the saturator's input unchanged.
+- **The VCF and VCA are one hybrid per voice**, the A1QH80017A, whose printed internal
+  block diagram is an IR3109 plus two BA662s: four cascaded transconductance stages, so
+  **4-pole, 24 dB per octave, and it self-oscillates** (the calibration procedure trims
+  each voice to a 4.8 Vp-p sine while oscillating). `ve.moog_vcf` here is therefore the
+  wrong nonlinearity, a ladder standing in for an OTA design. Cutoff spans 5 Hz to 50 kHz.
+- **Key follow is 1:1 at full**, from the calibration: self-oscillation trimmed to 248 Hz
+  holding C4 and 992 Hz holding C6, exactly 4x over two octaves. The `kybd` fader's
+  exponent mapping gives that at 1.0 without having been designed to.
+- **One envelope per voice, shared by VCF and VCA**, and it is not analog: the panel
+  sliders are read by the CPU, and the envelope is computed and emitted as a stair-stepped
+  digital CV on a sample-and-hold. Declared ranges are attack 1.5 ms to 3 s, decay and
+  release 1.5 ms to 12 s. The cubic mappings invented here give 1 ms to 3 s and 5 ms to
+  12 s, which is close enough to be luck.
+- **The sub is a square an octave down**, divided by a flip-flop inside the waveshaper,
+  with its level set by the DAC driving the switching transistor's collector supply.
+- **The LFO runs 0.1 to 30 Hz with a 0 to 3 s delay.**
+- **The chorus is two MN3009 bucket brigades with their own MN3101 clocks**, fed by one
+  triangle LFO **in opposite polarity**, at TP3 and TP4. Antiphase modulation is what
+  makes the width. An earlier claim here, that the hardware inverts one wet output, is
+  **wrong**: both output mixers are identical inverting summers with the same ratio. The
+  rates used here, 0.553 and 0.898 Hz, are solved from the 106's own integrator; the
+  0.513 and 0.863 that stood here before are measurements of a Juno-60.
+- **There is one noise generator for the whole instrument**, shared by all six voices and
+  low-passed around 4.8 kHz. An earlier claim here that each voice board carries its own
+  was wrong. The per-voice noise in this patch is now a deliberate departure, kept because
+  Faust voices are otherwise bit-identical and a shared source would sum coherently across
+  a chord instead of forming a texture.
+- **The DCOs are digitally reset and phase-locked**, which is why chords sit still and why
+  the machine needs a chorus at all. The 16'/8'/4' switch selects 399K/200K/100K into a
+  1 nF integrator, a 4:2:1 ratio.
+
+**Still not verified, and unlikely to be:**
+
+- **The saw-to-pulse mixing ratio.** The waveshaper is a Roland/Matsushita MC5534A custom
+  chip, and the service notes print its internals: saw and pulse are summed **through
+  resistors inside the resin**, with no values given, onto one output pin. There is no
+  external level control for either; the panel switches are on/off only. Two independent
+  public teardowns of the Juno DCO stop at the same wall. The 0.5 factor used here, which
+  matches the two fundamentals by putting 4/pi over 2/pi, is a derivation and not a fact,
+  and only measuring a real 106 would settle it.
+- **The chorus delay time.** The MN3009 is 256 stages, so delay is 128 over the clock
+  frequency, and the datasheet range is 0.64 to 12.8 ms. The 106's actual clock frequency
+  is not stated. The base of 4.60 ms and deviations of 2.55 and 3.30 ms used here match no
+  source found.
+- **The HPF corner frequencies are sourced but the boost shape is approximated**, as a
+  first-order shelf rather than the actual two-path summing network.
 
 ### acid-lead.dsp — 0 fail, 1 warn
 

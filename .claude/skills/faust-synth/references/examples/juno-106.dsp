@@ -29,7 +29,7 @@ gate = button("gate");
 //======================================================================
 
 // ---- LFO ----
-lfoRate  = hslider("rate[panel:LFO][idx:1][cap:RATE]", 1.35, 0.1, 20, 0.01) : si.smoo;
+lfoRate  = hslider("rate[panel:LFO][idx:1][cap:RATE]", 1.35, 0.1, 30, 0.01) : si.smoo;
 lfoDelay = hslider("delay[panel:LFO][idx:2][cap:DELAY]", 1.15, 0, 3, 0.01);
 
 // ---- DCO ----
@@ -45,8 +45,11 @@ dcoSub   = hslider("sub[panel:DCO][idx:7][cap:SUB]", 0.45, 0, 1, 0.001) : si.smo
 dcoNoise = hslider("noise[panel:DCO][idx:8][cap:NOISE]", 0.04, 0, 1, 0.001) : si.smoo;
 
 // ---- HPF ----
-// A fader on the 106, where the 60 has a four-position switch.
-hpfFreq = hslider("hpf[panel:HPF][idx:1][cap:FREQ]", 0.37, 0, 1, 0.001) : si.smoo;
+// Four positions, not a continuous fader: the panel board encodes the slider onto two
+// lines through a diode matrix, and the panel prints 3 2 1 0 beside it where every
+// continuous fader prints 10 5 0. What each position DOES is off the jack board in the
+// service notes, and it is not what a name like "HPF" suggests. See hpfStage below.
+hpfPos = hslider("hpf[panel:HPF][idx:1][cap:FREQ]", 1, 0, 3, 1);
 
 // ---- VCF ----
 vcfFreq = hslider("cutoff[panel:VCF][idx:1][cap:FREQ]", 0.38, 0, 1, 0.001) : si.smoo;
@@ -72,8 +75,14 @@ envR = hslider("release[panel:ENV][idx:4][cap:R]", 0.42, 0, 1, 0.001);
 
 // The DCOs are deliberately NOT decorrelated per voice. A Juno's oscillators are
 // digitally reset and stay phase-locked, which is why its chords sit so still and
-// why the machine needs a chorus at all. Only the noise differs per voice, as it
-// does in hardware, where every voice board carries its own source.
+// why the machine needs a chorus at all.
+//
+// The noise IS decorrelated here, and that is a departure from the hardware rather
+// than a model of it. The service notes show one noise generator for the whole
+// instrument, a selected 2SC945 into a BA662, shared by all six voices; an earlier
+// comment here claimed each voice board carried its own, and that was wrong. Kept
+// because Faust poly voices are otherwise bit-identical, so a shared source would
+// make noise sum coherently across a chord instead of forming a texture.
 vseed  = ma.frac(freq * 0.0177);
 vnoise = no.noise : de.delay(4096, int(vseed * 4000));
 
@@ -140,9 +149,26 @@ sub = os.square(f0 * 0.5);
 // and `sat` catches the rest when everything is at maximum.
 dco = (saw * dcoSaw + pul * dcoPulse + sub * dcoSub + vnoise * dcoNoise) * 0.52;
 
-// The panel's HPF. One pole, because that is what the hardware is, and because a
-// steeper filter here would eat the fundamental at the bottom of the keyboard.
-hpF = 20 * pow(40, hpfFreq);
+// The panel's HPF, read off the jack board: a 4052 selects one of four paths into a
+// 47K virtual earth with 47K feedback, so each is unity gain and exactly one pole.
+//
+//   3   4700 pF into 47K   high-pass at 720 Hz
+//   2   0.015 uF into 47K  high-pass at 226 Hz
+//   1   direct             FLAT. This is the bypass, not position 0
+//   0   shelf network      bass BOOST, about +10 dB below 72 Hz
+//
+// The two surprises are worth stating plainly, because both were modelled wrong here
+// from the photograph alone. The bypass is position 1, and the lowest position adds
+// bass rather than removing it, which is why a Juno with the HPF "off" sounds fatter
+// than one with it at 1. Do not carry the Juno-60's numbers over: it has no boost
+// position and different corners.
+hpfStage(x) = select2(hpfPos > 0.5, boost(x),
+                select2(hpfPos > 1.5, x,
+                  select2(hpfPos > 2.5, hp(226.0, x), hp(720.0, x))))
+with {
+    hp(f, sig) = sig : fi.highpass(1, f);
+    boost(sig) = sig : fi.lowshelf(1, 10.0, 72.0);
+};
 
 // Key tracking, now with the panel's KYBD amount as the exponent: 0 is no tracking,
 // 0.5 is half-power, where an octave up moves the cutoff by a fifth.
@@ -184,7 +210,7 @@ sat(x) = x / sqrt(1 + 0.8 * x * x);
 // from a symmetric wave, but a saw plus a narrow pulse is not symmetric about zero
 // and an odd curve applied to it has a nonzero mean: measured +0.039 without this,
 // four times the threshold, and gone entirely with the saturator bypassed.
-voice = dco : fi.highpass(1, hpF) : *(push) : sat
+voice = dco : hpfStage : *(push) : sat
             : ve.moog_vcf(res, fc) : fi.dcblocker : *(makeup);
 
 // The VCA's ENV/GATE switch. GATE is the organ setting: full level for as long as
@@ -209,13 +235,18 @@ fast = chorus > 0.75;
 
 bbd(l, r) = l*dry + wl*wet, r*dry + wr*wet
 with {
-    rate  = select2(fast, 0.513, 0.863);      // mode I and mode II, measured rates
+    // Solved from the 106's own triangle oscillator: a 2SK30A shunts R3 2.2M across
+    // R4 680K to change the integrator drive. The 0.513 and 0.863 that stood here
+    // are measurements of a Juno-60, which is a different machine.
+    rate  = select2(fast, 0.553, 0.898);
     depth = select2(fast, 2.55, 3.30);        // ms of deviation either side
     base  = 4.60;                             // ms
     clfo  = os.osc(rate);
-    // Antiphase on the two lines is what makes the width. The hardware instead
-    // inverts one wet output, which is why a Juno through a mono desk loses its
-    // chorus completely; this keeps the mono sum intact and the width comparable.
+    // Antiphase on the two lines is what makes the width, and that IS the hardware:
+    // one LFO feeds the two MN3101 clock generators with opposite polarity, at TP3
+    // and TP4. An earlier comment here claimed the hardware inverts one wet output
+    // instead. It does not: both output mixers on the jack board are identical
+    // inverting summers, same ratio, same polarity.
     dl = ma.SR * 0.001 * (base + depth * clfo);
     dr = ma.SR * 0.001 * (base - depth * clfo);
     // A bucket brigade is dark and noisy at the top. The lowpass is the part of

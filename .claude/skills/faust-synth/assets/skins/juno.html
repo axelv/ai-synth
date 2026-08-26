@@ -192,11 +192,10 @@ body { background: #101214; color: #edebe5; }
   display: flex; flex-direction: column; align-items: center; gap: .3rem;
   flex: 0 0 auto; padding: 0 .2rem; height: 100%;
 }
-/* the auto margins centre the LEDs and buttons in whatever the label leaves */
-[data-skin="juno"] .switch .leds { margin-top: auto; }
-[data-skin="juno"] .switch .row  { margin-bottom: auto; }
-[data-skin="juno"] .switch .leds {
-  display: flex; gap: .3rem; justify-content: center;
+/* the auto margins centre the positions in whatever the label leaves */
+[data-skin="juno"] .switch .row { margin: auto 0; }
+[data-skin="juno"] .switch .pos {
+  display: flex; flex-direction: column; align-items: center; gap: .3rem;
 }
 [data-skin="juno"] .switch .led {
   width: 5px; height: 5px; border-radius: 50%;
@@ -205,12 +204,15 @@ body { background: #101214; color: #edebe5; }
 [data-skin="juno"] .switch .led.on {
   background: var(--led); box-shadow: 0 0 6px var(--led);
 }
+/* OFF is the absence of an active state, so it carries no lamp: the switch board has
+   one on I and one on II and none on OFF. Kept in flow so the buttons still line up. */
+[data-skin="juno"] .switch .led.blank { visibility: hidden; }
 [data-skin="juno"] .switch .row { display: flex; gap: 0; }
-[data-skin="juno"] .switch .row button + button { margin-left: -1px; }
+[data-skin="juno"] .switch .row .pos + .pos button { margin-left: -1px; }
 [data-skin="juno"] .switch .row button { border-radius: 0; }
-[data-skin="juno"] .switch .row button:first-child { border-radius: 2px 0 0 2px; }
-[data-skin="juno"] .switch .row button:last-child  { border-radius: 0 2px 2px 0; }
-[data-skin="juno"] .switch .row button:only-child  { border-radius: 2px; }
+[data-skin="juno"] .switch .row .pos:first-child button { border-radius: 2px 0 0 2px; }
+[data-skin="juno"] .switch .row .pos:last-child button  { border-radius: 0 2px 2px 0; }
+[data-skin="juno"] .switch .row .pos:only-child button  { border-radius: 2px; }
 /* a latching waveform switch: one button under its printed name, as on the panel */
 [data-skin="juno"] .switch button.latch { min-width: 2rem; }
 [data-skin="juno"] .switch button {
@@ -312,10 +314,19 @@ function caption(it, m, section) {
   return c.toUpperCase() === section ? "" : c;
 }
 
-function scale(side) {
+// Eleven ticks over the travel, longer at 0, 5 and 10, as printed on the panel. A
+// control with only a few steps gets one tick per step instead, because that is what
+// it has: the HPF slider prints four where the faders beside it print eleven.
+function scale(side, n) {
   const s = el("div", "scale " + side);
-  for (let i = 0; i <= 10; i++) s.appendChild(el("i", i % 5 === 0 ? "maj" : ""));
+  for (let i = 0; i < n; i++) s.appendChild(el("i", n <= 6 || i % 5 === 0 ? "maj" : ""));
   return s;
+}
+
+// How many detents a control has, or 0 if it is continuous.
+function detents(it) {
+  const steps = +it.step > 0 ? (+it.max - +it.min) / +it.step : 0;
+  return Number.isInteger(steps) && steps >= 1 && steps <= 5 ? steps + 1 : 0;
 }
 
 function fader(it, m, set, section, numbered) {
@@ -325,10 +336,16 @@ function fader(it, m, set, section, numbered) {
 
   if (numbered) wrap.classList.add("numbered");
   const slot = el("div", "slot");
+  const det = detents(it);
   // Only the numbered fader gets the column at all. Left in place empty it still
-  // reserved its width, which pushed the slot past the fader and clipped it.
+  // reserved its width, which pushed the slot past the fader and clipped it. A
+  // detented control is numbered at every position, top down, the way the HPF's
+  // 3 2 1 0 is printed; a continuous one gets the panel's 10 / 5 / 0.
   const nums = el("div", "nums");
-  if (numbered) ["10", "5", "0"].forEach(n => nums.appendChild(el("span", "", n)));
+  const labels = det
+    ? Array.from({ length: det }, (_, i) => String(max - i * (+it.step)))
+    : ["10", "5", "0"];
+  if (numbered) labels.forEach(n => nums.appendChild(el("span", "", n)));
   const inp = document.createElement("input");
   inp.type = "range";
   inp.min = min; inp.max = max;
@@ -336,11 +353,13 @@ function fader(it, m, set, section, numbered) {
   inp.value = +it.init;
   inp.setAttribute("orient", "vertical");          // Firefox
   inp.setAttribute("aria-label", it.label);
-  slot.append(...(numbered ? [nums] : []), scale("left"), inp, scale("right"));
+  slot.append(...(numbered ? [nums] : []), scale("left", det || 11), inp, scale("right", det || 11));
   wrap.appendChild(slot);
 
   const val = el("div", "val");
-  const show = (v) => { val.textContent = (+v).toFixed(Math.abs(max - min) > 20 ? 0 : 2); };
+  // a detented control reads as its position, not as 1.00
+  const dp = det || Math.abs(max - min) > 20 ? 0 : 2;
+  const show = (v) => { val.textContent = (+v).toFixed(dp); };
   show(it.init);
   inp.addEventListener("input", () => { set(it.address, +inp.value); show(inp.value); });
   wrap.appendChild(val);
@@ -351,19 +370,36 @@ function switchRow(it, m, set, section) {
   const min = +it.min, max = +it.max, step = +it.step;
   const n = Math.round((max - min) / step) + 1;
   const names = (m.positions || "").split("|").filter(Boolean);
+  const nameOf = (i) => names[i] !== undefined ? names[i] : String(min + i * step);
   const wrap = el("div", "switch");
   wrap.appendChild(el("div", "cap", caption(it, m, section)));
-  const leds = el("div", "leds");
   const row = el("div", "row");
+
+  // A lamp above a button, blanked where the panel has none: on a position that is
+  // the absence of a state (CHORUS OFF has no lamp where I and II do), and on a
+  // two-way either/or, which the panel builds as an unlit slide switch. Blanked
+  // rather than dropped so every switch keeps the same height.
+  const lamps = n > 2;
+  const position = (label) => {
+    const pos = el("div", "pos");
+    const dark = !lamps || label.toUpperCase() === "OFF";
+    const led = el("div", "led" + (dark ? " blank" : ""));
+    const b = el("button", "", label);
+    b.type = "button";
+    pos.append(led, b);
+    row.appendChild(pos);
+    return { b, led };
+  };
 
   // OFF/ON is one latching button that lights, not a pair of buttons. That is what
   // the panel has for each waveform, and a pair reads as two separate things while
   // taking twice the width. The button carries no text because the name is printed
   // directly above it, exactly as the waveform symbols are on the hardware.
   if (n === 2 && names[0] === "OFF" && names[1] === "ON") {
-    const led = el("div", "led");
-    const b = el("button", "latch");
-    b.type = "button";
+    const { b, led } = position("\u0000");     // never "OFF", so the lamp stays
+    b.className = "latch";
+    b.textContent = "";
+    led.classList.remove("blank");
     b.setAttribute("role", "switch");
     b.setAttribute("aria-label", it.label);
     let on = +it.init >= max;
@@ -373,25 +409,18 @@ function switchRow(it, m, set, section) {
     };
     b.addEventListener("click", () => { on = !on; set(it.address, on ? max : min); paint(); });
     paint();
-    leds.appendChild(led);
-    row.appendChild(b);
-    wrap.append(leds, row);
+    wrap.appendChild(row);
     return wrap;
   }
 
   const btns = [];
   for (let i = 0; i < n; i++) {
     const v = min + i * step;
-    const led = el("div", "led");
-    const b = el("button", "", names[i] !== undefined ? names[i] : String(v));
-    b.type = "button";
+    const { b, led } = position(nameOf(i));
     b.setAttribute("role", "radio");
     b.setAttribute("aria-label", it.label + " " + b.textContent);
     b.addEventListener("click", () => { set(it.address, v); paint(i); });
-    // A two-position either/or is a slide switch on the panel and carries no lamp;
-    // only the multi-position selectors do.
-    if (n > 2) leds.appendChild(led);
-    row.appendChild(b); btns.push({ b, led });
+    btns.push({ b, led });
   }
   const paint = (sel) => btns.forEach(({ b, led }, i) => {
     b.setAttribute("aria-checked", String(i === sel));
@@ -399,7 +428,7 @@ function switchRow(it, m, set, section) {
   });
   paint(Math.round((+it.init - min) / step));
   row.setAttribute("role", "radiogroup");
-  wrap.append(leds, row);
+  wrap.appendChild(row);
   return wrap;
 }
 
@@ -426,9 +455,9 @@ SKIN.renderControls = (items, host, set) => {
     const ctrls = groups.get(key).sort((a, b) => (+a.m.idx || 0) - (+b.m.idx || 0));
     let numbered = true;                 // the section's first fader carries the scale
     for (const { it, m } of ctrls) {
-      const steps = +it.step > 0 ? Math.round((+it.max - +it.min) / +it.step) + 1 : 0;
-      const discrete = m.positions !== undefined || (steps >= 2 && steps <= 4);
-      if (discrete) { body.appendChild(switchRow(it, m, set, key)); continue; }
+      // Buttons only when the DSP names the positions. Inferring it from the step
+      // count turned the HPF into a button row, and the HPF is a detented slider.
+      if (m.positions !== undefined) { body.appendChild(switchRow(it, m, set, key)); continue; }
       body.appendChild(fader(it, m, set, key, numbered));
       numbered = false;
     }

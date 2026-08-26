@@ -340,227 +340,227 @@
   "juno-106.dsp": {
    "findings": [
     {
-     "kind": "moves level more than shape (# dB against # dB); correct for an envelope-length control, a defect for a timbre control",
-     "macro": "hpf",
-     "message": "moves level more than shape (6.9 dB against 6.7 dB); correct for an envelope-length control, a defect for a timbre control",
-     "severity": "warn"
+     "kind": "does nothing: # dB level, # dB shape, # dB width, and # dB in the release tail",
+     "macro": "delay",
+     "message": "does nothing: 0.11 dB level, 0.36 dB shape, 0.06 dB width, and 0.00 dB in the release tail",
+     "severity": "fail"
     },
     {
      "kind": "moves level more than shape (# dB against # dB); correct for an envelope-length control, a defect for a timbre control",
      "macro": "level",
-     "message": "moves level more than shape (221.6 dB against 17.6 dB); correct for an envelope-length control, a defect for a timbre control",
+     "message": "moves level more than shape (221.9 dB against 17.5 dB); correct for an envelope-length control, a defect for a timbre control",
      "severity": "warn"
     },
     {
      "kind": "is a volume control: # dB of level for # dB of spectral shape",
      "macro": "sustain",
-     "message": "is a volume control: 8.1 dB of level for 0.84 dB of spectral shape",
+     "message": "is a volume control: 7.7 dB of level for 1.05 dB of spectral shape",
      "severity": "fail"
     }
    ],
    "macros": {
     "attack": {
-     "centroid_ratio": 1.005,
-     "level_dB": 1.26,
-     "peak_hi": 0.62,
-     "peak_lo": 0.5,
+     "centroid_ratio": 1.025,
+     "level_dB": 1.47,
+     "peak_hi": 0.624,
+     "peak_lo": 0.499,
      "shape_dB": 1.83,
-     "width_dB": 0.15
+     "width_dB": 0.1
     },
     "chorus": {
-     "centroid_ratio": 1.029,
-     "level_dB": 1.73,
-     "peak_hi": 0.516,
+     "centroid_ratio": 1.043,
+     "level_dB": 1.85,
+     "peak_hi": 0.564,
      "peak_lo": 0.587,
-     "shape_dB": 0.48,
-     "width_dB": 74.57
+     "shape_dB": 0.59,
+     "width_dB": 74.63
     },
     "cutoff": {
-     "centroid_ratio": 2.338,
-     "level_dB": 1.42,
-     "peak_hi": 0.588,
-     "peak_lo": 0.588,
-     "shape_dB": 25.01,
-     "width_dB": 0.47
+     "centroid_ratio": 2.308,
+     "level_dB": 1.66,
+     "peak_hi": 0.608,
+     "peak_lo": 0.558,
+     "shape_dB": 23.78,
+     "width_dB": 0.12
     },
     "dcoLfo": {
      "centroid_ratio": 0.976,
-     "level_dB": 0.52,
-     "peak_hi": 0.655,
-     "peak_lo": 0.562,
-     "shape_dB": 0.62,
-     "width_dB": 0.01
+     "level_dB": 0.37,
+     "peak_hi": 0.616,
+     "peak_lo": 0.583,
+     "shape_dB": 0.53,
+     "width_dB": 0.12
     },
     "decay": {
-     "centroid_ratio": 0.978,
-     "level_dB": 0.98,
-     "peak_hi": 0.602,
-     "peak_lo": 0.565,
-     "shape_dB": 0.95,
-     "width_dB": 0.21
+     "centroid_ratio": 1.017,
+     "level_dB": 1.27,
+     "peak_hi": 0.631,
+     "peak_lo": 0.584,
+     "shape_dB": 0.63,
+     "width_dB": 0.01
     },
     "delay": {
-     "centroid_ratio": 0.975,
-     "level_dB": 0.57,
-     "peak_hi": 0.557,
-     "peak_lo": 0.565,
-     "shape_dB": 0.48,
-     "width_dB": 0.09
+     "centroid_ratio": 1.047,
+     "level_dB": 0.11,
+     "peak_hi": 0.578,
+     "peak_lo": 0.584,
+     "shape_dB": 0.36,
+     "width_dB": 0.06
     },
     "envPol": {
-     "centroid_ratio": 0.365,
-     "level_dB": 15.96,
-     "peak_hi": 0.076,
-     "peak_lo": 0.565,
-     "shape_dB": 19.39,
-     "width_dB": 1.96
+     "centroid_ratio": 0.333,
+     "level_dB": 15.23,
+     "peak_hi": 0.083,
+     "peak_lo": 0.584,
+     "shape_dB": 21.43,
+     "width_dB": 2.17
     },
     "hpf": {
-     "centroid_ratio": 1.584,
-     "level_dB": 6.91,
-     "peak_hi": 0.32,
-     "peak_lo": 0.576,
-     "shape_dB": 6.67,
-     "width_dB": 0.3
+     "centroid_ratio": 1.659,
+     "level_dB": 7.04,
+     "peak_hi": 0.347,
+     "peak_lo": 0.545,
+     "shape_dB": 8.64,
+     "width_dB": 0.52
     },
     "kybd": {
-     "centroid_ratio": 1.078,
-     "level_dB": 0.34,
-     "peak_hi": 0.597,
-     "peak_lo": 0.561,
-     "shape_dB": 5.12,
-     "width_dB": 0.16
+     "centroid_ratio": 1.104,
+     "level_dB": 0.25,
+     "peak_hi": 0.593,
+     "peak_lo": 0.566,
+     "shape_dB": 5.11,
+     "width_dB": 0.06
     },
     "level": {
      "centroid_ratio": 0.0,
-     "level_dB": 221.58,
-     "peak_hi": 0.706,
+     "level_dB": 221.95,
+     "peak_hi": 0.73,
      "peak_lo": 0.0,
-     "shape_dB": 17.57,
-     "width_dB": 5.68
+     "shape_dB": 17.47,
+     "width_dB": 5.53
     },
     "noise": {
-     "centroid_ratio": 1.068,
-     "level_dB": 0.82,
-     "peak_hi": 0.559,
-     "peak_lo": 0.567,
-     "shape_dB": 1.69,
-     "width_dB": 0.09
+     "centroid_ratio": 1.022,
+     "level_dB": 0.62,
+     "peak_hi": 0.568,
+     "peak_lo": 0.584,
+     "shape_dB": 1.57,
+     "width_dB": 0.11
     },
     "pulse": {
-     "centroid_ratio": 1.073,
-     "level_dB": 3.1,
-     "peak_hi": 0.565,
-     "peak_lo": 0.447,
-     "shape_dB": 2.15,
-     "width_dB": 0.35
+     "centroid_ratio": 1.015,
+     "level_dB": 3.76,
+     "peak_hi": 0.584,
+     "peak_lo": 0.444,
+     "shape_dB": 1.61,
+     "width_dB": 0.38
     },
     "pwm": {
-     "centroid_ratio": 1.117,
-     "level_dB": 0.42,
-     "peak_hi": 0.605,
-     "peak_lo": 0.611,
-     "shape_dB": 0.8,
+     "centroid_ratio": 1.081,
+     "level_dB": 0.32,
+     "peak_hi": 0.578,
+     "peak_lo": 0.554,
+     "shape_dB": 0.66,
      "width_dB": 0.04
     },
     "pwmMode": {
-     "centroid_ratio": 1.012,
-     "level_dB": 0.27,
-     "peak_hi": 0.598,
-     "peak_lo": 0.565,
-     "shape_dB": 0.76,
-     "width_dB": 0.16
+     "centroid_ratio": 1.059,
+     "level_dB": 0.66,
+     "peak_hi": 0.659,
+     "peak_lo": 0.584,
+     "shape_dB": 0.69,
+     "width_dB": 0.19
     },
     "range": {
-     "centroid_ratio": 2.292,
-     "level_dB": 2.28,
-     "peak_hi": 0.557,
-     "peak_lo": 0.493,
-     "shape_dB": 12.86,
-     "width_dB": 1.21
+     "centroid_ratio": 2.226,
+     "level_dB": 1.53,
+     "peak_hi": 0.547,
+     "peak_lo": 0.531,
+     "shape_dB": 13.34,
+     "width_dB": 1.25
     },
     "rate": {
-     "centroid_ratio": 1.018,
-     "level_dB": 0.4,
+     "centroid_ratio": 1.017,
+     "level_dB": 0.31,
      "peak_hi": 0.57,
-     "peak_lo": 0.589,
-     "shape_dB": 0.37,
-     "width_dB": 0.09
+     "peak_lo": 0.603,
+     "shape_dB": 0.5,
+     "width_dB": 0.15
     },
     "release": {
-     "centroid_ratio": 1.019,
-     "level_dB": 0.19,
-     "peak_hi": 0.565,
-     "peak_lo": 0.589,
-     "shape_dB": 0.52,
-     "width_dB": 0.17
+     "centroid_ratio": 0.942,
+     "level_dB": 1.02,
+     "peak_hi": 0.655,
+     "peak_lo": 0.67,
+     "shape_dB": 0.62,
+     "width_dB": 0.06
     },
     "res": {
-     "centroid_ratio": 2.171,
-     "level_dB": 0.69,
-     "peak_hi": 0.705,
-     "peak_lo": 0.614,
-     "shape_dB": 7.04,
-     "width_dB": 0.11
+     "centroid_ratio": 2.324,
+     "level_dB": 0.73,
+     "peak_hi": 0.653,
+     "peak_lo": 0.627,
+     "shape_dB": 7.25,
+     "width_dB": 0.35
     },
     "saw": {
-     "centroid_ratio": 1.063,
-     "level_dB": 4.29,
-     "peak_hi": 0.565,
-     "peak_lo": 0.427,
-     "shape_dB": 2.24,
-     "width_dB": 0.26
+     "centroid_ratio": 1.128,
+     "level_dB": 3.55,
+     "peak_hi": 0.584,
+     "peak_lo": 0.476,
+     "shape_dB": 2.14,
+     "width_dB": 0.53
     },
     "sub": {
      "centroid_ratio": 0.854,
-     "level_dB": 0.47,
-     "peak_hi": 0.659,
-     "peak_lo": 0.542,
-     "shape_dB": 4.96,
-     "width_dB": 0.45
+     "level_dB": 0.15,
+     "peak_hi": 0.667,
+     "peak_lo": 0.537,
+     "shape_dB": 6.67,
+     "width_dB": 0.56
     },
     "sustain": {
-     "centroid_ratio": 1.05,
-     "level_dB": 8.06,
-     "peak_hi": 0.622,
-     "peak_lo": 0.565,
-     "shape_dB": 0.84,
-     "width_dB": 0.08
+     "centroid_ratio": 1.09,
+     "level_dB": 7.68,
+     "peak_hi": 0.657,
+     "peak_lo": 0.608,
+     "shape_dB": 1.05,
+     "width_dB": 0.29
     },
     "vcaMode": {
-     "centroid_ratio": 0.977,
-     "level_dB": 2.02,
-     "peak_hi": 0.609,
-     "peak_lo": 0.565,
-     "shape_dB": 0.35,
-     "width_dB": 0.05
+     "centroid_ratio": 1.018,
+     "level_dB": 1.9,
+     "peak_hi": 0.674,
+     "peak_lo": 0.584,
+     "shape_dB": 0.41,
+     "width_dB": 0.03
     },
     "vcfEnv": {
-     "centroid_ratio": 1.698,
-     "level_dB": 0.36,
-     "peak_hi": 0.567,
-     "peak_lo": 0.52,
-     "shape_dB": 20.88,
+     "centroid_ratio": 1.677,
+     "level_dB": 0.45,
+     "peak_hi": 0.582,
+     "peak_lo": 0.538,
+     "shape_dB": 19.86,
      "width_dB": 0.14
     },
     "vcfLfo": {
-     "centroid_ratio": 1.033,
-     "level_dB": 0.15,
-     "peak_hi": 0.571,
-     "peak_lo": 0.565,
-     "shape_dB": 10.95,
-     "width_dB": 0.06
+     "centroid_ratio": 1.061,
+     "level_dB": 0.33,
+     "peak_hi": 0.573,
+     "peak_lo": 0.584,
+     "shape_dB": 10.89,
+     "width_dB": 0.17
     }
    },
    "pattern": "pad",
    "register_dB": [
-    -33.3,
-    -30.2,
-    -28.8,
+    -29.6,
+    -28.9,
     -28.4,
-    -28.5
+    -28.5,
+    -28.3
    ],
-   "release_below_peak_dB": -229.0,
+   "release_below_peak_dB": -228.0,
    "voices_dB": 12.04
   },
   "warm-pad.dsp": {
