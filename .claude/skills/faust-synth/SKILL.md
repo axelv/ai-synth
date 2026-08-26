@@ -135,8 +135,15 @@ already has in their head. It is a homage to the panel's visual grammar, drawn f
 public-domain photograph at `commons.wikimedia.org/wiki/File:Roland-Juno-106.jpg`. No
 maker's mark is reproduced.
 
+**Give the page a descriptive display name, not the machine's name.** The display name
+is what titles the page and sets its wordmark, so it is trademark use in a way that a
+reference file inside this skill is not. `build_page.py` puts the homage in visible page
+text on every juno-skinned page, via `SKIN_NOTICES`, so the attribution is stated where a
+reader can check it rather than only in a source comment. That notice is per-skin and
+automatic; there is no flag to remember and no call site that can drop it.
+
 ```bash
-uv run python $SK/scripts/build_page.py juno.dsp patches/juno.html "Juno-106" --skin juno
+uv run python $SK/scripts/build_page.py juno.dsp patches/juno.html "Chorus Polysynth" --skin juno
 ```
 
 The skin reads four optional metadata keys off each slider label. They are inert
@@ -257,11 +264,18 @@ which windows correctly:
 
 The generated page serves two roles from one file:
 
-- **Published as an artifact**, for sharing and for hearing it immediately. Web MIDI does
-  **not** work there: the viewer embeds the page in an iframe without the `midi`
-  permission, so `requestMIDIAccess` throws `SecurityError` and no user action fixes it.
-  The on-screen and QWERTY keyboards work.
-- **Served locally**, where Web MIDI works and a hardware keyboard can play it.
+- **Published as an artifact**, for sharing and for hearing it immediately. Build it with
+  `--fragment`: the artifact wrapper supplies `<!doctype html>` and the `<head>` itself,
+  and a second shell inside the body would be a duplicate. Web MIDI does **not** work
+  there: the viewer embeds the page in an iframe without the `midi` permission, so
+  `requestMIDIAccess` throws `SecurityError` and no user action fixes it. The on-screen
+  and QWERTY keyboards work.
+- **Served locally**, where Web MIDI works and a hardware keyboard can play it. This is
+  the default build, a whole document, because a fragment served over HTTP parses in
+  quirks mode: measured on a 375 px viewport, `document.compatMode` reads `BackCompat`
+  and the layout viewport comes out 980 px wide, so a skin's width media query never
+  fires and the panel is too small to play. Nothing shows at desktop widths, which is
+  how it went unnoticed. Check `compatMode` at a phone viewport, not by eye.
 
 ```bash
 python -m http.server 8777 --directory patches
