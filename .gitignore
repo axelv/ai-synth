@@ -37,5 +37,9 @@ out/*
 # `npm install`, so nothing here is worth a place in history.
 patches/
 
+# The built site, same argument: `python site/build.py` regenerates all of it, and the
+# six instrument pages come to 2.2 MB per build.
+site/dist/
+
 # Node is only here for faustwasm, which is 28 MB of libfaust.
 node_modules/

@@ -111,6 +111,26 @@ One self-contained HTML file: the Faust wasm, its metadata, the runtime, an on-s
 keyboard, a computer-keyboard mapping, MIDI input, and a slider per macro generated from
 the DSP's own metadata. Typically under 300 KiB.
 
+#### The first click plays
+
+Browser autoplay policy means one click is unavoidable before any sound, so that click
+plays a phrase and lights the keys rather than opening a silent panel. A page that
+answers its only button with silence reads as broken: nothing on it says the keys are
+playable until something plays them. Any real input, a key, a touch, a MIDI note, stops
+the phrase immediately, and the button then replays it.
+
+`--demo` picks the phrase, and it should suit the instrument for the same reason the
+measurement pattern does: a bass auditioned on a pad chord is being shown in a register
+it was never written for.
+
+| phrase | material |
+|---|---|
+| `chord` | a rolled Cmaj9, held. The default, and right for pads |
+| `arp` | up the chord then the chord, for plucks and bells |
+| `riff` | short notes low down with one octave jump, for basses |
+| `line` | a melodic phrase with a held tail, for leads |
+| `none` | no phrase. The first click just starts audio |
+
 The computer keyboard is mapped by **physical position** (`e.code`), never by the
 character a layout produces (`e.key`), so the piano keys fall under the same fingers on
 AZERTY, QWERTZ and QWERTY. The printed legend is relabelled from
@@ -143,7 +163,7 @@ reader can check it rather than only in a source comment. That notice is per-ski
 automatic; there is no flag to remember and no call site that can drop it.
 
 ```bash
-uv run python $SK/scripts/build_page.py juno.dsp patches/juno.html "Chorus Polysynth" --skin juno
+uv run python $SK/scripts/build_page.py juno.dsp patches/juno.html "Chorus Polysynth" --skin juno --demo chord
 ```
 
 The skin reads four optional metadata keys off each slider label. They are inert

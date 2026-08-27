@@ -1,0 +1,56 @@
+{
+  "featured": "chorus-polysynth",
+  "patches": [
+    {
+      "slug": "chorus-polysynth",
+      "name": "Chorus Polysynth",
+      "family": "Subtractive, DCO",
+      "blurb": "The early-80s Japanese polysynth sound: one oscillator per voice, a fat 4-pole filter, and a bucket-brigade stereo chorus doing most of the work. Laid out as the machine's own panel, 24 faders and all.",
+      "dsp": ".claude/skills/faust-synth/references/examples/juno-106.dsp",
+      "skin": "juno",
+      "demo": "chord"
+    },
+    {
+      "slug": "warm-analog-pad",
+      "name": "Warm Analog Pad",
+      "family": "Subtractive",
+      "blurb": "Three detuned saws, a sub octave, a soft filter and a hall. The pad that sits under everything and never asks for attention.",
+      "dsp": ".claude/skills/faust-synth/references/examples/warm-pad.dsp",
+      "demo": "chord"
+    },
+    {
+      "slug": "glassy-bell-lead",
+      "name": "Glassy Bell Lead",
+      "family": "Additive, inharmonic",
+      "blurb": "Struck metal, tuned. Inharmonic partials over an FM strike. Its sparkle control is the best macro in the set: it changes the timbre by 10 dB and the volume by none.",
+      "dsp": ".claude/skills/faust-synth/references/examples/bell-lead.dsp",
+      "demo": "arp",
+      "caveat": "Long decays overlap and clip near the top of the decay range. A measured defect, left in as a test case."
+    },
+    {
+      "slug": "plucky-fm-bass",
+      "name": "Plucky FM Bass",
+      "family": "Phase modulation",
+      "blurb": "DX-style slap. Two modulators into one sine carrier, with the metallic clang living only in the attack, which is what keeps it tight instead of boomy.",
+      "dsp": ".claude/skills/faust-synth/references/examples/fm-bass.dsp",
+      "demo": "riff",
+      "caveat": "The width control clips at the top of its own range. A measured defect, left in as a test case."
+    },
+    {
+      "slug": "acid-line",
+      "name": "Acid Line",
+      "family": "Resonant sweep",
+      "blurb": "A 303 in spirit. One sharp saw through a resonant ladder filter that sweeps on every note, with accent and post-filter overdrive.",
+      "dsp": ".claude/skills/faust-synth/references/examples/acid-lead.dsp",
+      "demo": "riff"
+    },
+    {
+      "slug": "breathy-texture",
+      "name": "Breathy Texture",
+      "family": "Noise and resonators",
+      "blurb": "Filtered noise with pitch in it, so a note reads as a colour rather than a tone. The movement is built from rates with no common period, so it never loops.",
+      "dsp": ".claude/skills/faust-synth/references/examples/breathy-texture.dsp",
+      "demo": "chord"
+    }
+  ]
+}

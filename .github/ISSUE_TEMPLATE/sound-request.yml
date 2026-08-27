@@ -1,0 +1,46 @@
+name: Request a sound
+description: Describe a sound and get back a synth you can play in the browser.
+title: "Sound request: "
+labels: ["sound request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        These are built by hand, one at a time, usually within a day. There is no
+        service behind this yet: the point of asking is to find out whether one is
+        worth building, so a request is useful even if you never play the result.
+  - type: textarea
+    id: sound
+    attributes:
+      label: The sound you want
+      description: >
+        Your own words are the right words. Name a record, a scene, an instrument, a
+        feeling. "The pad under the second verse" is a better brief than a list of
+        oscillator settings.
+      placeholder: A warm 80s pad, the kind that swells under a chorus and gets out of the way.
+    validations:
+      required: true
+  - type: input
+    id: clip
+    attributes:
+      label: A link to a clip
+      description: >
+        Optional, and worth knowing either way. Whether people reach for a clip or are
+        satisfied by a description decides which half of this project gets built next.
+      placeholder: https://
+  - type: dropdown
+    id: use
+    attributes:
+      label: What you would do with it
+      options:
+        - Play it and see
+        - Use it in something I am working on
+        - Curious how close it gets
+        - Something else
+    validations:
+      required: false
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Register, how it should move, what it must not sound like.
