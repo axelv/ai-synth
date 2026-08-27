@@ -56,7 +56,31 @@ def find_faust2wasm() -> str:
 
 BLURB = ("Faust compiled to WebAssembly, running in an AudioWorklet. "
          "Everything is inside this one file: no network, no server. "
-         "Press start, then play the keys.")
+         "Press play to hear it, then take over the keys.")
+
+# Demo phrases, as [start ms, MIDI note, duration ms]. One plays on the first click,
+# because browser autoplay policy makes that click unavoidable and a page that answers
+# it with silence reads as broken: nothing on screen says the keys are playable until
+# something plays them. The phrase belongs to the instrument, so a bass gets a line in
+# its own register rather than a pad chord it was never written for, the same reason
+# measure.py takes a pattern.
+PHRASES = {
+    # Cmaj9 rolled by hand, held long enough for a swell and a tail to show.
+    "chord": [(0, 48, 2600), (60, 55, 2540), (120, 59, 2480),
+              (180, 64, 2420), (240, 67, 2360)],
+    # Up the chord, then the chord: decay length first, then voice stealing.
+    "arp": [(0, 60, 900), (180, 64, 900), (360, 67, 900), (540, 72, 900),
+            (720, 76, 900), (1300, 60, 1800), (1300, 64, 1800),
+            (1300, 67, 1800), (1300, 72, 1800)],
+    # Short notes low down, one octave jump: attack and note-off, which is what a
+    # bass is judged on.
+    "riff": [(0, 36, 180), (200, 36, 140), (400, 48, 180), (600, 43, 160),
+             (800, 39, 180), (1000, 36, 620)],
+    # A phrase with a held tail on the end, for vibrato and legato.
+    "line": [(0, 64, 400), (400, 67, 400), (800, 71, 300), (1100, 72, 900),
+             (2100, 69, 1400)],
+    "none": [],
+}
 
 
 def load_skin(name: str) -> tuple[str, str]:
@@ -194,11 +218,13 @@ def compile_dsp(dsp_path: str, out_dir: str) -> None:
 
 def build(dsp_path: str, out_path: str, voices: int = 16,
           title: str | None = None, skin: str = "plain",
-          fragment: bool = False) -> dict[str, int]:
+          fragment: bool = False, demo: str = "chord") -> dict[str, int]:
     name = os.path.splitext(os.path.basename(dsp_path))[0]
     # The Faust name has to stay the slug (it keys the worklet processor registration);
     # only the heading and <title> get the readable form.
     display = title or name.replace("-", " ").title()
+    if demo not in PHRASES:
+        raise RuntimeError(f"no phrase {demo!r}. Available: {', '.join(PHRASES)}")
     skin_css, skin_js = load_skin(skin)
     tmp = tempfile.mkdtemp(prefix="faustbuild-")
     try:
@@ -245,6 +271,7 @@ def build(dsp_path: str, out_path: str, voices: int = 16,
                 .replace("__NOTICE__", notice_html(skin))
                 .replace("__PAYLOAD__", json.dumps(payload))
                 .replace("__VOICES__", str(voices))
+                .replace("__DEMO__", json.dumps(PHRASES[demo]))
                 .replace("__TITLE__", display)
                 .replace("__EYEBROW__", "ai-synth")
                 .replace("__TAGLINE__", f"{voices}-voice polyphonic synthesizer")
@@ -279,13 +306,16 @@ if __name__ == "__main__":
     ap.add_argument("--voices", type=int, default=16)
     ap.add_argument("--skin", default="plain",
                     help="panel look: plain, or a name under assets/skins/")
+    ap.add_argument("--demo", default="chord",
+                    help="phrase played on the first click: "
+                         + ", ".join(PHRASES))
     ap.add_argument("--fragment", action="store_true",
                     help="emit the bare fragment, for publishing as an Artifact whose "
                          "wrapper supplies its own document shell")
     a = ap.parse_args()
 
     stats = build(a.dsp, a.out, voices=a.voices, title=a.title, skin=a.skin,
-                  fragment=a.fragment)
+                  fragment=a.fragment, demo=a.demo)
     total = stats["page"]
     mode = "fragment" if a.fragment else "document"
     print(f"{a.out}  [skin: {a.skin}, {mode}]")

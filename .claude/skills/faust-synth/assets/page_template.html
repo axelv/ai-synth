@@ -2,6 +2,8 @@
 
 <style>
 __FONTS__
+  /* --- tokens: the palette, lifted verbatim by site/build.py so the landing page
+     and the instruments it links to are visibly one thing. Keep the markers. --- */
   :root {
     --ground: #e9eef0; --surface: #ffffff; --sunk: #dde5e7; --line: #c3d0d3;
     --ink: #11191b; --muted: #5b6c70; --accent: #0d6f78; --live: #17724f;
@@ -24,6 +26,7 @@ __FONTS__
     --key-white: #c8d6d8; --key-white-on: #45b9c1; --key-black: #0a1113; --key-black-on: #1f7c84;
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.3);
   }
+  /* --- end tokens --- */
 
   * { box-sizing: border-box; }
   body {
@@ -137,7 +140,7 @@ __FONTS__
   </header>
 
   <div class="bar">
-    <button id="start">Start audio</button>
+    <button id="start">Play</button>
     <span class="status" id="status">Not started</span>
     <span class="status" id="midi">MIDI: checking</span>
   </div>
@@ -168,6 +171,9 @@ __FAUSTWASM__
 
 const PAYLOAD = __PAYLOAD__;
 const VOICES = __VOICES__;
+// [startMs, midiNote, durationMs] per note. Built by build_page.py from a named
+// phrase, so the page carries the notes and not the vocabulary.
+const DEMO = __DEMO__;
 
 const b64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 
@@ -226,6 +232,7 @@ function buildKeys() {
     const n = e.target.dataset && e.target.dataset.note;
     if (!n) return;
     host.setPointerCapture(e.pointerId);
+    stopDemo();
     noteOn(+n, 100);
   });
   const release = () => { held.forEach(n => noteOff(n)); };
@@ -250,6 +257,34 @@ function noteOff(n) {
   held.delete(n);
   node.keyOff(0, n, 0);
   paint(n, false);
+}
+
+// ---- the demo phrase ----
+// Browser autoplay policy makes one click unavoidable, so that click should produce
+// sound. Silence after it is where a visitor decides the page is broken and leaves:
+// nothing on screen says the keys are playable until something plays them.
+// Any real input wins immediately; a demo that keeps playing over someone is worse
+// than no demo at all.
+let demoTimers = [];
+const demoHeld = new Set();
+
+function stopDemo() {
+  demoTimers.forEach(clearTimeout);
+  demoTimers = [];
+  demoHeld.forEach(n => noteOff(n));
+  demoHeld.clear();
+}
+
+function playDemo() {
+  stopDemo();
+  if (!node || !DEMO.length) return;
+  const at = (ms, fn) => demoTimers.push(setTimeout(fn, ms));
+  DEMO.forEach(([t, n, dur]) => {
+    at(t, () => { demoHeld.add(n); noteOn(n, 96); });
+    at(t + dur, () => { demoHeld.delete(n); noteOff(n); });
+  });
+  const end = Math.max(...DEMO.map(([t, , dur]) => t + dur));
+  at(end + 40, () => { demoTimers = []; });
 }
 
 // ---- computer keyboard ----
@@ -277,6 +312,7 @@ addEventListener("keydown", (e) => {
   e.preventDefault();
   const n = 60 + off + octave * 12;
   downCodes.set(e.code, n);
+  stopDemo();
   noteOn(n, 100);
 });
 addEventListener("keyup", (e) => {
@@ -389,7 +425,7 @@ async function initMidi() {
 }
 function onMidi(ev) {
   const d = ev.data, s = d[0] & 0xf0;
-  if (s === 0x90 && d[2] > 0) noteOn(d[1], d[2]);
+  if (s === 0x90 && d[2] > 0) { stopDemo(); noteOn(d[1], d[2]); }
   else if (s === 0x80 || (s === 0x90 && d[2] === 0)) noteOff(d[1]);
   else if (node) node.midiMessage(d);
 }
@@ -400,6 +436,10 @@ labelKeymap();
 
 $("start").addEventListener("click", async () => {
   const btn = $("start");
+  // Once booted the button is the demo's replay, not a second boot. Leaving it
+  // disabled and reading "Running" spends the one control a visitor has found on
+  // nothing.
+  if (node) { playDemo(); return; }
   btn.disabled = true;
   setStatus("starting");
   try {
@@ -424,10 +464,12 @@ $("start").addEventListener("click", async () => {
     buildMacros();
     // Scripting handle: lets a test drive the instrument and tap its output without
     // clicking, which is the only way to verify this page from an automated browser.
-    window.synth = { ctx, node, noteOn, noteOff };
+    window.synth = { ctx, node, noteOn, noteOff, playDemo, stopDemo };
     setStatus(`running, ${VOICES} voices, ${ctx.sampleRate} Hz, ${(ctx.baseLatency*1000).toFixed(1)} ms`, true);
-    btn.textContent = "Running";
+    btn.textContent = "Play again";
+    btn.disabled = false;
     initMidi();
+    playDemo();
   } catch (err) {
     setStatus("failed: " + err.message);
     btn.disabled = false;

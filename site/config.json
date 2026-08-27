@@ -1,0 +1,18 @@
+{
+  "_comment": "Everything here is a deployment decision, not a code one. build.py reads it and nothing else does.",
+
+  "repo": "axelv/ai-synth",
+  "site_url": "https://axelv.github.io/ai-synth",
+
+  "_request_form_url": "POST endpoint for the request form (Formspree, Tally, Basin). Blank means the form is not drawn at all and the GitHub issue link becomes the primary call to action, which works on day one but loses everyone without a GitHub account. This is the number the whole page exists to move, so filling it in is the first thing to do after the site is live.",
+  "request_form_url": "",
+
+  "_request_issue_url": "Always drawn, as the secondary path. Needs .github/ISSUE_TEMPLATE/sound-request.yml, which is in this repo.",
+  "request_issue_url": "https://github.com/axelv/ai-synth/issues/new?template=sound-request.yml&labels=sound+request",
+
+  "_analytics": "Injected verbatim into <head> on every page, landing and instrument alike. Empty by default: nothing here should set a cookie or need a consent banner in front of the one click that matters. GoatCounter, Plausible and Umami all fit.",
+  "analytics": "",
+
+  "_plugin_ready": "Flip to true once axelv/ai-synth is installable as a Claude Code plugin (issue #7). Until then the page tells people to clone, because printing an install command that does not work is worse than a longer one that does.",
+  "plugin_ready": false
+}

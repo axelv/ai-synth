@@ -1,0 +1,274 @@
+<style>
+__FONTS__
+__TOKENS__
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 16px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 54rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem;
+    display: flex; flex-direction: column; gap: 3.5rem;
+  }
+  a { color: var(--accent); }
+  .eyebrow {
+    font-family: var(--mono); font-size: .7rem; font-weight: 500;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--accent);
+    margin: 0 0 .6rem;
+  }
+  h1 {
+    font-size: clamp(2rem, 6.5vw, 3.1rem); font-weight: 700;
+    letter-spacing: -.025em; line-height: 1.05; margin: 0 0 .8rem;
+    text-wrap: balance; max-width: 20ch;
+  }
+  h2 {
+    font-size: clamp(1.15rem, 3vw, 1.5rem); font-weight: 700;
+    letter-spacing: -.015em; margin: 0 0 .5rem;
+  }
+  h3 { font-size: 1.05rem; font-weight: 700; letter-spacing: -.01em; margin: 0; }
+  .standfirst { margin: 0; font-size: 1.08rem; color: var(--muted); max-width: 44rem; }
+  .note { font-size: .85rem; color: var(--muted); margin: 0; }
+  section { display: flex; flex-direction: column; gap: 1rem; }
+  kbd {
+    font-family: var(--mono); font-size: .78rem; background: var(--sunk);
+    border: 1px solid var(--line); border-radius: 2px; padding: .05rem .3rem;
+  }
+
+  /* ---- the instrument, live, above everything that explains it ---- */
+  .stage {
+    border: 1px solid var(--line); border-radius: 3px; background: var(--surface);
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .stage iframe { display: block; width: 100%; border: 0; height: 46rem; }
+  .stage-foot {
+    display: flex; flex-wrap: wrap; gap: .4rem 1rem; justify-content: space-between;
+    align-items: baseline; border-top: 1px solid var(--line);
+    padding: .7rem 1.1rem; background: var(--sunk);
+  }
+
+  /* ---- getting started ---- */
+  ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: step;
+             display: grid; gap: .9rem; }
+  ol.steps li {
+    counter-increment: step; position: relative; padding-left: 2.6rem;
+    color: var(--muted);
+  }
+  ol.steps li::before {
+    content: counter(step); position: absolute; left: 0; top: .05rem;
+    width: 1.8rem; height: 1.8rem; border-radius: 50%;
+    display: grid; place-items: center;
+    font-family: var(--mono); font-size: .8rem; font-weight: 600;
+    color: var(--surface); background: var(--accent);
+  }
+  ol.steps b { color: var(--ink); font-weight: 600; }
+
+  /* ---- gallery ---- */
+  .cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+  .card {
+    display: flex; flex-direction: column; gap: .45rem;
+    border: 1px solid var(--line); border-radius: 3px; background: var(--surface);
+    box-shadow: var(--shadow); padding: 1.1rem 1.2rem 1rem;
+    text-decoration: none; color: inherit;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .card .fam {
+    font-family: var(--mono); font-size: .66rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--accent);
+  }
+  .card p { margin: 0; font-size: .9rem; color: var(--muted); }
+  .card .caveat {
+    font-size: .76rem; color: var(--muted); border-left: 2px solid var(--line);
+    padding-left: .6rem; opacity: .9;
+  }
+  .card .cta {
+    margin-top: auto; padding-top: .5rem;
+    font-family: var(--mono); font-size: .78rem; font-weight: 500; color: var(--accent);
+  }
+
+  /* ---- the ask, which is what the page is for ---- */
+  .ask {
+    border: 1px solid var(--accent); border-radius: 3px; background: var(--surface);
+    box-shadow: var(--shadow); padding: 1.6rem 1.4rem;
+    display: flex; flex-direction: column; gap: 1rem;
+  }
+  form { display: flex; flex-direction: column; gap: .8rem; max-width: 34rem; }
+  label { font-size: .85rem; font-weight: 600; }
+  textarea, input[type=email] {
+    font-family: var(--sans); font-size: .95rem; color: var(--ink);
+    background: var(--ground); border: 1px solid var(--line); border-radius: 3px;
+    padding: .6rem .7rem; width: 100%; resize: vertical;
+  }
+  textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .btn {
+    display: inline-block; font-family: var(--sans); font-size: .95rem; font-weight: 500;
+    color: var(--surface); background: var(--accent);
+    border: 1px solid var(--accent); border-radius: 3px;
+    padding: .55rem 1.1rem; cursor: pointer; text-decoration: none; align-self: flex-start;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn[disabled] { opacity: .45; cursor: default; filter: none; }
+  .btn.big { font-size: 1.05rem; padding: .8rem 1.5rem; }
+  .btn.ghost { color: var(--accent); background: transparent; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.4rem; }
+
+  /* ---- developers, deliberately below the musician path ---- */
+  pre {
+    font-family: var(--mono); font-size: .8rem; line-height: 1.7; margin: 0;
+    border: 1px solid var(--line); border-radius: 3px; background: var(--sunk);
+    padding: .9rem 1rem; overflow-x: auto;
+  }
+  footer { border-top: 1px solid var(--line); padding-top: 1.2rem; }
+  footer p { margin: 0 0 .5rem; font-size: .85rem; color: var(--muted); }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">An experiment</p>
+    <h1>Describe a sound. Get a synth you can play.</h1>
+    <p class="standfirst">
+      Not a sample and not a recording. What comes back is a patch: a real synth with
+      knobs on it, running in your browser. Press play to hear one, then take the keys
+      yourself.
+    </p>
+    <div class="cta-row">
+      <button class="btn big" id="hero-play" disabled>Play a synth now</button>
+      <a class="btn big ghost" href="#ask">Ask for a sound</a>
+    </div>
+  </header>
+
+  <section class="stage-wrap">
+    <div class="stage">
+      <iframe id="stage" src="p/__HERO_SLUG__.html" title="__HERO_NAME__"
+              allow="midi" loading="eager"></iframe>
+      <div class="stage-foot">
+        <span class="note"><b>__HERO_NAME__</b>, one of __COUNT__ instruments below.</span>
+        <span class="note"><a href="p/__HERO_SLUG__.html">Open it on its own page</a>,
+        which is where a MIDI keyboard works.</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Getting started is three clicks</h2>
+    <ol class="steps">
+      <li><b>Press play.</b> It plays itself a phrase. Nothing to install, no account,
+        no plugin, and no audio leaves your machine: the whole synth is in the page.</li>
+      <li><b>Take the keys.</b> Touch them, or play your computer keyboard:
+        <kbd>z</kbd> <kbd>x</kbd> <kbd>c</kbd> for the lower octave,
+        <kbd>q</kbd> <kbd>w</kbd> <kbd>e</kbd> for the upper. Plug a MIDI keyboard into
+        an instrument's own page and it plays that instead.</li>
+      <li><b>Turn the knobs.</b> Four to seven of them, named for what a musician would
+        call them rather than for the parameter underneath. It is a patch, so it keeps
+        dialling long after the first sound.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>__COUNT__ instruments</h2>
+    <p class="note">
+      One page each, and each page is one file you can send to somebody. Nothing is
+      fetched while it runs.
+    </p>
+    <div class="cards">__CARDS__</div>
+  </section>
+
+  <section class="ask" id="ask">
+    <div>
+      <h2>Ask for a sound</h2>
+      <p class="standfirst">
+        Tell me what you want to hear, in your own words. <em>Warm 80s pad. The bass on
+        that track. Something glassy that sits under a vocal.</em> Or paste a link to a
+        clip.
+      </p>
+    </div>
+    <p class="note">
+      I build it by hand and send back a link you can play, usually within a day. There
+      is no queue and no signup, because there is no service yet: this page exists to
+      find out whether one is worth building.
+    </p>
+    __REQUEST__
+  </section>
+
+  <section>
+    <h2>Or build one yourself</h2>
+    <p class="note">
+      Nothing above was hand-written. A Claude Code skill writes the Faust, measures the
+      patch for the defects that do not show up by ear, a macro that only moves volume, a
+      control that clips at the top of its own range, and builds the page. Two of the six
+      still carry a measured defect, named on their card, because they double as the
+      test cases that prove the measurement works.
+    </p>
+    __DEV__
+  </section>
+
+  <footer>
+    <p>
+      A side project by one person, built first for its author. The source, the method
+      and the measured negative results are
+      <a href="https://github.com/__REPO__">on GitHub</a>; where it is going is in
+      <a href="https://github.com/__REPO__/blob/main/VISION.md">VISION.md</a>.
+    </p>
+    <p>
+      The instruments are Faust compiled to WebAssembly. Names are descriptions, not
+      makes: no instrument here claims to be, or to be endorsed by, the machine it takes
+      after.
+    </p>
+  </footer>
+
+</div>
+
+<script>
+// The instrument is a same-origin document, so its real height is readable rather than
+// guessable. Guessing costs either a scrollbar inside the frame, which on a phone traps
+// the drag that was meant to play a key, or a slab of dead space under the panel.
+(function () {
+  const frame = document.getElementById("stage");
+  const fit = () => {
+    try {
+      const d = frame.contentDocument;
+      if (d && d.body) frame.style.height = d.documentElement.scrollHeight + "px";
+    } catch (err) {
+      /* cross-origin: the CSS height stands, which is why it is set there too */
+    }
+  };
+  frame.addEventListener("load", fit);
+  addEventListener("resize", fit);
+
+  // The hero button is the same button as the instrument's, moved to where a phone
+  // can see it without scrolling: the panel's own header is tall, so on a 390 px
+  // screen its Play sits near the fold and the one click the whole page depends on
+  // becomes a click someone has to go looking for. Same origin, so this is a plain
+  // forwarded click, and the user activation that lets an AudioContext start carries
+  // across the frame with it.
+  const hero = document.getElementById("hero-play");
+  const inner = () => {
+    try { return frame.contentDocument.getElementById("start"); }
+    catch (err) { return null; }
+  };
+  // Mirror the instrument's label only once it has one worth mirroring. Copying it
+  // unconditionally overwrites the hero's own wording with the panel's terser one
+  // before anybody has clicked anything.
+  const OPENING = hero.textContent;
+  const sync = () => {
+    const b = inner();
+    hero.disabled = !b;
+    const want = b && b.textContent !== "Play" ? b.textContent : OPENING;
+    if (hero.textContent !== want) hero.textContent = want;
+  };
+  hero.addEventListener("click", () => {
+    const b = inner();
+    if (b) b.click();
+  });
+  frame.addEventListener("load", sync);
+
+  // The panel reflows once its fonts land and again when the macros are built on the
+  // first click, and neither fires a load event. The button's label moves on the same
+  // schedule and for the same reason.
+  setInterval(() => { fit(); sync(); }, 400);
+})();
+</script>

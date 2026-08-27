@@ -66,6 +66,27 @@ repo-root `scripts/`, which belongs to track B.**
 | `references/examples/measured.md` | what each gets right and wrong, and why |
 | `references/examples/expected.json` | what each is expected to measure. The regression set, enforced by `--check` |
 
+### The public site
+
+Track A's shop window: one landing page and one page per instrument, built from the
+skill's own `build_page.py` and published to GitHub Pages. It is an experiment with one
+number, requests submitted, and `site/README.md` is where the reasoning behind the page
+lives. Read it before rewriting any of the copy.
+
+```
+python site/build.py                    # stdlib plus node, deliberately: no uv, no torch
+python -m http.server 8791 --directory site/dist
+CHROMIUM=... node site/check.mjs        # needs `npm install --no-save playwright`
+```
+
+| file | role |
+|---|---|
+| `site/catalogue.json` | which instruments the site ships, and what each one is called |
+| `site/config.json` | where a request goes, what counts a visit, whether the plugin exists |
+| `site/templates/index.html` | the landing page. Lifts its palette out of `page_template.html` through the `--- tokens ---` markers, so do not delete those |
+| `site/build.py` | the build. Also the seam where social metadata and analytics are injected into pages the skill built without knowing about either |
+| `site/check.mjs` | what the page has to do, checked in a browser: first click makes sound, panel fits its frame, nothing overflows at 390 px |
+
 ### Track B
 
 ```
