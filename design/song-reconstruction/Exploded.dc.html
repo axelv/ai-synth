@@ -1,0 +1,143 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; background: #101214; color: #edebe5;
+           font-family: "Archivo", ui-sans-serif, system-ui, sans-serif; }
+    a { color: #e5922c; } a:hover { color: #f5b559; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+            font-variant-numeric: tabular-nums; }
+    .plane { cursor: pointer; transition: transform .18s ease, opacity .18s ease; }
+    .plane:hover .pname { color: #fbfaf6; }
+  </style>
+</helmet>
+
+<div style="width: 940px; padding: 20px; background: #101214; box-sizing: border-box">
+<div style="display: flex; flex-direction: column; gap: 14px; padding: 18px; box-sizing: border-box; background: linear-gradient(180deg, #202325 0%, #16181a 100%); border: 1px solid #000; border-radius: 7px; box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 18px 44px rgba(0,0,0,.55)">
+
+  <div style="display: flex; align-items: stretch; background: #4a4a48; border-top: 9px solid #4a86bd; border-radius: 3px">
+    <div style="display: flex; align-items: center; padding: 0 14px; background: linear-gradient(180deg, #efeada 0%, #ded9c6 45%, #c9c4b0 100%); color: #23262a; font-weight: 700; font-size: 12px; letter-spacing: .06em">option b</div>
+    <div style="display: flex; flex-direction: column; justify-content: center; gap: 5px; flex-grow: 1; padding: 10px 18px">
+      <div style="font-family: 'Michroma', ui-sans-serif, sans-serif; font-size: 19px; line-height: 1; color: #f4f2ec; text-transform: uppercase">Exploded stack</div>
+      <div style="font-size: 9px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: #b8b6ae">five sheets of synth, low to high</div>
+    </div>
+  </div>
+
+  <!-- Each layer is a sheet lying in the mix, its spectral fingerprint painted on
+       it. Height in the stack is register, so the read is bass at the floor and
+       the bell on top, which is how the record is actually built. -->
+  <div style="position: relative; height: 470px; margin: 12px 0 0">
+    <sc-for list="{{ planes }}" as="p" hint-placeholder-count="5">
+      <div class="plane" onClick="{{ p.pick }}" style="{{ p.wrapStyle }}">
+        <div style="{{ p.sheetStyle }}">
+          <div style="{{ p.barsStyle }}">
+            <sc-for list="{{ p.bars }}" as="b" hint-placeholder-count="22">
+              <div style="{{ b.s }}"></div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="{{ p.tagStyle }}">
+          <div class="pname" style="{{ p.nameStyle }}">{{ p.name }}</div>
+          <div style="display: flex; align-items: center; gap: 7px">
+            <div style="{{ p.chipStyle }}">{{ p.synth }}</div>
+            <div class="mono" style="font-size: 10.5px; color: #b8b6ae">{{ p.db }}</div>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding-top: 6px; border-top: 1px solid rgba(233,231,224,.18)">
+    <div style="font-size: 11.5px; line-height: 1.5; color: #8d9094; max-width: 470px">Reads the arrangement as a stack, so overlap is the point: the bell sits clear of everything, and the pad runs straight under the riff. Weaker at showing how any one synth is configured.</div>
+    <div style="display: flex; gap: 16px; padding-top: 2px">
+      <sc-for list="{{ legend }}" as="g" hint-placeholder-count="2">
+        <div style="display: flex; align-items: center; gap: 6px">
+          <div style="{{ g.swatch }}"></div>
+          <div style="font-size: 9.5px; font-weight: 600; letter-spacing: .08em; color: #d6d4cc">{{ g.label }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+</div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"tilt":{"editor":"range","min":18,"max":48,"step":2,"default":38,"unit":"deg","section":"View"},"$preview":{"width":940,"height":780}}'>
+const HUE = { juno: '#4a86bd', fm: '#c98500' };
+
+// Bottom to top is low to high register: the stack itself carries the insight.
+const PLANES = [
+  { id: 'bass', name: 'SYNTH BASS', synth: 'DX7', kind: 'fm', db: '-3.0',
+    bars: [88, 96, 92, 78, 62, 48, 36, 27, 20, 15, 11, 8, 6, 5, 4, 3, 2, 2, 1, 1, 1, 1] },
+  { id: 'pad', name: 'STRING PAD', synth: 'JUNO-60', kind: 'juno', db: '-6.5',
+    bars: [22, 46, 68, 84, 96, 92, 82, 74, 66, 58, 50, 43, 36, 30, 24, 19, 14, 10, 7, 5, 3, 2] },
+  { id: 'stab', name: 'BRASS STAB', synth: 'DX7', kind: 'fm', db: '-13.5',
+    bars: [6, 12, 22, 38, 56, 74, 88, 96, 92, 84, 74, 64, 54, 45, 36, 28, 21, 15, 11, 8, 5, 3] },
+  { id: 'riff', name: 'RIFF LEAD', synth: 'JUNO-60', kind: 'juno', db: '-4.5',
+    bars: [10, 18, 32, 52, 74, 90, 96, 88, 76, 82, 70, 58, 62, 50, 40, 32, 25, 19, 14, 10, 7, 5] },
+  { id: 'bell', name: 'RIFF BELL', synth: 'DX7', kind: 'fm', db: '-9.0',
+    bars: [2, 3, 4, 6, 9, 14, 22, 33, 47, 63, 80, 94, 96, 88, 78, 68, 58, 48, 39, 30, 22, 15] },
+];
+
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const sel = st.sel ?? 'riff';
+    const tilt = this.props.tilt ?? 38;
+    const SHEET_H = 68, PITCH = 84;
+
+    const planes = PLANES.map((p, i) => {
+      const on = sel === p.id;
+      // top of the stack is the last entry, so lay them out from the bottom up
+      const top = (PLANES.length - 1 - i) * PITCH;
+      // 34px of gutter: the skew throws each sheet's bottom-left corner ~27px left
+      const left = 34 + i * 22;
+      return Object.assign({}, p, {
+        pick: () => this.setState({ sel: p.id }),
+        wrapStyle: 'position: absolute; left: ' + left + 'px; top: ' + top + 'px; width: 720px;'
+          + ' height: ' + SHEET_H + 'px; display: flex; align-items: center;'
+          + ' transform: translateX(' + (on ? 34 : 0) + 'px);'
+          + ' opacity: ' + (on ? '1' : '.62') + '; z-index: ' + (on ? 9 : i) + ';',
+        // counter-skewed by the same angle, so the bars stand up on the sheet
+        barsStyle: 'display: flex; align-items: flex-end; gap: 4px; height: 100%;'
+          + ' padding: 0 22px; transform: skewX(' + tilt + 'deg);',
+        sheetStyle: 'width: 540px; height: 100%; flex-shrink: 0;'
+          + ' transform: skewX(-' + tilt + 'deg);'
+          + ' background: linear-gradient(180deg, rgba(74,74,72,.9) 0%, rgba(32,35,37,.92) 100%);'
+          + ' border: 1px solid ' + (on ? HUE[p.kind] : 'rgba(233,231,224,.22)') + ';'
+          + ' border-bottom: 2px solid ' + HUE[p.kind] + ';'
+          + ' box-shadow: 0 10px 22px rgba(0,0,0,.5);',
+        tagStyle: 'display: flex; flex-direction: column; gap: 5px; margin-left: 30px;'
+          + ' padding-left: 14px; border-left: 2px solid '
+          + (on ? '#e9e7e0' : 'rgba(233,231,224,.3)') + ';',
+        nameStyle: 'font-size: 12px; font-weight: 700; letter-spacing: .07em;'
+          + ' color: ' + (on ? '#fbfaf6' : '#c8c6be') + ';',
+        chipStyle: 'padding: 2px 6px 3px; border-radius: 2px; font-size: 8.5px; font-weight: 700;'
+          + ' letter-spacing: .09em; color: #16181a; background: ' + HUE[p.kind] + ';',
+        bars: p.bars.map((h) => ({
+          s: 'flex-grow: 1; border-radius: 2px 2px 0 0; height: ' + Math.max(2, Math.round(h * 0.52)) + 'px;'
+            + ' background: ' + HUE[p.kind] + '; opacity: ' + (0.28 + 0.62 * h / 100) + ';',
+        })),
+      });
+    });
+
+    return {
+      planes,
+      legend: [
+        { label: 'JUNO-60', swatch: 'width: 11px; height: 11px; border-radius: 2px; background: ' + HUE.juno + ';' },
+        { label: 'DX7', swatch: 'width: 11px; height: 11px; border-radius: 2px; background: ' + HUE.fm + ';' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
