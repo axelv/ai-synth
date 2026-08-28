@@ -39,3 +39,8 @@ patches/
 
 # Node is only here for faustwasm, which is 28 MB of libfaust.
 node_modules/
+
+# Seeded design canvases. 2.5 MB each, nearly all of it a vendored copy of the
+# canvas editor, and a reseed from the tracked .dc.html sources reproduces it.
+design/**/*.html
+!design/**/*.dc.html

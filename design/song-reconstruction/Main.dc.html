@@ -1,0 +1,556 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    /* Panel grammar and every hex below are lifted from
+       .claude/skills/faust-synth/assets/skins/juno.html, so a page built from
+       this design and a page built by build_page.py read as one product. */
+    body { margin: 0; background: #101214; color: #edebe5;
+           font-family: "Archivo", ui-sans-serif, system-ui, sans-serif; }
+    a { color: #e5922c; } a:hover { color: #f5b559; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+            font-variant-numeric: tabular-nums; }
+    /* the printed fader scale: minor tick every 11.7px, major at 0 / 5 / 10 */
+    .scale { width: 6px; background-repeat: no-repeat; background-size: 6px 100%, 3px 100%;
+      background-image:
+        repeating-linear-gradient(to bottom, #fbfaf6 0 2px, transparent 2px 58.5px),
+        repeating-linear-gradient(to bottom, #cfcdc6 0 1px, transparent 1px 11.7px); }
+    .scale.right { background-position: 0 0, right 0; }
+    .row-hit { cursor: pointer; }
+    .row-hit:hover .rowname { color: #fbfaf6; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; padding: 20px; background: #101214; box-sizing: border-box">
+<div style="display: flex; flex-direction: column; gap: 14px; padding: 18px; box-sizing: border-box; background: linear-gradient(180deg, #202325 0%, #16181a 100%); border: 1px solid #000; border-radius: 7px; box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 18px 44px rgba(0,0,0,.55)">
+
+  <!-- ── header: maker's plate, wordmark block, fit meta ── -->
+  <div style="display: flex; align-items: stretch; gap: 0; background: #4a4a48; border-top: 9px solid #4a86bd; border-radius: 3px">
+    <div style="display: flex; align-items: center; padding: 0 18px; background: linear-gradient(180deg, #efeada 0%, #ded9c6 45%, #c9c4b0 100%); color: #23262a; font-weight: 700; font-size: 15px; letter-spacing: .06em">ai-synth</div>
+    <div style="display: flex; flex-direction: column; justify-content: center; gap: 6px; flex-grow: 1; padding: 12px 22px">
+      <div style="font-family: 'Michroma', ui-sans-serif, sans-serif; font-size: 30px; line-height: 1; color: #f4f2ec; text-transform: uppercase; text-shadow: 0 1px 0 rgba(0,0,0,.55)">Take On Me</div>
+      <div style="font-size: 10px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: #edebe5">a-ha &nbsp;·&nbsp; 1985 &nbsp;·&nbsp; reconstruction</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 26px; padding: 0 24px 0 22px; border-left: 2px solid #e9e7e0">
+      <sc-for list="{{ meta }}" as="m" hint-placeholder-count="3">
+        <div style="display: flex; flex-direction: column; gap: 3px; align-items: flex-start">
+          <div class="mono" style="font-size: 22px; font-weight: 600; line-height: 1; color: #f4f2ec">{{ m.v }}</div>
+          <div style="font-size: 8.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #b8b6ae">{{ m.k }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="font-size: 12px; line-height: 1.45; color: #8d9094; max-width: 900px">Reconstruction candidate. Panel positions are fitted by measurement against the isolated stems, not transcribed from the original patch sheets. Confidence is reported per layer.</div>
+
+  <!-- ── body: layer rail, then the selected layer's panel ── -->
+  <div style="display: flex; gap: 14px; align-items: stretch">
+
+    <!-- layer rail -->
+    <div style="display: flex; flex-direction: column; width: 396px; flex-shrink: 0; background: linear-gradient(180deg, #515150 0%, #4a4a48 20%, #3b3b39 100%); border-left: 2px solid #e9e7e0; border-right: 2px solid #e9e7e0; border-bottom: 3px solid #b3232b">
+      <div style="padding: 4px 8px 5px; background: #b3232b; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-align: center; text-transform: uppercase; text-shadow: 0 1px 1px rgba(0,0,0,.35)">Layers</div>
+      <div style="display: flex; flex-direction: column; gap: 2px; padding: 7px">
+        <sc-for list="{{ layers }}" as="L" hint-placeholder-count="5">
+          <div class="row-hit" onClick="{{ L.pick }}" style="{{ L.rowStyle }}">
+            <!-- LED: in / out of the mix -->
+            <div onClick="{{ L.toggle }}" title="in mix" style="{{ L.ledStyle }}"></div>
+            <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1; min-width: 0">
+              <div style="display: flex; align-items: baseline; gap: 8px">
+                <div class="rowname" style="{{ L.nameStyle }}">{{ L.name }}</div>
+                <div style="{{ L.chipStyle }}">{{ L.synth }}</div>
+              </div>
+              <div style="font-size: 10.5px; color: #9a9d9f; line-height: 1.3">{{ L.role }}</div>
+            </div>
+            <!-- band fingerprint: where this layer puts its energy -->
+            <div style="display: flex; align-items: flex-end; gap: 2px; height: 26px; flex-shrink: 0">
+              <sc-for list="{{ L.bars }}" as="b" hint-placeholder-count="14">
+                <div style="{{ b.s }}"></div>
+              </sc-for>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 3px; align-items: flex-end; width: 52px; flex-shrink: 0">
+              <div class="mono" style="font-size: 12px; font-weight: 600; color: #edebe5">{{ L.db }}</div>
+              <div style="{{ L.confStyle }}">{{ L.conf }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- the selected layer's panel -->
+    <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0; background: linear-gradient(180deg, #515150 0%, #4a4a48 20%, #3b3b39 100%); border-left: 2px solid #e9e7e0; border-right: 2px solid #e9e7e0; border-bottom: 3px solid #b3232b">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 12px 5px; background: #b3232b; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; text-shadow: 0 1px 1px rgba(0,0,0,.35)">
+        <div>{{ sel.synth }} &nbsp;—&nbsp; {{ sel.name }}</div>
+        <div class="mono" style="font-weight: 500; letter-spacing: .06em; opacity: .85">{{ sel.reg }}</div>
+      </div>
+
+      <!-- a subtractive panel: sections, hairlines, printed faders -->
+      <sc-if value="{{ sel.isJuno }}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; align-items: stretch; flex-grow: 1">
+          <sc-for list="{{ sel.sections }}" as="S" hint-placeholder-count="7">
+            <div style="{{ S.sectStyle }}">
+              <div style="padding: 3px 6px 4px; background: rgba(0,0,0,.22); color: #edebe5; font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-align: center; text-transform: uppercase">{{ S.name }}</div>
+              <div style="display: flex; justify-content: center; gap: 2px; flex-grow: 1; padding: 10px 7px 12px">
+                <sc-for list="{{ S.faders }}" as="f" hint-placeholder-count="4">
+                  <div style="display: flex; flex-direction: column; align-items: center; gap: 5px; width: 42px; flex-shrink: 0">
+                    <div style="font-size: 8px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; text-align: center; color: #edebe5; line-height: 1.25; min-height: 2.4em">{{ f.cap }}</div>
+                    <div style="position: relative; display: flex; align-items: stretch; justify-content: center; gap: 2px; height: 131px">
+                      <div class="scale" style="margin: 7px 0"></div>
+                      <div style="position: relative; width: 20px; background: linear-gradient(90deg, transparent 0 6px, #35383a 6px 7px, #08090a 7px 10px, #35383a 10px 11px, transparent 11px 100%)">
+                        <div style="{{ f.knobStyle }}"></div>
+                      </div>
+                      <div class="scale right" style="margin: 7px 0"></div>
+                    </div>
+                    <div class="mono" style="font-size: 9px; color: #d6d4cc">{{ f.val }}</div>
+                  </div>
+                </sc-for>
+                <sc-for list="{{ S.switches }}" as="w" hint-placeholder-count="1">
+                  <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 4px">
+                    <div style="font-size: 8px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; text-align: center; color: #edebe5; line-height: 1.25; min-height: 2.4em">{{ w.cap }}</div>
+                    <div style="display: flex; flex-direction: column; gap: 7px; margin: auto 0">
+                      <sc-for list="{{ w.positions }}" as="p" hint-placeholder-count="2">
+                        <div style="display: flex; align-items: center; gap: 6px">
+                          <div style="{{ p.ledStyle }}"></div>
+                          <div style="{{ p.btnStyle }}">{{ p.label }}</div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- an FM panel: the algorithm is the configuration, so draw it -->
+      <sc-if value="{{ sel.isFm }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; gap: 0; flex-grow: 1">
+          <div style="display: flex; flex-direction: column; gap: 8px; width: 300px; flex-shrink: 0; padding: 12px 16px 14px">
+            <div style="display: flex; align-items: baseline; gap: 8px">
+              <div style="font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #edebe5">Algorithm</div>
+              <div class="mono" style="font-size: 17px; font-weight: 600; color: #c98500">{{ sel.alg }}</div>
+            </div>
+            <div style="height: 192px; padding: 8px; background: #131516; border: 1px solid #000; border-radius: 3px; box-shadow: 0 4px 10px rgba(0,0,0,.4) inset">
+              <div style="position: relative; height: 100%">
+              <sc-for list="{{ sel.wires }}" as="w" hint-placeholder-count="6">
+                <div style="{{ w.s }}"></div>
+              </sc-for>
+              <sc-for list="{{ sel.nodes }}" as="o" hint-placeholder-count="6">
+                <div style="{{ o.s }}">{{ o.n }}</div>
+              </sc-for>
+              <div style="position: absolute; left: 0; right: 0; bottom: 0; text-align: center; font-size: 7.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #6e7275">Output</div>
+            </div>
+            </div>
+            <div style="display: flex; gap: 18px">
+              <div style="display: flex; flex-direction: column; gap: 2px">
+                <div class="mono" style="font-size: 14px; font-weight: 600; color: #f4f2ec">{{ sel.feedback }}</div>
+                <div style="font-size: 8px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #b8b6ae">Feedback</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 2px">
+                <div class="mono" style="font-size: 14px; font-weight: 600; color: #f4f2ec">{{ sel.carriers }}</div>
+                <div style="font-size: 8px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #b8b6ae">Carriers</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 2px">
+                <div class="mono" style="font-size: 14px; font-weight: 600; color: #f4f2ec">{{ sel.transpose }}</div>
+                <div style="font-size: 8px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #b8b6ae">Transpose</div>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0; padding: 12px 16px 14px; border-left: 2px solid #e9e7e0">
+            <div style="display: grid; grid-template-columns: 34px 62px 1fr 56px 52px 1fr; gap: 0 12px; align-items: center; padding-bottom: 6px; border-bottom: 1px solid rgba(233,231,224,.28)">
+              <sc-for list="{{ sel.opHead }}" as="h" hint-placeholder-count="6">
+                <div style="{{ h.s }}">{{ h.t }}</div>
+              </sc-for>
+            </div>
+            <sc-for list="{{ sel.ops }}" as="o" hint-placeholder-count="6">
+              <div style="display: grid; grid-template-columns: 34px 62px 1fr 56px 52px 1fr; gap: 0 12px; align-items: center; padding: 7px 0; border-bottom: 1px solid rgba(0,0,0,.18)">
+                <div style="{{ o.tagStyle }}">{{ o.n }}</div>
+                <div style="font-size: 9px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #d6d4cc">{{ o.kind }}</div>
+                <div class="mono" style="font-size: 13px; font-weight: 600; color: #f4f2ec">{{ o.ratio }}</div>
+                <!-- output level, as a printed bar rather than a second number -->
+                <div style="height: 7px; background: rgba(0,0,0,.35); border-radius: 4px; overflow: hidden"><div style="{{ o.lvlStyle }}"></div></div>
+                <div class="mono" style="font-size: 11px; color: #d6d4cc; text-align: right">{{ o.lvl }}</div>
+                <div style="{{ o.envStyle }}"></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <!-- ── how the layers sit together: frequency, level, width ── -->
+  <div style="display: flex; flex-direction: column; background: linear-gradient(180deg, #515150 0%, #4a4a48 20%, #3b3b39 100%); border-left: 2px solid #e9e7e0; border-right: 2px solid #e9e7e0; border-bottom: 3px solid #b3232b">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 12px 5px; background: #b3232b; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; text-shadow: 0 1px 1px rgba(0,0,0,.35)">
+      <div>Where they sit</div>
+      <div style="display: flex; gap: 16px; align-items: center">
+        <sc-for list="{{ legend }}" as="g" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; gap: 6px">
+            <div style="{{ g.swatch }}"></div>
+            <div style="font-size: 9.5px; font-weight: 600; letter-spacing: .08em">{{ g.label }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 0; padding: 12px 16px 10px">
+      <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0">
+        <!-- lanes -->
+        <sc-for list="{{ lanes }}" as="n" hint-placeholder-count="5">
+          <div style="display: flex; align-items: center; gap: 12px; height: 34px">
+            <div style="{{ n.labelStyle }}">{{ n.name }}</div>
+            <div style="position: relative; flex-grow: 1; height: 34px; min-width: 0">
+              <sc-for list="{{ gridlines }}" as="gl" hint-placeholder-count="8">
+                <div style="{{ gl.s }}"></div>
+              </sc-for>
+              <div style="{{ n.barStyle }}"></div>
+              <div style="{{ n.coreStyle }}"></div>
+            </div>
+            <div class="mono" style="width: 58px; flex-shrink: 0; font-size: 10px; color: #b8b6ae; text-align: right">{{ n.span }}</div>
+          </div>
+        </sc-for>
+        <!-- frequency axis -->
+        <div style="position: relative; height: 22px; margin-left: 108px; margin-right: 70px; border-top: 1px solid rgba(233,231,224,.3)">
+          <sc-for list="{{ ticks }}" as="t" hint-placeholder-count="8">
+            <div style="{{ t.s }}">{{ t.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- stereo width, kept as its own column because the mono loss cannot see it -->
+      <div style="display: flex; flex-direction: column; width: 132px; flex-shrink: 0; margin-left: 18px; padding-left: 18px; border-left: 1px solid rgba(233,231,224,.22)">
+        <sc-for list="{{ lanes }}" as="n" hint-placeholder-count="5">
+          <div style="display: flex; align-items: center; gap: 8px; height: 34px">
+            <div style="position: relative; flex-grow: 1; height: 9px; background: rgba(0,0,0,.35); border-radius: 5px; overflow: hidden">
+              <div style="{{ n.widthStyle }}"></div>
+            </div>
+            <div class="mono" style="width: 30px; font-size: 10px; color: #b8b6ae; text-align: right">{{ n.width }}</div>
+          </div>
+        </sc-for>
+        <div style="height: 22px; border-top: 1px solid rgba(233,231,224,.3); padding-top: 4px; font-size: 8px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #b8b6ae">Stereo width</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"startLayer":{"editor":"enum","options":["riff","bell","pad","bass","stab"],"default":"riff","section":"View"},"density":{"editor":"enum","options":["comfortable","compact"],"default":"comfortable","section":"View"},"$preview":{"width":1440,"height":1040}}'>
+// Colour carries the INSTRUMENT, not the layer: two hues validated against the
+// dark panel surface (all pairs), so a fifth layer never needs a generated hue.
+// Layer identity is the lane label, never colour alone.
+const HUE = { juno: '#4a86bd', fm: '#c98500' };
+
+// Log frequency to percent across a 40 Hz - 16 kHz plot.
+const P = (f) => (Math.log10(f) - Math.log10(40)) / (Math.log10(16000) - Math.log10(40)) * 100;
+
+const LAYERS = [
+  { id: 'riff', name: 'RIFF LEAD', synth: 'JUNO-60', kind: 'juno', conf: 'HIGH',
+    role: 'the hook, pulse plus saw, one chorus', db: '-4.5', reg: 'C4 - A5',
+    lo: 220, hi: 6300, mid: 1900, lvl: -4.5, width: 62,
+    bars: [8, 14, 34, 62, 88, 96, 74, 58, 66, 44, 28, 18, 11, 6] },
+  { id: 'bell', name: 'RIFF BELL', synth: 'DX7', kind: 'fm', conf: 'HIGH',
+    role: 'FM sheen locked an octave above the hook', db: '-9.0', reg: 'C5 - A6',
+    lo: 900, hi: 12500, mid: 4200, lvl: -9.0, width: 88,
+    bars: [2, 3, 5, 9, 18, 34, 58, 82, 96, 88, 70, 52, 36, 22] },
+  { id: 'pad', name: 'STRING PAD', synth: 'JUNO-60', kind: 'juno', conf: 'MED',
+    role: 'sustained chords, chorus II, slow attack', db: '-6.5', reg: 'G2 - E5',
+    lo: 130, hi: 3400, mid: 640, lvl: -6.5, width: 96,
+    bars: [16, 44, 78, 96, 90, 72, 58, 46, 34, 24, 15, 9, 5, 3] },
+  { id: 'bass', name: 'SYNTH BASS', synth: 'DX7', kind: 'fm', conf: 'MED',
+    role: 'octave line, near mono, short release', db: '-3.0', reg: 'E1 - A2',
+    lo: 45, hi: 900, mid: 110, lvl: -3.0, width: 12,
+    bars: [72, 96, 84, 56, 34, 20, 12, 7, 4, 3, 2, 1, 1, 1] },
+  { id: 'stab', name: 'BRASS STAB', synth: 'DX7', kind: 'fm', conf: 'LOW',
+    role: 'chorus punctuation, hard attack, no sustain', db: '-13.5', reg: 'C3 - C5',
+    lo: 300, hi: 5200, mid: 1250, lvl: -13.5, width: 54,
+    bars: [4, 10, 26, 52, 78, 96, 92, 76, 60, 42, 26, 15, 8, 4] },
+];
+
+// One fitted Juno panel per subtractive layer. Values print 0-10 the way the
+// panel does, so a reader compares them against the scale beside the cap.
+const JUNO = {
+  riff: [
+    ['LFO', [['rate', 4.2], ['delay', 0.0]]],
+    ['DCO', [['pwm', 6.1], ['sub', 4.4], ['noise', 0.0]], [['wave', ['SAW', 'PULSE'], 1]]],
+    ['HPF', [['', 1.0]]],
+    ['VCF', [['freq', 6.8], ['res', 2.4], ['env', 5.2], ['kybd', 3.0], ['lfo', 0.8]]],
+    ['VCA', [['level', 7.5]]],
+    ['ENV', [['a', 0.2], ['d', 3.4], ['s', 0.0], ['r', 2.8]]],
+    ['CHORUS', [], [['mode', ['OFF', 'I', 'II'], 1]]],
+  ],
+  pad: [
+    ['LFO', [['rate', 2.1], ['delay', 3.6]]],
+    ['DCO', [['pwm', 8.4], ['sub', 6.2], ['noise', 0.6]], [['wave', ['SAW', 'PULSE'], 0]]],
+    ['HPF', [['', 2.0]]],
+    ['VCF', [['freq', 4.4], ['res', 1.2], ['env', 2.6], ['kybd', 5.0], ['lfo', 2.2]]],
+    ['VCA', [['level', 6.2]]],
+    ['ENV', [['a', 4.8], ['d', 6.0], ['s', 8.6], ['r', 6.4]]],
+    ['CHORUS', [], [['mode', ['OFF', 'I', 'II'], 2]]],
+  ],
+};
+
+// One fitted FM patch per layer: [op, kind, ratio, level, envelope shape]
+const FM = {
+  bell: { alg: '5', feedback: '3', carriers: '3', transpose: '+12', ops: [
+    [6, 'mod', '7.00', 68, 'pluck'], [5, 'car', '1.00', 92, 'bell'],
+    [4, 'mod', '3.00', 74, 'pluck'], [3, 'car', '1.00', 88, 'bell'],
+    [2, 'mod', '14.00', 52, 'blip'], [1, 'car', '1.00', 99, 'bell']] },
+  bass: { alg: '16', feedback: '6', carriers: '1', transpose: '-12', ops: [
+    [6, 'mod', '1.00', 58, 'blip'], [5, 'mod', '2.00', 71, 'pluck'],
+    [4, 'mod', '1.00', 44, 'blip'], [3, 'mod', '3.00', 66, 'pluck'],
+    [2, 'mod', '1.00', 80, 'sustain'], [1, 'car', '1.00', 99, 'pluck']] },
+  stab: { alg: '21', feedback: '0', carriers: '4', transpose: '0', ops: [
+    [6, 'mod', '1.00', 62, 'sustain'], [5, 'car', '1.00', 84, 'sustain'],
+    [4, 'car', '2.00', 78, 'sustain'], [3, 'car', '1.00', 90, 'sustain'],
+    [2, 'mod', '4.00', 55, 'pluck'], [1, 'car', '1.00', 96, 'sustain']] },
+};
+
+// Envelope silhouettes as [time %, level %]. Drawn with clip-path rather than an
+// inline SVG: a data: URI inside a style attribute does not survive the runtime.
+const ENV_SHAPE = {
+  bell:    [[0, 0], [5, 94], [33, 61], [73, 22], [100, 0]],
+  pluck:   [[0, 0], [3, 94], [20, 44], [43, 11], [100, 0]],
+  blip:    [[0, 0], [2, 89], [10, 22], [23, 0], [100, 0]],
+  sustain: [[0, 0], [17, 83], [33, 72], [80, 72], [100, 0]],
+};
+const poly = (pts) => 'polygon(' + pts.map(([t, v]) => t + '% ' + (100 - v) + '%').join(', ') + ')';
+
+// Each algorithm as [column, row] per operator plus its links. Rows run downward
+// toward the carriers, so a link always descends and can be drawn with hairlines.
+const ALG_GRAPH = {
+  '5':  { cols: 3, rows: 2, fb: 6,
+          nodes: { 2: [0, 0], 1: [0, 1], 4: [1, 0], 3: [1, 1], 6: [2, 0], 5: [2, 1] },
+          links: [[2, 1], [4, 3], [6, 5]] },
+  '16': { cols: 3, rows: 3, fb: 6,
+          nodes: { 4: [1, 0], 6: [2, 0], 2: [0, 1], 3: [1, 1], 5: [2, 1], 1: [1, 2] },
+          links: [[4, 3], [6, 5], [2, 1], [3, 1], [5, 1]] },
+  '21': { cols: 4, rows: 2, fb: null,
+          nodes: { 2: [0, 0], 6: [2, 0], 1: [0, 1], 3: [1, 1], 4: [2, 1], 5: [3, 1] },
+          links: [[2, 1], [2, 3], [6, 4], [6, 5]] },
+};
+
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const dense = (this.props.density ?? 'comfortable') === 'compact';
+    const selId = st.sel ?? (this.props.startLayer ?? 'riff');
+    const off = st.off ?? {};
+    const sel = LAYERS.find((L) => L.id === selId) || LAYERS[0];
+    const live = LAYERS.filter((L) => !off[L.id]);
+
+    const layers = LAYERS.map((L) => {
+      const on = selId === L.id;
+      const muted = !!off[L.id];
+      return Object.assign({}, L, {
+        pick: () => this.setState({ sel: L.id }),
+        toggle: (e) => { e.stopPropagation(); this.setState({ off: Object.assign({}, off, { [L.id]: !off[L.id] }) }); },
+        rowStyle: 'display: flex; align-items: center; gap: 11px;'
+          + ' padding: ' + (dense ? '7px 10px' : '10px 11px') + ';'
+          + ' background: ' + (on ? 'linear-gradient(180deg, #5c5c5a 0%, #4d4d4b 100%)' : 'rgba(0,0,0,.16)') + ';'
+          + ' border-left: 3px solid ' + (on ? HUE[L.kind] : 'transparent') + ';'
+          + ' border-radius: 2px; opacity: ' + (muted ? '.42' : '1') + ';',
+        ledStyle: 'width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; cursor: pointer;'
+          + (muted
+            ? ' background: #4a1f1d; box-shadow: 0 0 0 1px rgba(0,0,0,.5) inset;'
+            : ' background: #ff4034; box-shadow: 0 0 7px #ff4034;'),
+        nameStyle: 'font-size: 12.5px; font-weight: 700; letter-spacing: .06em;'
+          + ' color: ' + (on ? '#fbfaf6' : '#e2e0d8') + ';',
+        chipStyle: 'padding: 2px 6px 3px; border-radius: 2px; font-size: 8.5px; font-weight: 700;'
+          + ' letter-spacing: .09em; color: #16181a; background: ' + HUE[L.kind] + ';',
+        confStyle: 'font-size: 8px; font-weight: 700; letter-spacing: .1em;'
+          + ' color: ' + (L.conf === 'HIGH' ? '#7fe0a8' : L.conf === 'MED' ? '#e5922c' : '#b8b6ae') + ';',
+        bars: L.bars.map((h) => ({
+          s: 'width: 3px; border-radius: 2px 2px 0 0; height: ' + Math.max(2, Math.round(h * 0.26)) + 'px;'
+            + ' background: ' + HUE[L.kind] + '; opacity: ' + (0.3 + 0.7 * h / 100) + ';',
+        })),
+      });
+    });
+
+    // The two panel grammars. A Juno layer prints faders; an FM layer prints
+    // its algorithm, because that is where its timbre actually lives.
+    const junoSections = (JUNO[sel.id] || []).map(([name, faders, switches]) => ({
+      name,
+      sectStyle: 'display: flex; flex-direction: column; flex: 1 0 auto; min-width: min-content;'
+        + ' border-left: 2px solid #e9e7e0;',
+      faders: (faders || []).map(([cap, v]) => ({
+        cap,
+        val: v.toFixed(1),
+        knobStyle: 'position: absolute; left: -1px; width: 21px; height: 12px; border-radius: 2px;'
+          + ' bottom: ' + (1 + v * 11.7).toFixed(1) + 'px;'
+          + ' border: 1px solid #000;'
+          + ' background: linear-gradient(180deg, #4a4d4f 0%, #26292b 34%, #f1efe8 44%, #f1efe8 56%, #191b1c 66%, #060708 100%);'
+          + ' box-shadow: 0 2px 3px rgba(0,0,0,.75), 0 1px 0 rgba(255,255,255,.12) inset;',
+      })),
+      switches: (switches || []).map(([cap, labels, act]) => ({
+        cap,
+        positions: labels.map((label, i) => ({
+          label,
+          ledStyle: 'width: 5px; height: 5px; border-radius: 50%;'
+            + (i === act && label !== 'OFF'
+              ? ' background: #ff4034; box-shadow: 0 0 6px #ff4034;'
+              : ' background: #4a1f1d; box-shadow: 0 0 0 1px rgba(0,0,0,.5) inset;'),
+          btnStyle: 'min-width: 34px; padding: 3px 6px 4px; border: 1px solid #24262a; border-radius: 2px;'
+            + ' font-size: 8.5px; font-weight: 700; text-align: center; color: #24262a;'
+            + ' box-shadow: 0 1px 2px rgba(0,0,0,.5);'
+            + ' background: ' + (i === act
+              ? 'linear-gradient(180deg, #f5b559 0%, #e5922c 50%, #b9701d 100%)'
+              : 'linear-gradient(180deg, #f2eddd 0%, #ded9c6 50%, #bdb8a5 100%)') + ';',
+        })),
+      })),
+    }));
+
+    const fm = FM[sel.id];
+    const graph = fm ? this.algorithm(fm) : { wires: [], nodes: [] };
+    const opHead = ['op', '', 'ratio', 'output', '', 'envelope'].map((t) => ({
+      t, s: 'font-size: 8px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #b8b6ae;',
+    }));
+
+    const panel = Object.assign({}, sel, {
+      isJuno: sel.kind === 'juno',
+      isFm: sel.kind === 'fm',
+      alg: fm ? fm.alg : '',
+      feedback: fm ? fm.feedback : '',
+      carriers: fm ? fm.carriers : '',
+      transpose: fm ? fm.transpose : '',
+      wires: graph.wires,
+      nodes: graph.nodes,
+      sections: junoSections,
+      opHead,
+      ops: fm ? fm.ops.map(([n, kind, ratio, lvl, env]) => ({
+        n, kind, ratio, lvl,
+        tagStyle: 'width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;'
+          + ' border-radius: 2px; font-size: 11px; font-weight: 700;'
+          + (kind === 'car'
+            ? ' background: ' + HUE.fm + '; color: #16181a;'
+            : ' background: rgba(0,0,0,.3); color: #d6d4cc; border: 1px solid rgba(233,231,224,.3);'),
+        lvlStyle: 'height: 100%; width: ' + lvl + '%; border-radius: 4px;'
+          + ' background: ' + (kind === 'car' ? HUE.fm : '#8d9094') + ';',
+        envStyle: 'height: 20px; clip-path: ' + poly(ENV_SHAPE[env]) + ';'
+          + ' background: ' + (kind === 'car' ? HUE.fm : '#8d9094') + '; opacity: .8;',
+      })) : [],
+    });
+
+    // Axis, gridlines and one lane per layer.
+    const tickVals = [50, 100, 200, 500, 1000, 2000, 5000, 10000];
+    const fmt = (f) => (f >= 1000 ? (f / 1000) + 'k' : String(f));
+    const ticks = tickVals.map((f) => ({
+      label: fmt(f),
+      s: 'position: absolute; top: 4px; left: ' + P(f) + '%; transform: translateX(-50%);'
+        + ' font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 9px; color: #9a9d9f;'
+        + ' white-space: nowrap;',
+    }));
+    const gridlines = tickVals.map((f) => ({
+      s: 'position: absolute; top: 0; bottom: 0; left: ' + P(f) + '%; width: 1px;'
+        + ' background: rgba(233,231,224,.1);',
+    }));
+
+    const lanes = LAYERS.map((L) => {
+      const muted = !!off[L.id];
+      const on = selId === L.id;
+      // Level sets bar height, so a quiet layer reads as a thin band.
+      const h = Math.round(9 + 15 * (1 - Math.min(18, -L.lvl) / 18));
+      const dim = muted ? 0.16 : on ? 1 : 0.5;
+      return {
+        name: L.name,
+        span: fmt(L.lo) + '-' + fmt(L.hi),
+        width: L.width + '%',
+        labelStyle: 'width: 96px; flex-shrink: 0; font-size: 9.5px; font-weight: 700;'
+          + ' letter-spacing: .06em; text-align: right;'
+          + ' color: ' + (on ? '#fbfaf6' : '#c8c6be') + '; opacity: ' + (muted ? '.5' : '1') + ';',
+        // 4px rounded data ends, a 2px surface ring where lanes overlap in x
+        barStyle: 'position: absolute; top: 50%; transform: translateY(-50%);'
+          + ' left: ' + P(L.lo) + '%; width: ' + (P(L.hi) - P(L.lo)) + '%; height: ' + h + 'px;'
+          + ' border-radius: 4px; background: ' + HUE[L.kind] + '; opacity: ' + dim + ';'
+          + (muted ? ' outline: 1px dashed rgba(233,231,224,.35); outline-offset: 1px;' : ''),
+        // where the energy actually centres, drawn over the span
+        coreStyle: 'position: absolute; top: 50%; transform: translate(-50%, -50%);'
+          + ' left: ' + P(L.mid) + '%; width: 3px; height: ' + (h + 8) + 'px; border-radius: 2px;'
+          + ' background: #fbfaf6; opacity: ' + (muted ? '.2' : on ? '.95' : '.55') + ';',
+        widthStyle: 'height: 100%; width: ' + L.width + '%; border-radius: 5px;'
+          + ' background: ' + HUE[L.kind] + '; opacity: ' + dim + ';',
+      };
+    });
+
+    return {
+      sel: panel, layers, lanes, ticks, gridlines,
+      meta: [
+        { k: 'in mix', v: live.length + '/' + LAYERS.length },
+        { k: 'instruments', v: '2' },
+        { k: 'fit', v: '0142' },
+      ],
+      legend: [
+        { label: 'JUNO-60', swatch: 'width: 11px; height: 11px; border-radius: 2px; background: ' + HUE.juno + ';' },
+        { label: 'DX7', swatch: 'width: 11px; height: 11px; border-radius: 2px; background: ' + HUE.fm + ';' },
+      ],
+    };
+  }
+
+  // The operator graph, as absolutely positioned boxes and hairlines.
+  algorithm(fm) {
+    const g = ALG_GRAPH[fm.alg];
+    if (!g) return { wires: [], nodes: [] };
+    const carriers = fm.ops.filter((o) => o[1] === 'car').map((o) => String(o[0]));
+    const W = 40, H = 30, GX = 22, GY = 32;
+    const gw = g.cols * W + (g.cols - 1) * GX;
+    const gh = g.rows * H + (g.rows - 1) * GY;
+    const x0 = (268 - gw) / 2, y0 = (172 - gh) / 2;
+    const xy = (n) => [x0 + g.nodes[n][0] * (W + GX), y0 + g.nodes[n][1] * (H + GY)];
+    const line = (l, t, w, h, c) => ({
+      s: 'position: absolute; left: ' + l + 'px; top: ' + t + 'px; width: ' + w + 'px;'
+        + ' height: ' + h + 'px; background: ' + c + ';',
+    });
+
+    const wires = [];
+    g.links.forEach(([a, b]) => {
+      const [ax, ay] = xy(a), [bx, by] = xy(b);
+      const acx = ax + W / 2 - 1, bcx = bx + W / 2 - 1;
+      if (acx === bcx) { wires.push(line(acx, ay + H, 2, by - ay - H, '#6e7275')); return; }
+      // an L: down out of the modulator, across the gap, down into the carrier
+      const midY = ay + H + (by - ay - H) / 2;
+      wires.push(line(acx, ay + H, 2, midY - (ay + H) + 2, '#6e7275'));
+      wires.push(line(Math.min(acx, bcx), midY, Math.abs(bcx - acx) + 2, 2, '#6e7275'));
+      wires.push(line(bcx, midY, 2, by - midY, '#6e7275'));
+    });
+    // the carriers reaching the output bus
+    carriers.forEach((n) => {
+      const [x, y] = xy(n);
+      wires.push(line(x + W / 2 - 1, y + H, 2, 20, HUE.fm));
+    });
+    if (g.fb) {
+      const [fx, fy] = xy(g.fb);
+      wires.push({
+        s: 'position: absolute; left: ' + (fx + W + 2) + 'px; top: ' + (fy + 4) + 'px;'
+          + ' width: 10px; height: ' + (H - 8) + 'px; border: 2px dashed ' + HUE.fm + ';'
+          + ' border-left: 0; border-radius: 0 8px 8px 0;',
+      });
+    }
+
+    const nodes = Object.keys(g.nodes).map((k) => {
+      const [x, y] = xy(k), carrier = carriers.indexOf(k) !== -1;
+      return {
+        n: k,
+        s: 'position: absolute; left: ' + x + 'px; top: ' + y + 'px; box-sizing: border-box;'
+          + ' width: ' + W + 'px; height: ' + H + 'px; display: flex; align-items: center;'
+          + ' justify-content: center; border-radius: 3px;'
+          + ' font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px;'
+          + ' font-weight: 600;'
+          + ' background: ' + (carrier ? HUE.fm : '#22262a') + ';'
+          + ' border: 1px solid ' + (carrier ? HUE.fm : '#5b6165') + ';'
+          + ' color: ' + (carrier ? '#16181a' : '#d6d4cc') + ';',
+      };
+    });
+    return { wires, nodes };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; background: #101214; color: #edebe5;
+           font-family: "Archivo", ui-sans-serif, system-ui, sans-serif; }
+    a { color: #e5922c; } a:hover { color: #f5b559; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+            font-variant-numeric: tabular-nums; }
+    .op { cursor: pointer; }
+    .op:hover { filter: brightness(1.22); }
+  </style>
+</helmet>
+
+<div style="width: 940px; padding: 20px; background: #101214; box-sizing: border-box">
+<div style="display: flex; flex-direction: column; gap: 14px; padding: 18px; box-sizing: border-box; background: linear-gradient(180deg, #202325 0%, #16181a 100%); border: 1px solid #000; border-radius: 7px; box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 18px 44px rgba(0,0,0,.55)">
+
+  <div style="display: flex; align-items: stretch; background: #4a4a48; border-top: 9px solid #c98500; border-radius: 3px">
+    <div style="display: flex; align-items: center; padding: 0 14px; background: linear-gradient(180deg, #efeada 0%, #ded9c6 45%, #c9c4b0 100%); color: #23262a; font-weight: 700; font-size: 12px; letter-spacing: .06em">drill-down</div>
+    <div style="display: flex; flex-direction: column; justify-content: center; gap: 5px; flex-grow: 1; padding: 10px 18px">
+      <div style="font-family: 'Michroma', ui-sans-serif, sans-serif; font-size: 19px; line-height: 1; color: #f4f2ec; text-transform: uppercase">DX7 &nbsp;·&nbsp; Riff bell</div>
+      <div style="font-size: 9px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: #b8b6ae">six operators &nbsp;·&nbsp; algorithm 5 &nbsp;·&nbsp; feedback 3</div>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 0; background: linear-gradient(180deg, #515150 0%, #4a4a48 20%, #3b3b39 100%); border-left: 2px solid #e9e7e0; border-right: 2px solid #e9e7e0; border-bottom: 3px solid #b3232b">
+
+    <!-- The algorithm IS the patch. Boxes are the click targets. -->
+    <div style="display: flex; flex-direction: column; width: 300px; flex-shrink: 0">
+      <div style="padding: 4px 10px 5px; background: #b3232b; color: #fff; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-align: center; text-transform: uppercase">Algorithm</div>
+      <div style="flex-grow: 1; padding: 14px 16px 16px">
+        <div style="position: relative; height: 274px; background: #131516; border: 1px solid #000; border-radius: 3px; box-shadow: 0 4px 10px rgba(0,0,0,.4) inset">
+          <sc-for list="{{ wires }}" as="w" hint-placeholder-count="4">
+            <div style="{{ w.s }}"></div>
+          </sc-for>
+          <sc-for list="{{ nodes }}" as="o" hint-placeholder-count="6">
+            <div class="op" onClick="{{ o.pick }}" style="{{ o.boxStyle }}">
+              <div style="{{ o.numStyle }}">{{ o.n }}</div>
+              <div style="{{ o.kindStyle }}">{{ o.kind }}</div>
+            </div>
+          </sc-for>
+          <sc-for list="{{ outs }}" as="u" hint-placeholder-count="3">
+            <div style="{{ u.s }}"></div>
+          </sc-for>
+          <div style="position: absolute; left: 0; right: 0; bottom: 7px; text-align: center; font-size: 8px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #6e7275">Output</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- The selected operator, in full -->
+    <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0; border-left: 2px solid #e9e7e0">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 12px 5px; background: #b3232b; color: #fff; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase">
+        <div>Operator {{ op.n }} &nbsp;—&nbsp; {{ op.kindLong }}</div>
+        <div class="mono" style="font-weight: 500; letter-spacing: .06em; opacity: .85">ratio {{ op.ratio }}</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px; padding: 14px 18px 16px">
+        <!-- envelope, at a size you can actually read a shape off -->
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div style="font-size: 8px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #b8b6ae">Envelope</div>
+          <div style="height: 118px; background: #131516 repeating-linear-gradient(to right, rgba(233,231,224,.07) 0 1px, transparent 1px 25%); border: 1px solid #000; border-radius: 3px; box-shadow: 0 4px 10px rgba(0,0,0,.4) inset">
+            <div style="{{ op.envStyle }}"></div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding-top: 2px">
+            <sc-for list="{{ op.stages }}" as="s" hint-placeholder-count="4">
+              <div style="display: flex; flex-direction: column; gap: 3px; padding: 5px 8px 6px; background: rgba(0,0,0,.22); border-radius: 2px">
+                <div style="font-size: 8px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #b8b6ae">{{ s.name }}</div>
+                <div style="display: flex; align-items: baseline; gap: 8px">
+                  <div class="mono" style="font-size: 15px; font-weight: 600; color: #f4f2ec">{{ s.rate }}</div>
+                  <div class="mono" style="font-size: 10px; color: #9a9d9f">lv {{ s.level }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- the rest of the operator, printed compactly -->
+        <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; padding-top: 12px; border-top: 1px solid rgba(233,231,224,.2)">
+          <sc-for list="{{ op.params }}" as="p" hint-placeholder-count="5">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <div style="font-size: 8px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #b8b6ae">{{ p.k }}</div>
+              <div class="mono" style="font-size: 16px; font-weight: 600; color: #f4f2ec">{{ p.v }}</div>
+              <div style="height: 5px; background: rgba(0,0,0,.32); border-radius: 3px; overflow: hidden"><div style="{{ p.barStyle }}"></div></div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; background: rgba(0,0,0,.24); border-left: 3px solid #c98500; border-radius: 2px">
+          <div style="font-size: 12px; line-height: 1.5; color: #dedcd4">{{ op.note }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="font-size: 11.5px; line-height: 1.5; color: #8d9094; max-width: 640px">A Juno prints its whole state on the front panel, so a photograph of the panel is the patch. An FM patch has no panel, so the configuration has to be drawn: which operators reach the output, what each one is tuned to, and how each one decays.</div>
+
+</div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":940,"height":840}}'>
+const AMBER = '#c98500';
+
+// Algorithm 5: three modulator-carrier pairs in parallel, feedback on op 6.
+// [column, row] on a 3 x 2 grid; row 0 modulates row 1.
+const POS = { 6: [2, 0], 5: [2, 1], 4: [1, 0], 3: [1, 1], 2: [0, 0], 1: [0, 1] };
+const LINKS = [[6, 5], [4, 3], [2, 1]];
+
+const OPS = {
+  1: { kind: 'car', ratio: '1.00', detune: '0', out: 99, ks: '2', vel: '4',
+       stages: [[99, 99], [38, 82], [22, 0], [45, 0]],
+       pts: [[0, 0], [2, 99], [26, 82], [100, 0]],
+       note: 'Carrier at the played pitch. Its long decay is what makes the layer ring on after the riff has moved.' },
+  2: { kind: 'mod', ratio: '14.00', detune: '+3', out: 52, ks: '0', vel: '6',
+       stages: [[99, 99], [72, 44], [60, 0], [50, 0]],
+       pts: [[0, 0], [1, 99], [10, 44], [38, 0], [100, 0]],
+       note: 'The metallic strike. A ratio this high is inharmonic, and it dies inside 200 ms, so it reads as attack rather than as pitch.' },
+  3: { kind: 'car', ratio: '1.00', detune: '-2', out: 88, ks: '2', vel: '4',
+       stages: [[96, 92], [34, 74], [20, 0], [42, 0]],
+       pts: [[0, 0], [3, 92], [34, 74], [100, 0]],
+       note: 'Second carrier, detuned two cents against the first. That small offset is the whole reason the layer sounds wide rather than doubled.' },
+  4: { kind: 'mod', ratio: '3.00', detune: '0', out: 74, ks: '1', vel: '3',
+       stages: [[98, 96], [58, 58], [44, 0], [48, 0]],
+       pts: [[0, 0], [2, 96], [16, 58], [62, 0], [100, 0]],
+       note: 'Third-harmonic modulator. Harmonic ratio, so it adds body without dissonance, and it holds longer than the strike.' },
+  5: { kind: 'car', ratio: '1.00', detune: '+1', out: 92, ks: '3', vel: '2',
+       stages: [[92, 86], [30, 70], [18, 0], [40, 0]],
+       pts: [[0, 0], [5, 86], [44, 70], [100, 0]],
+       note: 'Third carrier, softest attack of the three. It is the tail: at the point the other two have gone, this is what is left.' },
+  6: { kind: 'mod', ratio: '7.00', detune: '0', out: 68, ks: '0', vel: '5',
+       stages: [[99, 99], [80, 36], [66, 0], [52, 0]],
+       pts: [[0, 0], [1, 99], [7, 36], [26, 0], [100, 0]],
+       note: 'Feedback modulator, and the reason the top end sounds glassy rather than clean. Feedback 3 is enough to roughen it without breaking into noise.' },
+};
+
+const STAGE_NAMES = ['attack', 'decay 1', 'decay 2', 'release'];
+const KIND_LONG = { car: 'CARRIER', mod: 'MODULATOR' };
+
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const selN = st.op ?? 1;
+    const o = OPS[selN];
+
+    // grid geometry, in the graph box's own pixels
+    const W = 54, H = 40, GX = 34, GY = 46, PADX = 17, PADY = 46;
+    const xy = (n) => [PADX + POS[n][0] * (W + GX), PADY + POS[n][1] * (H + GY)];
+
+    const nodes = Object.keys(POS).map((k) => {
+      const n = +k, [x, y] = xy(n), op = OPS[n];
+      const on = n === selN, carrier = op.kind === 'car';
+      return {
+        n, kind: op.kind.toUpperCase(),
+        pick: () => this.setState({ op: n }),
+        boxStyle: 'position: absolute; left: ' + x + 'px; top: ' + y + 'px;'
+          + ' width: ' + W + 'px; height: ' + H + 'px; box-sizing: border-box;'
+          + ' display: flex; flex-direction: column; align-items: center; justify-content: center;'
+          + ' gap: 1px; border-radius: 3px;'
+          + ' background: ' + (carrier ? AMBER : '#22262a') + ';'
+          + ' border: ' + (on ? '2px solid #fbfaf6' : '1px solid ' + (carrier ? AMBER : '#5b6165')) + ';'
+          + (on ? ' box-shadow: 0 0 0 3px rgba(251,250,246,.14);' : ''),
+        numStyle: 'font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 15px;'
+          + ' font-weight: 600; line-height: 1; color: ' + (carrier ? '#16181a' : '#d6d4cc') + ';',
+        kindStyle: 'font-size: 6.5px; font-weight: 700; letter-spacing: .1em;'
+          + ' color: ' + (carrier ? 'rgba(22,24,26,.7)' : '#7f8285') + ';',
+      };
+    });
+
+    // every link in algorithm 5 is vertical, so a hairline div draws it
+    const wires = LINKS.map(([a, b]) => {
+      const [ax, ay] = xy(a), [, by] = xy(b);
+      return {
+        s: 'position: absolute; left: ' + (ax + W / 2 - 1) + 'px; top: ' + (ay + H) + 'px;'
+          + ' width: 2px; height: ' + (by - ay - H) + 'px; background: #6e7275;',
+      };
+    });
+    // the three carriers reaching the output bus
+    const outs = [1, 3, 5].map((n) => {
+      const [x, y] = xy(n);
+      return {
+        s: 'position: absolute; left: ' + (x + W / 2 - 1) + 'px; top: ' + (y + H) + 'px;'
+          + ' width: 2px; height: 30px; background: ' + AMBER + ';',
+      };
+    });
+    // feedback loop on op 6, drawn as a dashed return down its right side
+    const [fx, fy] = xy(6);
+    wires.push({
+      s: 'position: absolute; left: ' + (fx + W + 2) + 'px; top: ' + (fy + 5) + 'px;'
+        + ' width: 12px; height: ' + (H - 10) + 'px; border: 2px dashed ' + AMBER + ';'
+        + ' border-left: 0; border-radius: 0 8px 8px 0;',
+    });
+
+    // clip-path rather than an inline SVG: a data: URI inside a style attribute
+    // does not survive the runtime, and this stays a real element the panel can edit.
+    const clip = 'polygon(' + o.pts.map(([t, v]) => t + '% ' + (100 - v) + '%').join(', ') + ')';
+
+    return {
+      nodes, wires, outs,
+      op: {
+        n: selN,
+        ratio: o.ratio,
+        kindLong: KIND_LONG[o.kind],
+        note: o.note,
+        envStyle: 'height: 100%; clip-path: ' + clip + ';'
+          + ' background: linear-gradient(180deg, ' + AMBER + ' 0%, rgba(201,133,0,.28) 100%);',
+        stages: o.stages.map(([rate, level], i) => ({ name: STAGE_NAMES[i], rate, level })),
+        params: [
+          { k: 'ratio', v: o.ratio, pct: Math.min(100, +o.ratio / 16 * 100) },
+          { k: 'output', v: o.out, pct: o.out },
+          { k: 'detune', v: o.detune, pct: (parseInt(o.detune, 10) + 7) / 14 * 100 },
+          { k: 'key scale', v: o.ks, pct: +o.ks / 7 * 100 },
+          { k: 'velocity', v: o.vel, pct: +o.vel / 7 * 100 },
+        ].map((p) => Object.assign(p, {
+          barStyle: 'height: 100%; width: ' + p.pct + '%; border-radius: 3px;'
+            + ' background: ' + (o.kind === 'car' ? AMBER : '#8d9094') + ';',
+        })),
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>

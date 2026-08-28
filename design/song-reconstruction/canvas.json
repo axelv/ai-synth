@@ -1,0 +1,13 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "title": "Option A — Patch rack", "x": 0, "y": 0, "w": 1440, "h": 870, "is_interactive": true },
+    { "file": "Exploded.dc.html", "title": "Option B — Exploded stack", "x": 0, "y": 1010, "w": 940, "h": 750, "is_interactive": true },
+    { "file": "Placement.dc.html", "title": "Option C — Placement chart", "x": 1020, "y": 1010, "w": 1080, "h": 735, "is_interactive": true },
+    { "file": "DX7.dc.html", "title": "Drill-down — DX7 operators", "x": 2180, "y": 1010, "w": 940, "h": 630, "is_interactive": true }
+  ],
+  "annotations": [
+    { "id": "brief", "x": 1520, "y": 0, "w": 300, "text": "Take On Me, broken down as 2 Juno-60 layers and 3 DX7 layers.\n\nNo timeline anywhere. Three ways to answer the same two questions: what is each synth doing, and how is it set up.\n\nColour means the instrument, never the layer. Layers are named in place." },
+    { "id": "pick-one", "x": 1520, "y": 320, "w": 300, "text": "Option A is the full page: click a layer in the rack, the panel below it changes.\n\nB and C are the alternates. The LEDs in A take a layer out of the mix so you can see the gap it leaves.\n\nSay which one to build out and I will fold the other two in or drop them." }
+  ],
+  "launch": { "view": "canvas" }
+}
