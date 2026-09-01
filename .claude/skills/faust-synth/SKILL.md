@@ -41,12 +41,18 @@ their defaults.
 
 ### 2. Write the patch
 
-`references/examples/` holds six complete working instruments, with `measured.md` naming
+`references/examples/` holds eight complete working instruments, with `measured.md` naming
 what each one gets right and what it gets wrong. Read the one whose family matches the
 target sound.
 
-Five of them carry deliberate defects and are read for warnings. `juno-106.dsp` is the
-one to copy the *shape* of, and it is the worked example of modelling a named machine
+Most of them carry deliberate defects and are read for warnings. **Two model a named
+machine rather than a description, and they are the ones to copy the shape of:
+`juno-106.dsp` and `dx7-fm.dsp`.** Read `dx7-fm.dsp` for the version of that pattern
+that measures well, 1 fail and 1 warn with neither a patch defect, and for what a
+panel model costs when the machine has no panel: its 25 controls are the DX7's
+parameter grid, and its `measured.md` entry separates what the hardware research
+changed from what was a taste decision. Read `juno-106.dsp` for the same exercise on a
+real fader panel, and it is the worked example of modelling a named machine
 rather than a description: its `measured.md` entry separates what was measured here from
 what is a fact about the hardware. It does **not** measure clean. Laying it out as the
 machine's own panel put 24 controls on it, and a hardware panel has faders that
@@ -84,7 +90,7 @@ bass measured on a held pad chord is being measured on material it was never wri
 for, and the pattern bounds what can be seen at all.
 
 If the change was to `measure.py` itself, or to a rule the examples are written against,
-run the regression pass over all six of them:
+run the regression pass over every one of them:
 
 ```bash
 uv run python $SK/scripts/measure.py --check
@@ -128,9 +134,12 @@ one place however many skins exist. Skins live in `assets/skins/<name>.html`.
 |---|---|
 | `plain` | the default. One labelled horizontal slider per macro |
 | `juno` | a Juno-106 style panel: vertical faders in red-banded sections, discrete controls as lit buttons |
+| `dx7` | a DX7 style panel: emerald-banded sections of slim horizontal slots, membrane buttons with amber lamps, an olive character display that reads the last-touched parameter, and a live algorithm diagram |
 
 **Reach for `juno` when the user asks for a Juno, a Roland-style polysynth, or a
-juno-ish pad**, which is the case where the machine's own panel is the layout the person
+juno-ish pad**, and for `dx7` when they ask for a DX7, a 6-operator FM instrument, or
+anything whose controls are operators and algorithms rather than filters and envelopes.
+Both are the case where the machine's own panel is the layout the person
 already has in their head. It is a homage to the panel's visual grammar, drawn from the
 public-domain photograph at `commons.wikimedia.org/wiki/File:Roland-Juno-106.jpg`. No
 maker's mark is reproduced.
@@ -162,7 +171,12 @@ brightness = hslider("brightness[panel:VCF][idx:1]", 0.44, 0, 1, 0.001) : si.smo
 chorus     = hslider("chorus[panel:CHORUS][positions:OFF|I|II]", 0.5, 0, 1, 0.5);
 ```
 
-`references/examples/juno-106.dsp` carries the full set and is the one to copy.
+`references/examples/juno-106.dsp` carries the full set and is the one to copy. The
+`dx7` skin reads the same four keys and adds one convention of its own: it treats
+`positions` as a value-label map at any step count, not only at two to four. A control
+with more positions than it will draw as buttons stays a slot and shows the position's
+NAME as its readout, which is how `dx7-fm.dsp`'s operator ratios read `1.41` instead of
+step `2`. The DSP stays the authority on what its numbers mean.
 
 #### Two things that fail silently when verifying a page
 

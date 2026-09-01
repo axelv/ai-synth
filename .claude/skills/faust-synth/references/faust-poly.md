@@ -191,6 +191,14 @@ patches there was exactly one compile error:
 
 - `BoxIdent[tanh] is defined here : maths.lib:782` — bare `tanh` collides with the
   library. Use `ma.tanh`. The same applies to any name the standard library also defines.
+- `redefinition of symbols are not allowed : mi` — a helper named `mi` collides with
+  `mi.lib`, the modal instrument library, which `stdfaust.lib` imports under that
+  prefix. The message names the symbol and nothing else, so it does not point at the
+  cause. **Every two-letter library prefix is taken**, and `stdfaust.lib` has about
+  thirty of them: `aa an ba co de dm dx en fd fi ho it ma mi ne no os pf pl pm qu rm
+  ro si sf so sp sy ve vl wa wd`. `mi` for a modulation index and `dx` for anything
+  DX7-shaped are the two that read as natural abbreviations, which is exactly why
+  they get written.
 
 Everything else compiled first try, including `re.zita_rev1_stereo`'s six arguments,
 `ve.moog_vcf(res, freq)` argument order, `en.adsre`, `ba.take` being 1-indexed, and

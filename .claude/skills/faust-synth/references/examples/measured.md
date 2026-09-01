@@ -36,6 +36,7 @@ a gap worth closing. **Do not copy any patch here without reading its defects fi
 | `breathy-texture.dsp` | noise-sourced with resonators | emergent: depends on decorrelation | `pad` |
 | `acid-lead.dsp` | resonant per-note sweep | emergent: envelope through a nonlinear mapping | `bass` |
 | `juno-106.dsp` | subtractive, DCO | direct, and modelled on a specific machine | `pad` |
+| `dx7-fm.dsp` | 6-operator phase modulation | emergent, and modelled on a specific machine | `pluck` |
 
 Reproduce one row, or check them all:
 
@@ -357,6 +358,99 @@ recorded here as leads to check against the 106 jack board, **not** as facts abo
   source found.
 - **The HPF corner frequencies are sourced but the boost shape is approximated**, as a
   first-order shelf rather than the actual two-path summing network.
+
+### dx7-fm.dsp — 1 fail, 1 warn
+
+```
+  algo              1.1d    8.8d    4.1d      0.19x    0.684    0.554
+  index             0.5d   12.6d    5.5d      8.67x    0.582    0.712
+  op1               0.3d    7.3d    0.8d      2.43x    0.672    0.609
+  fbMode            0.1d    0.9d    0.0d      0.98x    0.667    0.666
+  sustain           6.7d    3.3d    0.7d      1.41x    0.659    0.705
+  voices    +12.04 dB for 4x unison at MIDI 64: bit-identical voices
+  register  36:-30dB/436Hz  48:-30dB/690Hz  60:-30dB/1291Hz  72:-31dB/2395Hz  84:-31dB/4153Hz
+```
+
+**The second panel model, and the closest thing this corpus has to a clean report.**
+Twenty-five controls in correspondence with the DX7's parameter grid rather than with a
+handful of intents, for the same reason `juno-106.dsp` has 24: the deliverable is an
+instrument a DX7 programmer already knows how to operate. Unlike juno-106 it does not pay
+for that with a volume control, because it exposes no master LEVEL fader; the master gain
+is a measured constant instead.
+
+Neither remaining finding is a defect in the patch:
+
+- **`sustain` warns**, 6.7 dB of level against 3.3 dB of shape. It is the sustain level of
+  an envelope, so that is what it is, and it is the same reading juno-106 gets for the
+  same reason.
+- **`pmd` fails as inert on `pluck`**, at 0.28 dB of shape, and it is not inert. The same
+  macro on the same patch measures **1.6 dB of shape on `lead`**. Vibrato is a
+  modulation in time and the shape metric averages spectra over the render, so on
+  fast repeated notes that barely complete an LFO cycle there is nothing for it to
+  see. This is the clearest case in the corpus of the pattern bounding the
+  measurement rather than the patch being wrong, and it is worth more than the FAIL:
+  before concluding a modulation macro is dead, re-measure it on material that lasts
+  longer than a cycle of it.
+
+`index` is now the best macro in the set at 0.5 dB level against 12.6 dB shape and a
+centroid ratio of 8.67x, beating `bell-lead`'s `sparkle`. That is not craft, it is what
+FM is: one number moves the whole sideband structure and nothing else.
+
+**Its `+12.04 dB` is correct, and for the DX7's own reason rather than the Juno's.** The
+hardware time-multiplexes one datapath across 96 operator slots at a fixed rate and its
+oscillators are not free-running against each other, so coherent voices are the machine.
+There is no chorus to compensate with, because the machine has none.
+
+#### What the hardware research changed about the patch
+
+Three things here come from the reverse-engineering literature rather than from
+listening, and each one is checkable:
+
+- **Operator feedback averages the previous TWO outputs, it does not delay by one.**
+  The OPS chip holds two previous outputs in shift registers, sums and halves them,
+  and modulates with that. Yamaha's patent (Tomisawa, US 4,249,447) gives the reason:
+  a single-sample loop makes a large modulation produce a small output and the
+  signal alternates every sample, which is an oscillation at Nyquist; the mean of two
+  consecutive samples is a 2-tap FIR with a zero exactly there. `F.LOOP` switches
+  between the two so the difference can be measured. Measured on the built page,
+  algorithm 32 at feedback 1.0, note 62, through an AnalyserNode: mean per-bin
+  difference **6.9 dB**, and the top quarter of the band carries **4.4 dB more energy
+  in 1TAP** than in AVG (-65.3 against -69.7 dB). That is the predicted direction and
+  it is why faustlibraries' own `dx7.lib`, which writes the single tap, carries the
+  open TODO "artifacts that sound like aliasing for high feedback values".
+- **Carrier-count compensation is real and is usually skipped.** The algorithm ROM
+  stores an output count per operator. Six carriers at unity is 15.6 dB hotter than
+  one, so without it the ALG switch is mostly a volume control. Dexed computes the
+  count in `n_out()` under `#ifdef VERBOSE` and never applies it at render time. With
+  `com` trimmed from measured peaks the switch reads 1.1 dB of level against 8.8 dB of
+  shape.
+- **The audible quantisation is the phase, not the output word.** The OPS truncates
+  phase to 12 bits before the log-sine ROM. The first `GRAIN` control here quantised
+  the OUTPUT instead, 15 bits down to 7, and measured 0.34 dB of shape: it failed as
+  inert, because quantisation noise sits under a bright FM spectrum that already has
+  energy in every band. Phase truncation moves the partials themselves and measures
+  0.8 dB. A negative result worth keeping, because output-word depth is the obvious
+  thing to reach for and it is the wrong one.
+
+#### What is deliberately not modelled
+
+Each of these is a simplification, not an oversight:
+
+- **Six independent 4-rate/4-level operator envelopes**, which is 48 controls. One ADSR
+  biased across the stack by `CONTOUR` stands in, geometric in the operator index.
+- **28 of the 32 algorithms.** The four here span the shapes: a two-carrier stack, three
+  2-op pairs, one carrier under three modulators, and six carriers in parallel. All four
+  put feedback on operator 6, as the ROM does for most of the set.
+- **Keyboard level scaling breakpoints and curves.** `LV.SCALE` is a single exponent.
+- **Feedback is taken from the raw sine**, where the hardware takes it from the operator's
+  enveloped output, so on hardware the feedback dies with the note.
+
+#### One Faust collision worth adding to the list
+
+`mi` is `mi.lib`, the modal instrument library, so a helper called `mi` fails with
+`redefinition of symbols are not allowed : mi` and not with anything that points at the
+name. Same class as the bare `tanh` collision in `references/faust-poly.md`: any
+two-letter name that is a standard library prefix is taken.
 
 ### juno-106-bbd.dsp — 1 fail, 2 warn
 
