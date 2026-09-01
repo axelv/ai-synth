@@ -134,6 +134,11 @@ SKIN_NOTICES = {
              "public-domain photograph. An independent Faust patch: not affiliated "
              "with or endorsed by Roland Corporation. Roland and Juno are trademarks "
              "of their respective owners."),
+    "dx7": ("Panel layout is a visual homage to the Yamaha DX7: its section bands, "
+            "membrane buttons, character display and algorithm diagram. An "
+            "independent Faust patch, not a chip emulation: not affiliated with or "
+            "endorsed by Yamaha Corporation. Yamaha and DX7 are trademarks of their "
+            "respective owners."),
 }
 
 

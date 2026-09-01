@@ -1,0 +1,679 @@
+<!-- DX7-style panel skin.
+
+A visual homage to the 1983 Yamaha DX7 front panel. The grammar it copies is the
+panel's: a warm charcoal-brown case, deep emerald section bands carrying white
+legends, matte membrane buttons with amber lamps above them, an olive backlit
+character display, and the printed algorithm diagram. No maker's mark is
+reproduced and no typeface of the original is imitated; the left plate carries
+whatever eyebrow the page was built with.
+
+Two departures from the machine, both deliberate. The DX7 has ONE fader, the data
+entry slider, and every parameter is reached through the keypad and read off the
+display; twenty parameters on one page needs twenty controls, so continuous
+parameters are drawn as slim horizontal slots with the display's own numerals
+beside them. And the algorithm diagram is live rather than printed, because here
+it is the one graphic that says what the patch is actually doing.
+
+Single visual world on purpose, so single theme: this is a dark machine face in
+both host themes, and every colour is painted explicitly rather than inherited.
+
+A skin supplies CSS and a control renderer. It never forks the page markup, so the
+keyboard, the MIDI handling and the boot path stay in one place.
+-->
+<style>
+
+body { background: #14120f; color: #eae7dd; }
+
+.wrap[data-skin="dx7"] {
+  /* Warm neutrals, biased olive-brown toward the emerald band rather than grey. */
+  --case:     #302c27;
+  --case-lo:  #1c1a17;
+  --panel:    #26241f;
+  --panel-hi: #302d27;
+  --band:     #1d6e52;
+  --band-lo:  #14513c;
+  --lcd:      #a8c455;
+  --lcd-dim:  #5f7430;
+  --lcd-bg:   #232c11;
+  --legend:   #eae7dd;
+  --legend-d: #9b9689;
+  --key:      #3c3833;
+  --key-hi:   #4a453f;
+  --key-lit:  #ddd6c5;
+  --lamp:     #ff5a33;
+  --lamp-off: #4a201a;
+  --slot:     #100f0d;
+  --hair:     #58524a;
+}
+
+/* ---- the case ---- */
+.wrap[data-skin="dx7"] {
+  max-width: 122rem;
+  margin: 1.5rem auto;
+  padding: 1rem 1rem 1.2rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0;
+  background: linear-gradient(180deg, var(--case) 0%, var(--case-lo) 100%);
+  border: 1px solid #000;
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 18px 44px rgba(0,0,0,.6);
+}
+
+[data-skin="dx7"] header      { display: contents; }
+[data-skin="dx7"] .eyebrow    { grid-area: 1 / 1 / 3 / 2; }
+[data-skin="dx7"] .controls   { grid-area: 4 / 1 / 5 / 4; }
+[data-skin="dx7"] h1          { grid-area: 1 / 2 / 2 / 3; }
+[data-skin="dx7"] .tagline    { grid-area: 2 / 2 / 3 / 3; }
+[data-skin="dx7"] .display    { grid-area: 1 / 3 / 3 / 4; }
+[data-skin="dx7"] .standfirst { grid-area: 3 / 1 / 4 / 4; }
+[data-skin="dx7"] .bar        { grid-area: 5 / 1 / 6 / 4; }
+[data-skin="dx7"] .keyboard   { grid-area: 6 / 1 / 7 / 4; }
+[data-skin="dx7"] .notice     { grid-area: 7 / 1 / 8 / 4; padding: .9rem .2rem 0; }
+
+/* the end cheek: brushed aluminium, the only light mass on the face */
+[data-skin="dx7"] .eyebrow {
+  display: flex; align-items: center; justify-content: center;
+  margin: 0; padding: 0 .9rem; min-width: 4.6rem;
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  font: 600 .62rem/1 Archivo, system-ui, sans-serif;
+  letter-spacing: .3em; text-transform: uppercase; color: #4a453d;
+  background: linear-gradient(90deg, #b9b3a6, #8f8a7c 40%, #a8a294);
+  border: 1px solid #6d675c; border-radius: 3px;
+}
+
+[data-skin="dx7"] h1 {
+  margin: 0; padding: .1rem 0 0 1.1rem;
+  font: 800 1.9rem/1.05 Archivo, system-ui, sans-serif;
+  letter-spacing: .01em; color: var(--legend); text-wrap: balance;
+}
+[data-skin="dx7"] .tagline {
+  margin: .2rem 0 0; padding: 0 0 0 1.15rem;
+  font: 500 .66rem/1 Archivo, system-ui, sans-serif;
+  letter-spacing: .24em; text-transform: uppercase; color: var(--legend-d);
+}
+
+/* ---- the display bay: olive character display, plus the live algorithm ---- */
+[data-skin="dx7"] .display {
+  display: flex; align-items: stretch;
+  padding: .1rem .1rem .1rem 1.2rem;
+}
+[data-skin="dx7"] .lcd {
+  min-width: 17rem; flex: 1 1 auto;
+  padding: .62rem .8rem;
+  display: flex; flex-direction: column; justify-content: center; gap: .18rem;
+  background: var(--lcd-bg);
+  border: 1px solid #0a0d05;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(168,196,85,.13) inset, 0 0 22px rgba(140,180,60,.09);
+}
+[data-skin="dx7"] .lcd-line {
+  font: 500 .78rem/1.35 "IBM Plex Mono", ui-monospace, monospace;
+  letter-spacing: .07em; color: var(--lcd);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+[data-skin="dx7"] .lcd-line.sub { color: var(--lcd-dim); font-size: .66rem; }
+
+/* The algorithm diagram sits directly above the switch that changes it, which is
+   also where the machine prints it: on the panel, over the operator controls. */
+[data-skin="dx7"] .algo-bay {
+  padding: .45rem .5rem .35rem;
+  margin-bottom: .1rem;
+  background: var(--slot);
+  border: 1px solid #0c0b09; border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.6) inset;
+}
+/* Fixed box, meet-scaled: the four algorithms have very different aspect ratios
+   (six boxes wide and one tall, versus three and three), so sizing by height
+   alone would make the parallel one 31rem wide. */
+[data-skin="dx7"] .algo-bay svg { display: block; width: 100%; height: 5.4rem; }
+[data-skin="dx7"] .algo-cap {
+  margin: .28rem 0 0;
+  font: 500 .55rem/1.2 "IBM Plex Mono", ui-monospace, monospace;
+  letter-spacing: .08em; color: var(--lcd-dim);
+  text-align: center;
+}
+
+[data-skin="dx7"] .standfirst {
+  margin: 1rem 0 .1rem; padding: 0 .2rem;
+  max-width: 62ch;
+  font: 400 .84rem/1.55 Archivo, system-ui, sans-serif; color: var(--legend-d);
+}
+
+/* ---- the panel proper ---- */
+/* The template's .section is a light card by default. Every surface below the
+   header has to be repainted or the panel floats on a white slab. */
+[data-skin="dx7"] .section {
+  background: none; border: 0; box-shadow: none; padding: 0; border-radius: 0;
+}
+[data-skin="dx7"] .section h2 { display: none; }
+[data-skin="dx7"] .controls { display: block; min-width: 0; margin-top: .2rem; }
+
+[data-skin="dx7"] .bar {
+  margin-top: .8rem; padding: .55rem .7rem; gap: .6rem 1rem;
+  background: linear-gradient(180deg, var(--panel-hi), var(--panel));
+  border: 1px solid #100f0d; border-radius: 3px;
+}
+[data-skin="dx7"] .bar button {
+  padding: .42rem .95rem;
+  font: 700 .7rem/1 Archivo, system-ui, sans-serif;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: #1a2408;
+  background: linear-gradient(180deg, #bcd86a, #8fae3e);
+  border: 1px solid #14120f; border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.5);
+  cursor: pointer;
+}
+[data-skin="dx7"] .bar button:disabled {
+  opacity: 1; color: #6d675c;
+  background: linear-gradient(180deg, var(--key-hi), var(--key));
+}
+[data-skin="dx7"] .bar button:focus-visible { outline: 2px solid var(--lcd); outline-offset: 2px; }
+[data-skin="dx7"] .status {
+  font: 500 .72rem/1.4 "IBM Plex Mono", ui-monospace, monospace;
+  color: var(--legend-d);
+}
+[data-skin="dx7"] .status b { color: var(--lcd); font-weight: 500; }
+
+[data-skin="dx7"] .keyboard { margin-top: .8rem; }
+[data-skin="dx7"] .keys {
+  height: 10.5rem; background: #100f0d;
+  border: 1px solid #000; border-radius: 3px 3px 4px 4px;
+  box-shadow: 0 6px 14px rgba(0,0,0,.5) inset;
+}
+[data-skin="dx7"] .key.white {
+  background: linear-gradient(180deg, #f7f5ee 0%, #e6e2d6 88%, #c7c3b6 100%);
+  border-right: 1px solid #97948a;
+}
+[data-skin="dx7"] .key.white.on {
+  background: linear-gradient(180deg, #d6e39a 0%, #a8c455 90%, #86a03c 100%);
+}
+[data-skin="dx7"] .key.black {
+  background: linear-gradient(180deg, #34302a 0%, #131210 70%, #211f1b 100%);
+  border-radius: 0 0 3px 3px;
+}
+[data-skin="dx7"] .key.black.on {
+  background: linear-gradient(180deg, #8fae3e 0%, #5c7327 100%);
+}
+[data-skin="dx7"] .key .lbl { color: #7a786f; }
+[data-skin="dx7"] .note { color: var(--legend-d); font-size: .78rem; }
+[data-skin="dx7"] kbd {
+  background: var(--key); border-color: var(--key-hi); color: var(--legend-d);
+}
+[data-skin="dx7"] .notice { color: #7d786d; font-size: .7rem; line-height: 1.5; }
+
+/* The template paints .macros as a light card with its own border and padding.
+   This skin draws the case, so the container has to disappear entirely: a
+   background: none on .section alone leaves this slab behind it. */
+[data-skin="dx7"] .macros {
+  background: none; border: 0; padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: .55rem;
+  align-items: start;
+}
+
+[data-skin="dx7"] .sect {
+  background: linear-gradient(180deg, var(--panel-hi), var(--panel));
+  border: 1px solid #100f0d; border-radius: 3px;
+  overflow: hidden;
+}
+/* the emerald band, white legend: the panel's own section marker */
+[data-skin="dx7"] .sect-name {
+  margin: 0; padding: .3rem .6rem .27rem;
+  background: linear-gradient(180deg, var(--band), var(--band-lo));
+  font: 700 .6rem/1 Archivo, system-ui, sans-serif;
+  letter-spacing: .26em; text-transform: uppercase; color: #f2f6f3;
+  border-bottom: 1px solid #0b2c20;
+}
+[data-skin="dx7"] .sect-body {
+  padding: .5rem .6rem .58rem;
+  display: flex; flex-direction: column; gap: .34rem;
+}
+
+/* ---- a continuous parameter: caption, slot, numerals ---- */
+[data-skin="dx7"] .par {
+  display: grid;
+  grid-template-columns: 4.6rem minmax(0, 1fr) 3.1rem;
+  align-items: center; gap: .5rem;
+}
+[data-skin="dx7"] .par .cap {
+  font: 600 .58rem/1.15 Archivo, system-ui, sans-serif;
+  letter-spacing: .11em; text-transform: uppercase; color: var(--legend);
+}
+[data-skin="dx7"] .par .val {
+  font: 500 .7rem/1 "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  color: var(--lcd); text-align: right;
+}
+
+[data-skin="dx7"] input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 1.15rem; margin: 0;
+  background: transparent; cursor: pointer;
+}
+[data-skin="dx7"] input[type="range"]::-webkit-slider-runnable-track {
+  height: .42rem; border-radius: 2px;
+  background:
+    linear-gradient(90deg, var(--lcd-dim) 0 var(--p, 0%), transparent var(--p, 0%)),
+    var(--slot);
+  box-shadow: 0 1px 0 rgba(255,255,255,.05), 0 1px 3px rgba(0,0,0,.7) inset;
+}
+[data-skin="dx7"] input[type="range"]::-moz-range-track {
+  height: .42rem; border-radius: 2px;
+  background:
+    linear-gradient(90deg, var(--lcd-dim) 0 var(--p, 0%), transparent var(--p, 0%)),
+    var(--slot);
+  box-shadow: 0 1px 0 rgba(255,255,255,.05), 0 1px 3px rgba(0,0,0,.7) inset;
+}
+[data-skin="dx7"] input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: .58rem; height: 1.05rem; margin-top: -.32rem;
+  border-radius: 2px; border: 1px solid #17150f;
+  background: linear-gradient(180deg, var(--key-lit), #a8a08c);
+  box-shadow: 0 1px 2px rgba(0,0,0,.6);
+}
+[data-skin="dx7"] input[type="range"]::-moz-range-thumb {
+  width: .58rem; height: 1.05rem;
+  border-radius: 2px; border: 1px solid #17150f;
+  background: linear-gradient(180deg, var(--key-lit), #a8a08c);
+  box-shadow: 0 1px 2px rgba(0,0,0,.6);
+}
+[data-skin="dx7"] input[type="range"]:focus-visible {
+  outline: 2px solid var(--lcd); outline-offset: 2px; border-radius: 3px;
+}
+
+/* ---- a switched parameter: membrane buttons, amber lamps above ---- */
+[data-skin="dx7"] .sw {
+  display: grid;
+  grid-template-columns: 4.6rem minmax(0, 1fr);
+  align-items: center; gap: .5rem;
+}
+[data-skin="dx7"] .sw .cap {
+  font: 600 .58rem/1.15 Archivo, system-ui, sans-serif;
+  letter-spacing: .11em; text-transform: uppercase; color: var(--legend);
+}
+[data-skin="dx7"] .sw .row { display: flex; gap: .3rem; }
+[data-skin="dx7"] .pos {
+  display: flex; flex-direction: column; align-items: center; gap: .16rem;
+  flex: 1 1 0; min-width: 0;
+}
+[data-skin="dx7"] .lamp {
+  width: 100%; height: .2rem; border-radius: 1px;
+  background: var(--lamp-off);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.5) inset;
+  transition: background .12s linear, box-shadow .12s linear;
+}
+[data-skin="dx7"] .lamp.on {
+  background: var(--lamp);
+  box-shadow: 0 0 7px rgba(255,90,51,.65), 0 0 0 1px rgba(0,0,0,.4) inset;
+}
+[data-skin="dx7"] .lamp.blank { visibility: hidden; }
+[data-skin="dx7"] .pos button {
+  width: 100%; padding: .26rem .1rem;
+  font: 600 .56rem/1 Archivo, system-ui, sans-serif;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--legend-d);
+  background: linear-gradient(180deg, var(--key-hi), var(--key));
+  border: 1px solid #14120f; border-radius: 2px;
+  cursor: pointer;
+  transition: color .12s linear, background .12s linear;
+}
+[data-skin="dx7"] .pos button:hover { color: var(--legend); }
+[data-skin="dx7"] .pos button.sel {
+  color: #1a1712;
+  background: linear-gradient(180deg, var(--key-lit), #b3ab97);
+  border-color: #0c0a08;
+}
+[data-skin="dx7"] .pos button:focus-visible {
+  outline: 2px solid var(--lcd); outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-skin="dx7"] .lamp,
+  [data-skin="dx7"] .pos button { transition: none; }
+}
+
+/* Narrow: stop being a grid at all.
+   Overriding grid-template-columns to a single track did NOT collapse the layout:
+   the used template still resolved to two columns, so items paired up and the
+   auto-sized one crushed .standfirst into a 6px column 500px tall while .bar
+   stretched to match. Switching the case to a flex column makes every grid-area
+   above inert instead of fighting it, which is one rule rather than nine. The
+   grid-area resets below are kept because they say what the intent is.
+   Breakpoint matches the juno skin's, so the two panels reflow together. */
+@media (max-width: 60rem) {
+  .wrap[data-skin="dx7"] {
+    display: flex; flex-direction: column; gap: .5rem; padding: .7rem;
+  }
+  [data-skin="dx7"] .eyebrow {
+    grid-area: auto; writing-mode: horizontal-tb; transform: none;
+    align-self: stretch; text-align: center;
+    min-width: 0; padding: .28rem .6rem; letter-spacing: .24em;
+    border-radius: 3px 3px 0 0;
+  }
+  [data-skin="dx7"] header > *,
+  [data-skin="dx7"] .display,
+  [data-skin="dx7"] .controls,
+  [data-skin="dx7"] .standfirst,
+  [data-skin="dx7"] .bar,
+  [data-skin="dx7"] .keyboard,
+  [data-skin="dx7"] .notice { grid-area: auto; }
+  [data-skin="dx7"] h1 { padding-left: 0; font-size: 1.45rem; }
+  [data-skin="dx7"] .tagline { padding-left: 0; }
+  [data-skin="dx7"] .display { flex-direction: column; padding: 0; }
+  [data-skin="dx7"] .lcd { min-width: 0; }
+  [data-skin="dx7"] .standfirst { margin: .35rem 0; }
+  [data-skin="dx7"] .par { grid-template-columns: 4.2rem minmax(0, 1fr) 2.8rem; }
+}
+</style>
+<script>
+
+const PANEL_ORDER = ["ALGO", "OSC", "EG", "LFO", "SCALE", "OUT"];
+
+const el = (tag, cls, text) => {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+};
+
+const metaOf = (it) => Object.assign({}, ...(it.meta || []));
+
+// Positions are a value-label map, not only a switch declaration. Up to four of
+// them draw as buttons; more than that stays a slot and the names become its
+// readout, which is how the operator ratios show 1.41 for step 2 instead of the
+// step number. The DSP stays the authority on what the numbers mean.
+const SWITCH_MAX = 4;
+
+const namesOf = (m) => (m.positions || "").split("|").filter(Boolean);
+
+const stepsOf = (it) => {
+  const step = +it.step;
+  return step > 0 ? Math.round((+it.max - +it.min) / step) + 1 : 0;
+};
+
+//----------------------------------------------------------------------
+// The character display. One line for what was last touched, one for the patch.
+// This is the DX7's own interaction model: the panel has no numerals printed
+// beside anything, and the display is where a parameter's value lives.
+//----------------------------------------------------------------------
+const LCD = { main: null, sub: null, idle: "" };
+
+function say(cap, value) {
+  if (!LCD.main) return;
+  LCD.main.textContent = (cap + " ").padEnd(13, ".") + " " + value;
+}
+
+function buildDisplay(panel) {
+  const bay = el("div", "display");
+  const lcd = el("div", "lcd");
+  LCD.main = el("div", "lcd-line", "");
+  LCD.sub = el("div", "lcd-line sub", "");
+  lcd.append(LCD.main, LCD.sub);
+  bay.appendChild(lcd);
+
+  const h1 = panel.querySelector("h1");
+  const name = h1 ? h1.textContent.trim() : "patch";
+  LCD.idle = name.toUpperCase().slice(0, 16);
+  LCD.main.textContent = LCD.idle;
+  LCD.sub.textContent = "6 OP  32 ALG  READY";
+  // Insert beside the standfirst, not into the panel: .standfirst is a child of
+  // <header>, which is display:contents, so it is a GRID item of .wrap while
+  // still being header's child in the DOM. insertBefore on the panel therefore
+  // throws NotFoundError and takes the whole boot down with it, reported only as
+  // a failed status line. Ask the node itself who its parent is.
+  const sf = panel.querySelector(".standfirst");
+  sf.parentNode.insertBefore(bay, sf);
+}
+
+// The diagram's own bay, built once and handed to paintAlgo on every change.
+function buildAlgoBay(algoNames) {
+  const ab = el("div", "algo-bay");
+  ab.appendChild(algoSvg(0, algoNames));
+  ab.appendChild(el("p", "algo-cap", ""));
+  return ab;
+}
+
+//----------------------------------------------------------------------
+// The algorithm diagram, drawn from the same routing the DSP implements.
+//
+// Each entry is the operator grid: `col` and `row` place a box, `row` 0 being the
+// carrier at the bottom. `edges` are modulator -> carrier. `fb` is the operator
+// whose output returns to its own phase input, which every one of these four
+// puts on operator 6, as the hardware algorithm ROM does for most of the set.
+//----------------------------------------------------------------------
+const ALGOS = [
+  { name: "1", carriers: [1, 3], fb: 6,
+    nodes: { 1: [0, 0], 2: [0, 1], 3: [1, 0], 4: [1, 1], 5: [1, 2], 6: [1, 3] },
+    edges: [[2, 1], [4, 3], [5, 4], [6, 5]] },
+  { name: "5", carriers: [1, 3, 5], fb: 6,
+    nodes: { 1: [0, 0], 2: [0, 1], 3: [1, 0], 4: [1, 1], 5: [2, 0], 6: [2, 1] },
+    edges: [[2, 1], [4, 3], [6, 5]] },
+  { name: "16", carriers: [1], fb: 6,
+    nodes: { 1: [1, 0], 2: [0, 1], 3: [1, 1], 4: [1, 2], 5: [2, 1], 6: [2, 2] },
+    edges: [[2, 1], [3, 1], [5, 1], [4, 3], [6, 5]] },
+  { name: "32", carriers: [1, 2, 3, 4, 5, 6], fb: 6,
+    nodes: { 1: [0, 0], 2: [1, 0], 3: [2, 0], 4: [3, 0], 5: [4, 0], 6: [5, 0] },
+    edges: [] },
+];
+
+const BOX = 17, GAPX = 8, GAPY = 7, PAD = 5;
+
+function algoSvg(which, algoNames) {
+  const a = ALGOS[which] || ALGOS[0];
+  const cols = Math.max(...Object.values(a.nodes).map(p => p[0])) + 1;
+  const rows = Math.max(...Object.values(a.nodes).map(p => p[1])) + 1;
+  const w = PAD * 2 + cols * BOX + (cols - 1) * GAPX + 10;   // +10 for the fb loop
+  const h = PAD * 2 + rows * BOX + (rows - 1) * GAPY;
+  const xy = (n) => {
+    const [c, r] = a.nodes[n];
+    return [PAD + c * (BOX + GAPX), PAD + (rows - 1 - r) * (BOX + GAPY)];
+  };
+
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  svg.setAttribute("role", "img");
+  const names = algoNames || ALGOS.map(x => x.name);
+  svg.setAttribute("aria-label",
+    "Algorithm " + names[which] + ": " + a.carriers.length +
+    (a.carriers.length === 1 ? " carrier" : " carriers") +
+    ", feedback on operator " + a.fb);
+
+  const mk = (tag, attrs) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    svg.appendChild(e);
+    return e;
+  };
+
+  for (const [from, to] of a.edges) {
+    const [fx, fy] = xy(from), [tx, ty] = xy(to);
+    const attrs = { stroke: "#9b9689", "stroke-width": "1", fill: "none" };
+    if (fx === tx) {
+      mk("line", Object.assign({ x1: fx + BOX / 2, y1: fy + BOX,
+                                 x2: tx + BOX / 2, y2: ty }, attrs));
+    } else {
+      // a fan-in: down the modulator's column, across, then into the carrier
+      const midY = ty - GAPY / 2;
+      mk("path", Object.assign({ d: "M" + (fx + BOX / 2) + " " + (fy + BOX) +
+                                    " V" + midY + " H" + (tx + BOX / 2) +
+                                    " V" + ty }, attrs));
+    }
+  }
+
+  // The feedback loop: out of the operator's right flank, up over its head and
+  // back down into its own phase input. Amber, the one warm mark on the diagram,
+  // because it is the one path that is not simply operator-to-operator.
+  const [bx, by] = xy(a.fb);
+  const rt = bx + BOX, mid = by + BOX * 0.55, top = by - 5;
+  mk("path", {
+    d: "M" + rt + " " + mid + " h5 V" + top + " H" + (bx + BOX / 2) + " V" + by,
+    stroke: "#ff5a33", "stroke-width": "1.2", fill: "none",
+    "stroke-linejoin": "round",
+  });
+  mk("path", {
+    d: "M" + (bx + BOX / 2 - 2.6) + " " + (by - 3.4) +
+       " L" + (bx + BOX / 2) + " " + by + " L" + (bx + BOX / 2 + 2.6) + " " + (by - 3.4),
+    stroke: "#ff5a33", "stroke-width": "1.2", fill: "none", "stroke-linejoin": "round",
+  });
+
+  for (const n of Object.keys(a.nodes)) {
+    const [x, y] = xy(n);
+    const carrier = a.carriers.includes(+n);
+    mk("rect", {
+      x, y, width: BOX, height: BOX, rx: 2,
+      // carriers reach the output, so they are the lit boxes
+      fill: carrier ? "#a8c455" : "#26241f",
+      stroke: carrier ? "#a8c455" : "#6d675c", "stroke-width": "1",
+    });
+    const t = mk("text", {
+      x: x + BOX / 2, y: y + BOX / 2 + 0.5,
+      "text-anchor": "middle", "dominant-baseline": "middle",
+      fill: carrier ? "#1a2408" : "#c8c3b6",
+      "font-family": "'IBM Plex Mono', ui-monospace, monospace",
+      "font-size": "10", "font-weight": "500",
+    });
+    t.textContent = n;
+  }
+  return svg;
+}
+
+function paintAlgo(bay, which, names) {
+  const a = ALGOS[which] || ALGOS[0];
+  bay.replaceChild(algoSvg(which, names), bay.querySelector("svg"));
+  const n = a.carriers.length;
+  bay.querySelector(".algo-cap").textContent =
+    "ALG " + (names ? names[which] : a.name) + "  \u00b7  " +
+    n + (n === 1 ? " CARRIER" : " CARRIERS") + "  \u00b7  FB ON OP" + a.fb;
+}
+
+//----------------------------------------------------------------------
+// Controls
+//----------------------------------------------------------------------
+function parRow(it, m, set, onAlgo) {
+  const min = +it.min, max = +it.max;
+  const cap = (m.cap || it.label).toUpperCase();
+  const names = namesOf(m);
+  const row = el("div", "par");
+  row.appendChild(el("div", "cap", cap));
+
+  const inp = document.createElement("input");
+  inp.type = "range";
+  inp.min = min; inp.max = max;
+  // step BEFORE value: a range input snaps its value to the step on assignment
+  // and the step defaults to 1, so the other order silently rounds 0.44 to 0.
+  inp.step = +it.step || (max - min) / 200;
+  inp.value = +it.init;
+  inp.setAttribute("aria-label", cap);
+  row.appendChild(inp);
+
+  const val = el("div", "val");
+  row.appendChild(val);
+
+  const detented = stepsOf(it) > 0 && stepsOf(it) <= 32;
+  const text = (v) => {
+    if (names.length) return names[Math.round((v - min) / (+it.step || 1))] || String(v);
+    if (detented && +it.step >= 1) return String(Math.round(v));
+    return (+v).toFixed(Math.abs(max - min) > 20 ? 1 : 2);
+  };
+  const show = (v) => {
+    val.textContent = text(+v);
+    inp.style.setProperty("--p", (100 * (v - min) / (max - min)) + "%");
+  };
+  show(+it.init);
+  inp.addEventListener("input", () => {
+    set(it.address, +inp.value);
+    show(+inp.value);
+    say(cap, text(+inp.value));
+  });
+  inp.addEventListener("pointerdown", () => say(cap, text(+inp.value)));
+  return row;
+}
+
+function swRow(it, m, set, onAlgo) {
+  const min = +it.min, max = +it.max, step = +it.step;
+  const n = stepsOf(it);
+  if (!(n >= 2 && n <= SWITCH_MAX)) return null;
+  const cap = (m.cap || it.label).toUpperCase();
+  const names = namesOf(m);
+  const nameOf = (i) => names[i] !== undefined ? names[i] : String(min + i * step);
+
+  const row = el("div", "sw");
+  row.appendChild(el("div", "cap", cap));
+  const strip = el("div", "row");
+  const btns = [];
+  for (let i = 0; i < n; i++) {
+    const pos = el("div", "pos");
+    const lamp = el("div", "lamp");
+    const b = el("button", "", nameOf(i));
+    b.type = "button";
+    pos.append(lamp, b);
+    strip.appendChild(pos);
+    btns.push({ b, lamp });
+    b.addEventListener("click", () => {
+      set(it.address, min + i * step);
+      paint(i);
+      say(cap, nameOf(i));
+      if (onAlgo) onAlgo(i);
+    });
+  }
+  const paint = (sel) => btns.forEach(({ b, lamp }, i) => {
+    b.classList.toggle("sel", i === sel);
+    lamp.classList.toggle("on", i === sel);
+  });
+  const init = Math.round((+it.init - min) / (step || 1));
+  paint(init);
+  row.appendChild(strip);
+  return row;
+}
+
+SKIN.name = "dx7";
+SKIN.renderControls = (items, host, set) => {
+  host.innerHTML = "";
+  const panel = host.closest('[data-skin="dx7"]');
+
+  const groups = new Map();
+  for (const it of items) {
+    const m = metaOf(it);
+    const key = (m.panel || "PATCH").toUpperCase();
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push({ it, m });
+  }
+
+  // The algorithm control drives the diagram, so its position names are the
+  // diagram's labels too. Found by label rather than by section, because the
+  // section a patch files it under is the patch's business.
+  const algoItem = items.find(it => it.label === "algo");
+  const algoNames = algoItem ? namesOf(metaOf(algoItem)) : null;
+  if (panel) buildDisplay(panel);
+  const bay = algoItem ? buildAlgoBay(algoNames) : null;
+  const onAlgo = bay ? (i) => paintAlgo(bay, i, algoNames) : null;
+
+  const rank = (k) => { const i = PANEL_ORDER.indexOf(k); return i < 0 ? 99 : i; };
+  const keys = [...groups.keys()].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+
+  for (const key of keys) {
+    const sect = el("section", "sect");
+    sect.appendChild(el("h3", "sect-name", key));
+    const body = el("div", "sect-body");
+    // The diagram leads the section that owns the algorithm switch.
+    if (bay && groups.get(key).some(({ it }) => it.label === "algo")) {
+      body.appendChild(bay);
+      paintAlgo(bay, Math.round(+algoItem.init - +algoItem.min), algoNames);
+    }
+    // Faust emits controls alphabetically, so panel order has to be declared.
+    const ctrls = groups.get(key).sort((a, b) => (+a.m.idx || 0) - (+b.m.idx || 0));
+    for (const { it, m } of ctrls) {
+      const isAlgo = it.label === "algo" ? onAlgo : null;
+      const sw = m.positions !== undefined ? swRow(it, m, set, isAlgo) : null;
+      body.appendChild(sw || parRow(it, m, set, isAlgo));
+    }
+    sect.appendChild(body);
+    host.appendChild(sect);
+  }
+};
+</script>

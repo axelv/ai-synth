@@ -241,6 +241,234 @@
    "release_below_peak_dB": -91.0,
    "voices_dB": 10.72
   },
+  "dx7-fm.dsp": {
+   "findings": [
+    {
+     "kind": "does nothing: # dB level, # dB shape, # dB width, and # dB in the release tail",
+     "macro": "pmd",
+     "message": "does nothing: 0.12 dB level, 0.28 dB shape, 0.11 dB width, and 0.00 dB in the release tail",
+     "severity": "fail"
+    },
+    {
+     "kind": "moves level more than shape (# dB against # dB); correct for an envelope-length control, a defect for a timbre control",
+     "macro": "sustain",
+     "message": "moves level more than shape (6.7 dB against 3.3 dB); correct for an envelope-length control, a defect for a timbre control",
+     "severity": "warn"
+    }
+   ],
+   "macros": {
+    "algo": {
+     "centroid_ratio": 0.19,
+     "level_dB": 1.15,
+     "peak_hi": 0.554,
+     "peak_lo": 0.684,
+     "shape_dB": 8.78,
+     "width_dB": 4.06
+    },
+    "amd": {
+     "centroid_ratio": 0.783,
+     "level_dB": 0.13,
+     "peak_hi": 0.645,
+     "peak_lo": 0.705,
+     "shape_dB": 0.91,
+     "width_dB": 0.11
+    },
+    "attack": {
+     "centroid_ratio": 1.701,
+     "level_dB": 1.38,
+     "peak_hi": 0.706,
+     "peak_lo": 0.598,
+     "shape_dB": 2.06,
+     "width_dB": 0.55
+    },
+    "contour": {
+     "centroid_ratio": 0.556,
+     "level_dB": 2.34,
+     "peak_hi": 0.685,
+     "peak_lo": 0.727,
+     "shape_dB": 3.37,
+     "width_dB": 0.02
+    },
+    "decay": {
+     "centroid_ratio": 2.112,
+     "level_dB": 4.99,
+     "peak_hi": 0.783,
+     "peak_lo": 0.581,
+     "shape_dB": 4.44,
+     "width_dB": 0.1
+    },
+    "detune": {
+     "centroid_ratio": 1.089,
+     "level_dB": 1.84,
+     "peak_hi": 0.641,
+     "peak_lo": 0.62,
+     "shape_dB": 1.42,
+     "width_dB": 0.33
+    },
+    "fbMode": {
+     "centroid_ratio": 0.977,
+     "level_dB": 0.09,
+     "peak_hi": 0.666,
+     "peak_lo": 0.667,
+     "shape_dB": 0.94,
+     "width_dB": 0.01
+    },
+    "feedback": {
+     "centroid_ratio": 1.536,
+     "level_dB": 0.18,
+     "peak_hi": 0.718,
+     "peak_lo": 0.716,
+     "shape_dB": 2.03,
+     "width_dB": 0.09
+    },
+    "grain": {
+     "centroid_ratio": 1.019,
+     "level_dB": 0.15,
+     "peak_hi": 0.678,
+     "peak_lo": 0.651,
+     "shape_dB": 0.74,
+     "width_dB": 0.04
+    },
+    "index": {
+     "centroid_ratio": 8.669,
+     "level_dB": 0.48,
+     "peak_hi": 0.712,
+     "peak_lo": 0.582,
+     "shape_dB": 12.64,
+     "width_dB": 5.45
+    },
+    "lfoRate": {
+     "centroid_ratio": 0.957,
+     "level_dB": 0.3,
+     "peak_hi": 0.739,
+     "peak_lo": 0.654,
+     "shape_dB": 0.43,
+     "width_dB": 0.02
+    },
+    "lfoWave": {
+     "centroid_ratio": 0.952,
+     "level_dB": 0.19,
+     "peak_hi": 0.676,
+     "peak_lo": 0.667,
+     "shape_dB": 0.7,
+     "width_dB": 0.05
+    },
+    "lvScale": {
+     "centroid_ratio": 0.66,
+     "level_dB": 0.35,
+     "peak_hi": 0.68,
+     "peak_lo": 0.641,
+     "shape_dB": 2.83,
+     "width_dB": 0.0
+    },
+    "op1": {
+     "centroid_ratio": 2.43,
+     "level_dB": 0.27,
+     "peak_hi": 0.609,
+     "peak_lo": 0.672,
+     "shape_dB": 7.31,
+     "width_dB": 0.76
+    },
+    "op2": {
+     "centroid_ratio": 3.795,
+     "level_dB": 0.25,
+     "peak_hi": 0.714,
+     "peak_lo": 0.644,
+     "shape_dB": 5.54,
+     "width_dB": 1.19
+    },
+    "op3": {
+     "centroid_ratio": 1.665,
+     "level_dB": 0.21,
+     "peak_hi": 0.622,
+     "peak_lo": 0.595,
+     "shape_dB": 3.08,
+     "width_dB": 0.32
+    },
+    "op4": {
+     "centroid_ratio": 3.55,
+     "level_dB": 0.2,
+     "peak_hi": 0.679,
+     "peak_lo": 0.563,
+     "shape_dB": 4.23,
+     "width_dB": 1.37
+    },
+    "op5": {
+     "centroid_ratio": 1.308,
+     "level_dB": 0.14,
+     "peak_hi": 0.644,
+     "peak_lo": 0.646,
+     "shape_dB": 1.84,
+     "width_dB": 0.31
+    },
+    "op6": {
+     "centroid_ratio": 2.253,
+     "level_dB": 0.29,
+     "peak_hi": 0.645,
+     "peak_lo": 0.613,
+     "shape_dB": 3.64,
+     "width_dB": 0.07
+    },
+    "pmd": {
+     "centroid_ratio": 0.984,
+     "level_dB": 0.12,
+     "peak_hi": 0.655,
+     "peak_lo": 0.669,
+     "shape_dB": 0.28,
+     "width_dB": 0.11
+    },
+    "release": {
+     "centroid_ratio": 0.939,
+     "level_dB": 0.46,
+     "peak_hi": 0.591,
+     "peak_lo": 0.689,
+     "shape_dB": 0.51,
+     "width_dB": 0.31
+    },
+    "rtScale": {
+     "centroid_ratio": 0.921,
+     "level_dB": 0.32,
+     "peak_hi": 0.632,
+     "peak_lo": 0.647,
+     "shape_dB": 0.54,
+     "width_dB": 0.14
+    },
+    "spread": {
+     "centroid_ratio": 1.0,
+     "level_dB": 0.71,
+     "peak_hi": 0.68,
+     "peak_lo": 0.635,
+     "shape_dB": 0.0,
+     "width_dB": 71.0
+    },
+    "sustain": {
+     "centroid_ratio": 1.408,
+     "level_dB": 6.65,
+     "peak_hi": 0.705,
+     "peak_lo": 0.659,
+     "shape_dB": 3.32,
+     "width_dB": 0.69
+    },
+    "velSens": {
+     "centroid_ratio": 0.836,
+     "level_dB": 0.25,
+     "peak_hi": 0.675,
+     "peak_lo": 0.634,
+     "shape_dB": 0.81,
+     "width_dB": 0.14
+    }
+   },
+   "pattern": "pluck",
+   "register_dB": [
+    -29.7,
+    -29.7,
+    -30.4,
+    -31.1,
+    -31.4
+   ],
+   "release_below_peak_dB": -225.0,
+   "voices_dB": 12.04
+  },
   "fm-bass.dsp": {
    "findings": [
     {
